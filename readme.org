@@ -1,0 +1,2 @@
+* Readme
+Modal logic for declarative distributed algorithms.
