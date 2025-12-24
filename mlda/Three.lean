@@ -10,6 +10,7 @@ inductive Three : Type where
 notation "𝟯" => Three
 
 namespace Three
+namespace Atom
 
 instance : LinearOrder Three := by
   let toFin : 𝟯 → Fin 3
@@ -110,6 +111,8 @@ scoped notation "⊭" => NotValid
 
 namespace Proposition_2_2_2
 
+variable (a b : 𝟯)
+
 @[simp] theorem p1_1 : ⊨ .true := .true
 @[simp] theorem p1_2 : ⊨ .byzantine := .byzantine
 @[simp] theorem p1_3 : ⊭ .false := .false
@@ -117,36 +120,50 @@ namespace Proposition_2_2_2
 @[simp] theorem p1_5 : ¬ (⊭ .true) := by intro k; cases k
 @[simp] theorem p1_6 : ¬ (⊭ .byzantine) := by intro k; cases k
 
-theorem p2_1 (a b : 𝟯) : ⊨ (a ∨ b) ↔ ⊨ a ∨ ⊨ b := by
+theorem p2_1 : ⊨ (a ∨ b) ↔ ⊨ a ∨ ⊨ b := by
   constructor <;> intro x
   next => cases a <;> cases b <;> cases x <;> simp
   next => cases x <;> rename_i k <;> cases a <;> cases b <;> cases k <;> simp
 
-theorem p2_2 (a b : 𝟯) : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
+theorem p2_2 : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
   constructor <;> intro x
   next => cases a <;> cases b <;> cases x <;> simp
   next => rcases x with ⟨k1, k2⟩; cases a <;> cases b <;> cases k1 <;> cases k2 <;> simp
 
-theorem p3_1 (a b : 𝟯) : (a → b) = (¬ a ∨ b) := by cases a <;> cases b <;> rfl
-theorem p3_2 (a b : 𝟯) : (a ⇀ b) = (a → T b) := by cases a <;> cases b <;> rfl
+theorem p3_1 : (a → b) = (¬ a ∨ b) := by cases a <;> cases b <;> rfl
+theorem p3_2 : (a ⇀ b) = (a → T b) := by cases a <;> cases b <;> rfl
 
-theorem p4 (a b : 𝟯) : ⊨ (a → b) ↔ ((a = .true) → ⊨ (TB b)) := by
+theorem p4 : ⊨ (a → b) ↔ ((a = .true) → ⊨ (TB b)) := by
   constructor <;> cases a <;> cases b <;> simp
 
-theorem p5 (a b : 𝟯) : ⊨ (a ⇀ b) ↔ ((a = .true) → (b = .true)) := by
+theorem p5 : ⊨ (a ⇀ b) ↔ ((a = .true) → (b = .true)) := by
   constructor <;> cases a <;> cases b <;> simp
 
-theorem p6 (a : 𝟯) : ⊨ (a ∨ ¬ a) := by cases a <;> simp
+theorem p6 : ⊨ (a ∨ ¬ a) := by cases a <;> simp
 
-theorem p7 (a : 𝟯) : ⊨ (a ∧ ¬ a) ↔ a = .byzantine := by
+theorem p7 : ⊨ (a ∧ ¬ a) ↔ a = .byzantine := by
   constructor <;> cases a <;> simp
 
-theorem p8 (a : 𝟯) : ⊨ a ↔ (TF a = T a) := by cases a <;> simp
+theorem p8 : ⊨ a ↔ (TF a = T a) := by cases a <;> simp
 
-#eval Three.true ≤ .false
-
-theorem p9 (a b : 𝟯) : a ≤ b ↔ ((¬ b) ≤ ¬ a) := by
+theorem p9 : a ≤ b ↔ ((¬ b) ≤ ¬ a) := by
   constructor <;> cases a <;> cases b <;> decide
 
-
 end Proposition_2_2_2
+
+end Atom
+
+namespace Function
+
+variable {X : Type}
+
+def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
+def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
+
+def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
+def or (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.or f f'
+def impl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.impl f f'
+def strongImpl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.strongImpl f f'
+
+end Function
+end Three
