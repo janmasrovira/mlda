@@ -1,6 +1,4 @@
-import Mathlib.Init
-import Mathlib.Order.Basic
-import Mathlib.Order.Fin.Basic
+import mlda.Base
 
 inductive Three : Type where
   | false
@@ -10,16 +8,11 @@ inductive Three : Type where
 notation "𝟯" => Three
 
 namespace Three
+
 namespace Atom
 
-instance : LinearOrder Three := by
-  let toFin : 𝟯 → Fin 3
-    | .false => 0
-    | .byzantine => 1
-    | .true => 2
-  apply LinearOrder.lift' toFin
-  intro x y p
-  cases x <;> cases y <;> cases p <;> rfl
+variable
+  {X : Type}
 
 @[simp]
 def neg : 𝟯 → 𝟯
@@ -40,6 +33,15 @@ def and : 𝟯 → 𝟯 → 𝟯
 
 scoped infixl:35 " ∧ " => and
 
+instance : Std.Associative and where
+  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp
+
+instance : Std.Commutative and where
+  comm := by intro a b; cases a <;> cases b <;> simp
+
+instance : Std.LawfulCommIdentity and .true where
+  left_id := by intro a; cases a <;> simp
+
 @[simp]
 def or : 𝟯 → 𝟯 → 𝟯
   | .false, .false => .false
@@ -49,6 +51,15 @@ def or : 𝟯 → 𝟯 → 𝟯
   | _, _ => .true
 
 scoped infixl:30 " ∨ " => or
+
+instance : Std.Associative or where
+  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp
+
+instance : Std.Commutative or where
+  comm := by intro a b; cases a <;> cases b <;> simp
+
+instance : Std.LawfulCommIdentity or .false where
+  left_id := by intro a; cases a <;> simp
 
 @[simp]
 def xor : 𝟯 → 𝟯 → 𝟯
@@ -109,6 +120,40 @@ inductive NotValid : 𝟯 → Prop where
   | false : NotValid .false
 scoped notation "⊭" => NotValid
 
+instance : Min 𝟯 where
+  min := and
+
+instance : Max 𝟯 where
+  max := or
+
+instance : Ord 𝟯 where
+  compare := fun
+   | .false, .false => .eq
+   | .false, _ => .lt
+   | _, .false => .gt
+   | .byzantine, .byzantine => .eq
+   | .byzantine, .true => .lt
+   | .true, .byzantine => .gt
+   | .true, .true => .eq
+
+instance : LinearOrder Three := by
+  let toFin : 𝟯 → Fin 3
+    | .false => 0
+    | .byzantine => 1
+    | .true => 2
+  apply LinearOrder.liftWithOrd' toFin
+  intro x y p; cases x <;> cases y <;> cases p <;> rfl
+  intro x y; cases x <;> cases y <;> rfl
+
+instance : BoundedOrder Three where
+  bot := .false
+  bot_le := by intro a; cases a <;> decide
+  top := .true
+  le_top := by intro a; cases a <;> decide
+
+instance : DistribLattice Three where
+  le_sup_inf := by intro a b c; cases a <;> cases b <;> cases c <;> decide
+
 namespace Proposition_2_2_2
 
 variable (a b : 𝟯)
@@ -157,11 +202,24 @@ namespace Function
 
 variable {X : Type}
 
-def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
-def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
+def bigAnd (f : X → 𝟯) (l : Finset X) : 𝟯 := l.fold Atom.and .true f
+scoped notation "⋀" => bigAnd
 
-def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
-def or (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.or f f'
+def bigOr (f : X → 𝟯) (l : Finset X) : 𝟯 := l.fold Atom.or .false f
+scoped notation "⋁" => bigOr
+
+@[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
+@[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
+
+@[simp] def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
+scoped prefix:75 "¬" => neg
+
+@[simp] def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
+scoped infixl:35 " ∧ " => and
+
+@[simp] def or (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.or f f'
+scoped infixl:30 " ∨ " => or
+
 def impl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.impl f f'
 def strongImpl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.strongImpl f f'
 
