@@ -10,6 +10,7 @@ namespace FinSemitopology
 
 open scoped Three.Function
 open Three.Function
+open Three.Atom
 
 variable
   {P : Type}
@@ -37,8 +38,20 @@ theorem p1_1 : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
 omit [Fintype P] [TopologicalSpace P] in
 theorem p1_2 : (¬ (f ∨ f')) = (¬ f ∧ ¬ f') := by
   funext x; simp; cases f x <;> cases f' x <;> simp
- 
-theorem p1_3 : (Three.Atom.neg (◇ (¬ f'))) = □ f := by
-  sorry
+
+theorem p1_3 : (¬ (◇ (¬ f'))) = □ f := by
+  unfold somewhere everywhere bigAnd bigOr; simp
+  cases h : Finset.fold Three.Atom.and Three.true f ℙ
+  have k : Finset.fold min Three.true f ℙ ≤ .false := by simp; exact ge_of_eq h.symm
+  have y := (Finset.fold_min_le Three.false).mp k
+  cases y
+  contradiction
+  next u =>
+    simp at k
+
+
+
+
+
 
 end Lemma_2_3_3

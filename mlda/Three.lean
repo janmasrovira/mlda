@@ -120,12 +120,6 @@ inductive NotValid : 𝟯 → Prop where
   | false : NotValid .false
 scoped notation "⊭" => NotValid
 
-instance : Min 𝟯 where
-  min := and
-
-instance : Max 𝟯 where
-  max := or
-
 instance : Ord 𝟯 where
   compare := fun
    | .false, .false => .eq
@@ -202,10 +196,10 @@ namespace Function
 
 variable {X : Type}
 
-def bigAnd (f : X → 𝟯) (l : Finset X) : 𝟯 := l.fold Atom.and .true f
+def bigAnd (f : X → 𝟯) (P : Finset X) : 𝟯 := P.fold Atom.and .true f
 scoped notation "⋀" => bigAnd
 
-def bigOr (f : X → 𝟯) (l : Finset X) : 𝟯 := l.fold Atom.or .false f
+def bigOr (f : X → 𝟯) (P : Finset X) : 𝟯 := P.fold Atom.or .false f
 scoped notation "⋁" => bigOr
 
 @[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
@@ -224,4 +218,47 @@ def impl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.impl f f'
 def strongImpl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.strongImpl f f'
 
 end Function
+
+namespace Lemmas
+
+open scoped Three.Function
+open Three.Function
+
+variable {X : Type} (P : Finset X) (a : 𝟯) (f : X → 𝟯)
+
+@[simp] theorem minr : min = Atom.and := by
+  funext a b; cases a <;> cases b <;> rfl
+
+@[simp] theorem maxr : max = Atom.or := by
+  funext a b; cases a <;> cases b <;> rfl
+
+@[simp] theorem le_bot : a ≤ .false ↔ a = .false := by
+  constructor <;> (intro p; cases a; rfl; contradiction; contradiction )
+
+@[simp] theorem top_le : .true ≤ a ↔ a = .true := by
+  constructor <;> (intro p; cases a; contradiction; contradiction; rfl)
+
+@[simp] theorem meet_false : ⋀ f P = false ↔ ∃ x ∈ P, f x = false := by
+  unfold bigAnd; constructor;
+  intro h
+  have k : Finset.fold min true f P ≤ false := by simp [h]
+  have k1 := (Finset.fold_min_le false).mp k; simpa using k1
+  rintro ⟨u, pu, pu2⟩
+  have h' : ∃ x ∈ P, f x ≤ false := ⟨u, pu, (le_bot (f u)).mpr pu2⟩
+  have k1 := (Finset.fold_min_le false).mpr (.inr (a := true ≤ false) h')
+  simpa using k1
+
+@[simp] theorem join_true : ⋁ f P = .true ↔ ∃ x ∈ P, f x = .true := by
+  unfold bigOr; constructor;
+  intro h
+  have k : true ≤ Finset.fold max false f P := by simp [h]
+  have k1 := (Finset.le_fold_max true).mp k; simpa using k1
+  rintro ⟨u, pu, pu2⟩
+  have h' : ∃ x ∈ P, true ≤ f x := ⟨u, pu, (top_le (f u)).mpr pu2⟩
+  have k1 := (Finset.le_fold_max true).mpr (.inr (a := .true ≤ Three.false) h')
+  simpa using k1
+
+end Lemmas
+
+
 end Three
