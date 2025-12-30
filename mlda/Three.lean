@@ -14,7 +14,6 @@ namespace Atom
 variable
   {X : Type}
 
-@[simp]
 def neg : 𝟯 → 𝟯
   | .false => .true
   | .byzantine => .byzantine
@@ -23,7 +22,6 @@ scoped prefix:75 "¬" => neg
 
 example : 𝟯 := ¬ Three.false
 
-@[simp]
 def and : 𝟯 → 𝟯 → 𝟯
   | .true, .true => .true
   | .byzantine, .true => .byzantine
@@ -34,13 +32,13 @@ def and : 𝟯 → 𝟯 → 𝟯
 scoped infixl:35 " ∧ " => and
 
 instance : Std.Associative and where
-  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp
+  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp!
 
 instance : Std.Commutative and where
-  comm := by intro a b; cases a <;> cases b <;> simp
+  comm := by intro a b; cases a <;> cases b <;> simp!
 
 instance : Std.LawfulCommIdentity and .true where
-  left_id := by intro a; cases a <;> simp
+  left_id := by intro a; cases a <;> simp!
 
 @[simp]
 def or : 𝟯 → 𝟯 → 𝟯
@@ -167,21 +165,21 @@ theorem p2_1 : ⊨ (a ∨ b) ↔ ⊨ a ∨ ⊨ b := by
 theorem p2_2 : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
   constructor <;> intro x
   next => cases a <;> cases b <;> cases x <;> simp
-  next => rcases x with ⟨k1, k2⟩; cases a <;> cases b <;> cases k1 <;> cases k2 <;> simp
+  next => rcases x with ⟨k1, k2⟩; cases a <;> cases b <;> cases k1 <;> cases k2 <;> simp!
 
 theorem p3_1 : (a → b) = (¬ a ∨ b) := by cases a <;> cases b <;> rfl
 theorem p3_2 : (a ⇀ b) = (a → T b) := by cases a <;> cases b <;> rfl
 
 theorem p4 : ⊨ (a → b) ↔ ((a = .true) → ⊨ (TB b)) := by
-  constructor <;> cases a <;> cases b <;> simp
+  constructor <;> cases a <;> cases b <;> simp!
 
 theorem p5 : ⊨ (a ⇀ b) ↔ ((a = .true) → (b = .true)) := by
-  constructor <;> cases a <;> cases b <;> simp
+  constructor <;> cases a <;> cases b <;> simp!
 
-theorem p6 : ⊨ (a ∨ ¬ a) := by cases a <;> simp
+theorem p6 : ⊨ (a ∨ ¬ a) := by cases a <;> simp!
 
 theorem p7 : ⊨ (a ∧ ¬ a) ↔ a = .byzantine := by
-  constructor <;> cases a <;> simp
+  constructor <;> cases a <;> simp!
 
 theorem p8 : ⊨ a ↔ (TF a = T a) := by cases a <;> simp
 
@@ -196,22 +194,24 @@ namespace Function
 
 variable {X : Type}
 
-def bigAnd (f : X → 𝟯) (P : Finset X) : 𝟯 := P.fold Atom.and .true f
+def bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.and .true f
 scoped notation "⋀" => bigAnd
 
-def bigOr (f : X → 𝟯) (P : Finset X) : 𝟯 := P.fold Atom.or .false f
+def bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.or .false f
 scoped notation "⋁" => bigOr
 
 @[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
-@[simp] def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
+def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
 scoped prefix:75 "¬" => neg
 
-@[simp] def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
+theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ f) := by rfl
+
+def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
 scoped infixl:35 " ∧ " => and
 
-@[simp] def or (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.or f f'
+def or (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.or f f'
 scoped infixl:30 " ∨ " => or
 
 def impl (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.impl f f'
@@ -223,8 +223,22 @@ namespace Lemmas
 
 open scoped Three.Function
 open Three.Function
+open Three.Atom
 
-variable {X : Type} (P : Finset X) (a : 𝟯) (f : X → 𝟯)
+variable {X : Type} (P : Finset X) (a b : 𝟯) (f : X → 𝟯)
+
+theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
+  cases a <;> cases b <;> simp!
+
+theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
+  cases a <;> cases b <;> simp!
+
+@[simp] theorem neg_neg : (¬ ¬ a) = a := by
+  cases a <;> rfl
+
+@[simp] theorem Function.neg_neg : (¬ (¬ f)) = f := by
+  unfold Three.Function.neg; simp; funext a; rw [Function.comp, Function.comp]
+  cases h : f a <;> rfl
 
 @[simp] theorem minr : min = Atom.and := by
   funext a b; cases a <;> cases b <;> rfl
@@ -232,33 +246,76 @@ variable {X : Type} (P : Finset X) (a : 𝟯) (f : X → 𝟯)
 @[simp] theorem maxr : max = Atom.or := by
   funext a b; cases a <;> cases b <;> rfl
 
-@[simp] theorem le_bot : a ≤ .false ↔ a = .false := by
-  constructor <;> (intro p; cases a; rfl; contradiction; contradiction )
+@[simp] theorem bot_le : false ≤ a ↔ True := by
+  cases a <;> decide
 
-@[simp] theorem top_le : .true ≤ a ↔ a = .true := by
-  constructor <;> (intro p; cases a; contradiction; contradiction; rfl)
+@[simp] theorem le_bot : a ≤ false ↔ a = false := by
+  cases a <;> decide
 
-@[simp] theorem meet_false : ⋀ f P = false ↔ ∃ x ∈ P, f x = false := by
-  unfold bigAnd; constructor;
-  intro h
-  have k : Finset.fold min true f P ≤ false := by simp [h]
-  have k1 := (Finset.fold_min_le false).mp k; simpa using k1
-  rintro ⟨u, pu, pu2⟩
-  have h' : ∃ x ∈ P, f x ≤ false := ⟨u, pu, (le_bot (f u)).mpr pu2⟩
-  have k1 := (Finset.fold_min_le false).mpr (.inr (a := true ≤ false) h')
-  simpa using k1
+@[simp] theorem top_le : true ≤ a ↔ a = true := by
+  cases a <;> decide
 
-@[simp] theorem join_true : ⋁ f P = .true ↔ ∃ x ∈ P, f x = .true := by
-  unfold bigOr; constructor;
-  intro h
-  have k : true ≤ Finset.fold max false f P := by simp [h]
-  have k1 := (Finset.le_fold_max true).mp k; simpa using k1
-  rintro ⟨u, pu, pu2⟩
-  have h' : ∃ x ∈ P, true ≤ f x := ⟨u, pu, (top_le (f u)).mpr pu2⟩
-  have k1 := (Finset.le_fold_max true).mpr (.inr (a := .true ≤ Three.false) h')
-  simpa using k1
+@[simp] theorem le_top : a ≤ true ↔ True := by
+  cases a <;> decide
+
+theorem byzantine_le : byzantine ≤ a ↔ a = byzantine ∨ a = true := by
+  cases a <;> decide
+
+theorem le_byzantine : a ≤ byzantine ↔ a = false ∨ a = byzantine := by
+  cases a <;> decide
+
+@[simp] theorem meet_false : ⋀ P f = false ↔ ∃ x ∈ P, f x = false := by
+  unfold bigAnd;
+  have h : P.fold min true f ≤ false ↔ _ ∨ ∃ x ∈ P, f x ≤ false :=
+    Finset.fold_min_le false
+  simpa using h
+
+@[simp] theorem meet_byzantine : ⋀ P f = false ↔ ∃ x ∈ P, f x = false := by
+  unfold bigAnd;
+  have h : P.fold min true f ≤ false ↔ _ ∨ ∃ x ∈ P, f x ≤ false :=
+    Finset.fold_min_le false
+  simpa using h
+
+@[simp] theorem meet_true : ⋀ P f = true ↔ ∀ x ∈ P, f x = true := by
+  unfold bigAnd;
+  have h : true ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, true ≤ f x :=
+    Finset.le_fold_min true
+  simpa using h
+
+@[simp] theorem join_false : ⋁ P f = false ↔ ∀ x ∈ P, f x = false := by
+  unfold bigOr;
+  have h : P.fold max false f ≤ false ↔ _ ∧ ∀ x ∈ P, f x ≤ false :=
+    Finset.fold_max_le false
+  simpa using h
+
+theorem join_bizantine : ⋁ P f = byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) ∧ ∃ x ∈ P, f x = byzantine := by
+  unfold bigOr;
+  have h1 : P.fold max false f ≤ byzantine ↔ _ ∧ ∀ x ∈ P, f x ≤ byzantine :=
+    Finset.fold_max_le byzantine
+  have h2 : byzantine ≤ P.fold max false f ↔ _ ∨ ∃ x ∈ P, f x ≥ byzantine :=
+    Finset.le_fold_max byzantine
+  simp at h2 h1
+  generalize P.fold Atom.or false f = y at *
+  constructor
+  rintro ⟨_⟩; constructor; simpa using h1; simp at h1 h2
+  rcases h2 with ⟨u, mu, pu⟩; exists u; exists mu; exact (h1 u mu).antisymm pu
+  rintro ⟨l, ⟨r, mr, pr⟩⟩; have p1 := h1.mpr l; have p2 := h2.mpr ⟨r, mr, ge_of_eq pr⟩
+  exact p1.antisymm p2
+
+@[simp] theorem join_true : ⋁ P f = true ↔ ∃ x ∈ P, f x = true := by
+  unfold bigOr;
+  have h : true ≤ P.fold max false f ↔ _ ∨ ∃ x ∈ P, true ≤ f x :=
+    Finset.le_fold_max true
+  simpa using h
+
+theorem meet_neg : ⋀ P (¬ f) = ¬ ⋁ P f := by
+  have := Finset.fold_hom (op := Atom.or) (op' := Atom.and) (b := false) (f := f) (m := Atom.neg) (s := P) ?_
+  simp at this; exact this; apply neg_or
+
+theorem join_neg : ⋁ P (¬ f) = ¬ ⋀ P f := by
+  have := Finset.fold_hom (op := Atom.and) (op' := Atom.or) (b := true) (f := f) (m := Atom.neg) (s := P) ?_
+  simp at this; exact this; apply neg_and
 
 end Lemmas
-
 
 end Three

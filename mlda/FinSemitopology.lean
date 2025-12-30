@@ -23,35 +23,44 @@ abbrev ℙ : Finset P := Finset.univ
 
 def Open1 : Finset (Finset P) := S.Open.filter (·.Nonempty)
 
-def everywhere := ⋀ f ℙ
+def everywhere := ⋀ ℙ f
 scoped notation "□" => everywhere
 
-def somewhere := ⋁ f ℙ
+def somewhere := ⋁ ℙ f
 scoped notation "◇" => somewhere
+
+def quorum := ⋁ S.Open1 (fun o => ⋀ o f)
+scoped notation "⯀" => quorum
+notation "⯀" "(" S ")" => quorum (S := S)
+
+def contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
+scoped notation "◆" => contraquorum
+notation "◆" "(" S ")" => contraquorum (S := S)
 
 namespace Lemma_2_3_3
 
+open Three.Lemmas
+
 omit [Fintype P] [TopologicalSpace P] in
 theorem p1_1 : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
-  funext x; simp; cases f x <;> cases f' x <;> simp
+  funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp; cases f x <;> cases f' x <;> simp!
 
 omit [Fintype P] [TopologicalSpace P] in
 theorem p1_2 : (¬ (f ∨ f')) = (¬ f ∧ ¬ f') := by
-  funext x; simp; cases f x <;> cases f' x <;> simp
+  funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp; cases f x <;> cases f' x <;> simp!
 
-theorem p1_3 : (¬ (◇ (¬ f'))) = □ f := by
-  unfold somewhere everywhere bigAnd bigOr; simp
-  cases h : Finset.fold Three.Atom.and Three.true f ℙ
-  have k : Finset.fold min Three.true f ℙ ≤ .false := by simp; exact ge_of_eq h.symm
-  have y := (Finset.fold_min_le Three.false).mp k
-  cases y
-  contradiction
-  next u =>
-    simp at k
+omit [TopologicalSpace P] in
+theorem p1_3 : (¬ (◇ (¬ f))) = □ f := by
+  simp [somewhere, everywhere, join_neg, neg_neg];
 
+omit [TopologicalSpace P] in
+theorem p1_4 : (¬ (□ (¬ f))) = ◇ f := by
+  simp [somewhere, everywhere, meet_neg, neg_neg];
 
+theorem p1_5 : (¬ (◆(S) (¬ f))) = ⯀(S) f := by
+  simp_rw [contraquorum, join_neg, neg_fold, meet_neg, neg_neg]; rfl
 
-
-
+theorem p1_6 : (¬ (⯀(S) (¬ f))) = ◆(S) f := by
+  simp_rw [quorum, meet_neg, neg_fold, join_neg, neg_neg]; rfl
 
 end Lemma_2_3_3
