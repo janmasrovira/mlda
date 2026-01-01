@@ -1,14 +1,16 @@
-import Mathlib.Topology.Basic
--- import Mathlib.Data.Set.Finite.Basic
--- import Mathlib.Data.Set.Finite.Powerset
--- import Mathlib.Data.Set.Basic
 import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Finset.Powerset
 import Mathlib.Data.Finset.Defs
-import Mathlib.Order.Basic
 import Mathlib.Data.Finset.Fold
+import Mathlib.Data.Finset.Powerset
+import Mathlib.Order.Basic
+import Mathlib.Topology.Basic
 
-noncomputable
-def Set.Finite.toList {A : Type} {K : Set A} (fin : K.Finite) : List {s | s ∈ K} :=
-  have : Finite K := fin
-  Fintype.ofFinite K |>.elems.toList
+class MapMin {A : Type} [Min A] (op : A → A) where
+  map_min : ∀ x y, op (min x y) = min (op x) (op y)
+
+export MapMin (map_min)
+
+class MapMax {A : Type} [Max A] (op : A → A) where
+  map_max : ∀ x y, op (max x y) = max (op x) (op y)
+
+export MapMax (map_max)

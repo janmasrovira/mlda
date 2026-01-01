@@ -15,19 +15,19 @@ variable
   {X : Type}
 
 def neg : 𝟯 → 𝟯
-  | .false => .true
-  | .byzantine => .byzantine
-  | .true => .false
+  | false => true
+  | byzantine => byzantine
+  | true => false
 scoped prefix:75 "¬" => neg
 
 example : 𝟯 := ¬ Three.false
 
 def and : 𝟯 → 𝟯 → 𝟯
-  | .true, .true => .true
-  | .byzantine, .true => .byzantine
-  | .true, .byzantine => .byzantine
-  | .byzantine, .byzantine => .byzantine
-  | _, _ => .false
+  | true, true => true
+  | byzantine, true => byzantine
+  | true, byzantine => byzantine
+  | byzantine, byzantine => byzantine
+  | _, _ => false
 
 scoped infixl:35 " ∧ " => and
 
@@ -37,110 +37,109 @@ instance : Std.Associative and where
 instance : Std.Commutative and where
   comm := by intro a b; cases a <;> cases b <;> simp!
 
-instance : Std.LawfulCommIdentity and .true where
+instance : Std.LawfulCommIdentity and true where
   left_id := by intro a; cases a <;> simp!
 
-@[simp]
 def or : 𝟯 → 𝟯 → 𝟯
-  | .false, .false => .false
-  | .false, .byzantine => .byzantine
-  | .byzantine, .false => .byzantine
-  | .byzantine, .byzantine => .byzantine
-  | _, _ => .true
+  | false, false => false
+  | false, byzantine => byzantine
+  | byzantine, false => byzantine
+  | byzantine, byzantine => byzantine
+  | _, _ => true
 
 scoped infixl:30 " ∨ " => or
 
 instance : Std.Associative or where
-  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp
+  assoc := by intro a b c; cases a <;> cases b <;> cases c <;> simp!
 
 instance : Std.Commutative or where
-  comm := by intro a b; cases a <;> cases b <;> simp
+  comm := by intro a b; cases a <;> cases b <;> simp!
 
-instance : Std.LawfulCommIdentity or .false where
-  left_id := by intro a; cases a <;> simp
+instance : Std.LawfulCommIdentity or false where
+  left_id := by intro a; cases a <;> simp!
 
-@[simp]
 def xor : 𝟯 → 𝟯 → 𝟯
-  | .byzantine, _ => .byzantine
-  | _, .byzantine => .byzantine
-  | .true, .true => .false
-  | .false, .false => .false
-  | _, _ => .true
-
+  | byzantine, _ => byzantine
+  | _, byzantine => byzantine
+  | true, true => false
+  | false, false => false
+  | _, _ => true
 scoped infixl:30 " ⊕ " => xor
 
-@[simp]
-def impl (a b : 𝟯) : 𝟯 := (¬ a) ∨ b
-
+abbrev impl (a b : 𝟯) : 𝟯 := (¬ a) ∨ b
 scoped infixl:25 " → " => impl
 
-@[simp]
 def isTrue : 𝟯 → 𝟯
- | .true => .true
- | _ => .false
+ | true => true
+ | _ => false
 scoped notation "T" => isTrue
 
-@[simp]
 def isByzantine : 𝟯 → 𝟯
- | .byzantine => .true 
- | _ => .false
+ | byzantine => true 
+ | _ => false
 scoped notation "B" => isByzantine
 
-@[simp]
 def isFalse : 𝟯 → 𝟯
- | .false => .true 
- | _ => .false
+ | false => true 
+ | _ => false
 scoped notation "F" => isFalse
 
-@[simp]
 def isNotFalse : 𝟯 → 𝟯
- | .false => .false 
- | _ => .true
+ | false => false 
+ | _ => true
 scoped notation "TB" => isNotFalse
 
-@[simp]
 def isNotByzantine : 𝟯 → 𝟯
- | .byzantine => .false 
- | _ => .true
+ | byzantine => false 
+ | _ => true
 scoped notation "TF" => isNotByzantine
 
-@[simp]
-def strongImpl (a b : 𝟯) : 𝟯 := a → T b
-
+def strongImpl : 𝟯 → 𝟯 → 𝟯
+ | false, _ => true
+ | byzantine, true => true
+ | byzantine, _ => byzantine
+ | true, true => true 
+ | true, _ => false
 scoped infixl:25 " ⇀ " => strongImpl
 
 inductive Valid : 𝟯 → Prop where
-  | true : Valid .true
-  | byzantine : Valid .byzantine
+  | true : Valid true
+  | byzantine : Valid byzantine
 scoped notation "⊨" => Valid
 
 inductive NotValid : 𝟯 → Prop where
-  | false : NotValid .false
+  | false : NotValid false
 scoped notation "⊭" => NotValid
 
 instance : Ord 𝟯 where
   compare := fun
-   | .false, .false => .eq
-   | .false, _ => .lt
-   | _, .false => .gt
-   | .byzantine, .byzantine => .eq
-   | .byzantine, .true => .lt
-   | .true, .byzantine => .gt
-   | .true, .true => .eq
+   | false, false => .eq
+   | false, _ => .lt
+   | _, false => .gt
+   | byzantine, byzantine => .eq
+   | byzantine, true => .lt
+   | true, byzantine => .gt
+   | true, true => .eq
+
+instance : Max Three where
+  max := or
+
+instance : Min Three where
+  min := and
 
 instance : LinearOrder Three := by
   let toFin : 𝟯 → Fin 3
-    | .false => 0
-    | .byzantine => 1
-    | .true => 2
-  apply LinearOrder.liftWithOrd' toFin
+    | false => 0
+    | byzantine => 1
+    | true => 2
+  apply LinearOrder.liftWithOrd toFin
   intro x y p; cases x <;> cases y <;> cases p <;> rfl
-  intro x y; cases x <;> cases y <;> rfl
+  repeat (intro x y; cases x <;> cases y <;> rfl)
 
 instance : BoundedOrder Three where
-  bot := .false
+  bot := false
   bot_le := by intro a; cases a <;> decide
-  top := .true
+  top := true
   le_top := by intro a; cases a <;> decide
 
 instance : DistribLattice Three where
@@ -150,17 +149,17 @@ namespace Proposition_2_2_2
 
 variable (a b : 𝟯)
 
-@[simp] theorem p1_1 : ⊨ .true := .true
-@[simp] theorem p1_2 : ⊨ .byzantine := .byzantine
-@[simp] theorem p1_3 : ⊭ .false := .false
-@[simp] theorem p1_4 : ¬ (⊨ .false) := by intro k; cases k
-@[simp] theorem p1_5 : ¬ (⊭ .true) := by intro k; cases k
-@[simp] theorem p1_6 : ¬ (⊭ .byzantine) := by intro k; cases k
+@[simp] theorem p1_1 : ⊨ true := .true
+@[simp] theorem p1_2 : ⊨ byzantine := .byzantine
+@[simp] theorem p1_3 : ⊭ false := .false
+@[simp] theorem p1_4 : ¬ (⊨ false) := by intro k; cases k
+@[simp] theorem p1_5 : ¬ (⊭ true) := by intro k; cases k
+@[simp] theorem p1_6 : ¬ (⊭ byzantine) := by intro k; cases k
 
 theorem p2_1 : ⊨ (a ∨ b) ↔ ⊨ a ∨ ⊨ b := by
   constructor <;> intro x
   next => cases a <;> cases b <;> cases x <;> simp
-  next => cases x <;> rename_i k <;> cases a <;> cases b <;> cases k <;> simp
+  next => cases x <;> rename_i k <;> cases a <;> cases b <;> cases k <;> simp!
 
 theorem p2_2 : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
   constructor <;> intro x
@@ -170,18 +169,18 @@ theorem p2_2 : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
 theorem p3_1 : (a → b) = (¬ a ∨ b) := by cases a <;> cases b <;> rfl
 theorem p3_2 : (a ⇀ b) = (a → T b) := by cases a <;> cases b <;> rfl
 
-theorem p4 : ⊨ (a → b) ↔ ((a = .true) → ⊨ (TB b)) := by
-  constructor <;> cases a <;> cases b <;> simp!
+theorem p4 : ⊨ (a → b) ↔ ((a = true) → ⊨ (TB b)) := by
+  cases a <;> cases b <;> simp [impl, or, neg, isNotFalse]
 
-theorem p5 : ⊨ (a ⇀ b) ↔ ((a = .true) → (b = .true)) := by
-  constructor <;> cases a <;> cases b <;> simp!
+theorem p5 : ⊨ (a ⇀ b) ↔ ((a = true) → (b = true)) := by
+  cases a <;> cases b <;> simp [strongImpl]
 
 theorem p6 : ⊨ (a ∨ ¬ a) := by cases a <;> simp!
 
-theorem p7 : ⊨ (a ∧ ¬ a) ↔ a = .byzantine := by
+theorem p7 : ⊨ (a ∧ ¬ a) ↔ a = byzantine := by
   constructor <;> cases a <;> simp!
 
-theorem p8 : ⊨ a ↔ (TF a = T a) := by cases a <;> simp
+theorem p8 : ⊨ a ↔ (TF a = T a) := by cases a <;> simp!
 
 theorem p9 : a ≤ b ↔ ((¬ b) ≤ ¬ a) := by
   constructor <;> cases a <;> cases b <;> decide
@@ -194,10 +193,10 @@ namespace Function
 
 variable {X : Type}
 
-def bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.and .true f
+abbrev bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.and true f
 scoped notation "⋀" => bigAnd
 
-def bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.or .false f
+def bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.or false f
 scoped notation "⋁" => bigOr
 
 @[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
@@ -240,11 +239,11 @@ theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
   unfold Three.Function.neg; simp; funext a; rw [Function.comp, Function.comp]
   cases h : f a <;> rfl
 
-@[simp] theorem minr : min = Atom.and := by
-  funext a b; cases a <;> cases b <;> rfl
+-- TODO remove?
+@[simp] theorem min_and : min = Atom.and := by rfl
 
-@[simp] theorem maxr : max = Atom.or := by
-  funext a b; cases a <;> cases b <;> rfl
+-- TODO remove?
+@[simp] theorem max_or : max = Atom.or := by rfl
 
 @[simp] theorem bot_le : false ≤ a ↔ True := by
   cases a <;> decide
@@ -274,7 +273,7 @@ theorem le_byzantine : a ≤ byzantine ↔ a = false ∨ a = byzantine := by
   unfold bigAnd;
   have h : P.fold min true f ≤ false ↔ _ ∨ ∃ x ∈ P, f x ≤ false :=
     Finset.fold_min_le false
-  simpa using h
+  simp
 
 @[simp] theorem meet_true : ⋀ P f = true ↔ ∀ x ∈ P, f x = true := by
   unfold bigAnd;
