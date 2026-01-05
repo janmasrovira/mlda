@@ -84,7 +84,7 @@ namespace Remark_2_3_5
 
 variable
   {P : Type}
-  (f f' : P → 𝟯)
+  (f : P → 𝟯)
   (a : 𝟯)
 
 open Three
@@ -139,3 +139,50 @@ theorem map_contraquorum [TopologicalSpace P] [Fintype P] {S : FinSemitopology P
        _ = M (⋀ S.Open1 fun o ↦ (⋁ o f)) := by apply map_meet (M := M)
 
 end Remark_2_3_5
+
+namespace Lemma_2_3_6
+
+variable
+  {P : Type}
+  (f f' : P → 𝟯)
+  (a : 𝟯)
+  [Fintype P]
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+
+theorem p1 : (□ f ∧ ⯀(S) f') ≤ □ (f ∧ f') := sorry
+
+end Lemma_2_3_6
+
+namespace Lemma_2_3_7
+
+open Three.Lemmas
+
+variable
+  {P : Type}
+  (f f' : P → 𝟯)
+  (a : 𝟯)
+  [Fintype P]
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+
+theorem p1 : (⯀(S) f ∧ ◆(S) f') ≤ ◇ (f ∧ f') := by
+  apply le_by_cases;
+  case c1 =>
+    intro h1 _
+    obtain ⟨h1, h2⟩ := and_true.mp h1
+    obtain ⟨s, ms, ps⟩ := join_true.mp h1
+    obtain ⟨u, mu, pu⟩ := join_true.mp (meet_true.mp h2 s ms)
+    simp [somewhere, join_true]; exists u; simp [Three.Function.and, Three.Lemmas.and_true];
+    constructor; exact meet_true.mp ps u mu; assumption
+  case c2 =>
+    intro h1 _
+    simp [somewhere, byzantine_le_join]
+    obtain ⟨h1, h2⟩ := byzantine_le_and.mp (ge_of_eq h1)
+    obtain ⟨s, ms, ps⟩ := byzantine_le_join.mp h1
+    obtain ⟨u, u1, f'u⟩ := byzantine_le_join.mp (byzantine_le_meet.mp h2 s ms)
+    have fu := byzantine_le_meet.mp ps _ u1
+    exists u; simp [Three.Function.and, le_and];
+    exact ⟨fu, f'u⟩
+
+end Lemma_2_3_7
