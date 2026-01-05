@@ -150,7 +150,28 @@ variable
   [TopologicalSpace P]
   {S : FinSemitopology P}
 
-theorem p1 : (□ f ∧ ⯀(S) f') ≤ □ (f ∧ f') := sorry
+open Three.Lemmas
+
+theorem p1 : (□ f ∧ ⯀(S) f') ≤ ⯀(S) (f ∧ f') := by
+  apply le_by_cases
+  case c1 =>
+    intro h1 _
+    obtain ⟨h1, h2⟩ := and_true.mp h1
+    obtain ⟨u, mu, pu⟩ := join_true.mp h2
+    obtain pf := meet_true.mp h1
+    obtain pf' := meet_true.mp pu
+    rw [quorum, join_true]; exists u; constructor; assumption;
+    simp [meet_true]; intro y py; simp [Three.Function.and, Three.Lemmas.and_true]
+    exact ⟨pf y (Finset.mem_univ y), pf' y py⟩
+  case c2 =>
+    intro h1 _
+    obtain ⟨h1, h2⟩ := byzantine_le_and.mp (ge_of_eq h1)
+    obtain h1 := byzantine_le_meet.mp h1
+    obtain ⟨u, mu, pu⟩ := byzantine_le_join.mp h2
+    obtain pu := byzantine_le_meet.mp pu
+    rw [quorum, byzantine_le_join]; exists u; constructor; assumption
+    simp [byzantine_le_meet]; intro x xu; simp [Three.Function.and, byzantine_le_and]
+    exact ⟨h1 x (Finset.mem_univ x), pu x xu⟩
 
 end Lemma_2_3_6
 
