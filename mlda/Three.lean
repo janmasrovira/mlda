@@ -147,7 +147,7 @@ instance : DistribLattice Three where
 
 namespace Proposition_2_2_2
 
-variable (a b : 𝟯)
+variable {a b : 𝟯}
 
 @[simp] theorem p1_1 : ⊨ true := .true
 @[simp] theorem p1_2 : ⊨ byzantine := .byzantine
@@ -224,13 +224,23 @@ open scoped Three.Function
 open Three.Function
 open Three.Atom
 
-variable {X : Type} {P : Finset X} {a b c : 𝟯} {f : X → 𝟯}
+variable
+  {X : Type}
+  {P : Finset X}
+  {a b c : 𝟯}
+  {f f' : X → 𝟯}
+
+theorem false_or_byzantine_le (a : 𝟯) : (a = Three.false) ∨ .byzantine ≤ a := by cases a <;> decide
 
 theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
   cases a <;> cases b <;> simp!
 
 theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
   cases a <;> cases b <;> simp!
+
+theorem Function.neg_and : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
+  rw [Three.Function.and, Three.Function.or, Three.Function.neg]
+  funext; apply Lemmas.neg_and
 
 @[simp] theorem neg_neg : (¬ ¬ a) = a := by
   cases a <;> rfl
@@ -240,6 +250,9 @@ theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
   cases h : f a <;> rfl
 
 theorem le_and : c ≤ (a ∧ b) ↔ (c ≤ a ∧ c ≤ b) := by
+  cases a <;> cases b <;> cases c <;> decide
+
+theorem and_le : (a ∧ b) ≤ c ↔ (a ≤ c ∨ b ≤ c) := by
   cases a <;> cases b <;> cases c <;> decide
 
 theorem and_true : (a ∧ b) = Three.true ↔ (a = true ∧ b = true) := by
@@ -312,7 +325,6 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
   exists p1; constructor; assumption; exact ge_of_eq p3.symm
   apply h2.mpr; simp; assumption
 
-
 @[simp] theorem meet_true : ⋀ P f = true ↔ ∀ x ∈ P, f x = true := by
   unfold bigAnd;
   have h : true ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, true ≤ f x :=
@@ -340,7 +352,17 @@ theorem byzantine_le_join : byzantine ≤ ⋁ P f ↔ ∃ x ∈ P, f x ≥ byzan
     Finset.le_fold_max byzantine
   simpa using h2
 
-theorem le_join : a ≤ ⋁ P f ↔ a ≤ false ∨ ∃ x ∈ P, f x ≥ a := Finset.le_fold_max a
+theorem le_meet : a ≤ ⋀ P f ↔ ∀ x ∈ P, a ≤ f x := by
+  simpa using (Finset.le_fold_min (b := true) a)
+
+theorem meet_le : ⋀ P f ≤ a ↔ a = true ∨ ∃ x ∈ P, f x ≤ a := by
+  simpa using (Finset.fold_min_le (b := true) a)
+
+theorem le_join : a ≤ ⋁ P f ↔ a = false ∨ ∃ x ∈ P, f x ≥ a := by
+  simpa using (Finset.le_fold_max (b := false) a)
+
+theorem join_le : ⋁ P f ≤ a ↔ ∀ x ∈ P, f x ≤ a := by
+  simpa using (Finset.fold_max_le (b := false) a)
 
 theorem join_byzantine : ⋁ P f = byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) ∧ ∃ x ∈ P, f x = byzantine := by
   unfold bigOr;
@@ -369,6 +391,9 @@ theorem meet_neg : ⋀ P (¬ f) = ¬ ⋁ P f := by
 theorem join_neg : ⋁ P (¬ f) = ¬ ⋀ P f := by
   have := Finset.fold_hom (op := Atom.and) (op' := Atom.or) (b := true) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_and
+
+theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
+  intro x; cases a <;> cases b <;> cases x <;> simp at *
 
 end Lemmas
 

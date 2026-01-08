@@ -1,6 +1,9 @@
 import mlda.Base
 import mlda.Three
 
+-- TODO Semitopologies need not be closed under arbitrary intersections.
+-- I've added TopologicalSpace P as a constraint because it already exists in mathlib.
+-- It should be replaced at some point to drop the isOpen_inter condition.
 structure FinSemitopology (P : Type) [TopologicalSpace P] [Fintype P] where
   Open : Finset (Finset P)
   subset_P : Open ⊆ (Finset.univ : Finset P).powerset
@@ -47,8 +50,8 @@ namespace Lemma_2_3_3
 
 variable
   {P : Type}
-  (f f' : P → 𝟯)
-  (a : 𝟯)
+  {f f' : P → 𝟯}
+  {a : 𝟯}
 
 open Three.Lemmas
 
@@ -74,9 +77,6 @@ theorem p1_6 [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
 
 @[simp] theorem p2_1 : (¬ (T (¬ a))) = TB a := by cases a <;> rfl
 @[simp] theorem p2_2 : (¬ (TB (¬ a))) = T a := by cases a <;> rfl
-
--- NOTE this theorem is in the paper but it is incorrect. E.g. a = b = byzantine
--- theorem p3 : (a ⇀ b) = ((TB (¬ b)) ⇀ (TB (¬ a))) := by sorry
 
 end Lemma_2_3_3
 
@@ -181,7 +181,7 @@ open Three.Lemmas
 
 variable
   {P : Type}
-  (f f' : P → 𝟯)
+  {f f' : P → 𝟯}
   (a : 𝟯)
   [Fintype P]
   [TopologicalSpace P]
@@ -206,4 +206,82 @@ theorem p1 : (⯀(S) f ∧ ◆(S) f') ≤ ◇ (f ∧ f') := by
     exists u; simp [Three.Function.and, le_and];
     exact ⟨fu, f'u⟩
 
+theorem c1 : ⊨ (⯀(S) f ∧ ◆(S) f') → ⊨ (◇ (f ∧ f')) := by
+  intro x; apply le_implies_valid p1 x
+
+-- theorem c2 : ⊨ (◆(S) f') → ⊨ (◇ f') := by
+--   sorry
+
 end Lemma_2_3_7
+
+class Twined3 {P : Type} [TopologicalSpace P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
+  twined : ∀ (a b c : {x | x ∈ S.Open1}), (a.val ∩ b ∩ c) ∈ S.Open1
+
+export Twined3 (twined)
+
+namespace Theorem_2_4_3
+
+open Three.Lemmas
+
+variable
+  {P : Type}
+  {f f' : P → 𝟯}
+  [Fintype P]
+  [DecidableEq P]
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+  [Twined3 S]
+
+theorem t : (⯀(S) f ∧ ⯀(S) f') ≤ ◆(S) (f ∧ f') := by
+  apply le_by_cases
+  case c1 =>
+    intro h _; obtain ⟨h1, h2⟩ := and_true.mp h
+    have ⟨s1, m1, p1⟩ := join_true.mp h1
+    have ⟨s2, m2, p2⟩ := join_true.mp h2
+    simp [contraquorum]; intro s3 m3
+    have x := twined ⟨_, m1⟩ ⟨_, m2⟩ ⟨_, m3⟩; simp [Open1] at x; rcases x with ⟨x1, w, w1⟩
+    simp [Finset.mem_inter] at w1; rcases w1 with ⟨w1, w2, w3⟩
+    exists w; constructor; assumption;
+    simp [Three.Function.and, Three.Lemmas.and_true]
+    exact ⟨meet_true.mp p1 _ w1, meet_true.mp p2 _ w2⟩
+  case c2 =>
+    intro h _;
+    rw [contraquorum, byzantine_le_meet]
+    obtain ⟨h1, h2⟩ := byzantine_le_and.mp (ge_of_eq h)
+    have ⟨s1, m1, b1⟩ := byzantine_le_join.mp h1
+    have ⟨s2, m2, b2⟩ := byzantine_le_join.mp h2
+    intro s3 m3;
+    simp [byzantine_le_join, Three.Function.and, byzantine_le_and];
+    obtain x := twined ⟨_, m1⟩ ⟨_, m2⟩ ⟨_, m3⟩; simp [Open1] at x; rcases x with ⟨_, w, w1⟩
+    simp [Finset.mem_inter] at w1; obtain ⟨w1, w2, w3⟩ := w1
+    exists w; constructor; assumption; constructor
+    exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
+
+-- TODO
+-- theorem t' : (⯀(S) f ∧ ⯀(S) f') ≤ ◆(S) (f ∧ f') → Twined3 S := by
+--   intro h ⟨a, ma⟩ ⟨b, mb⟩ ⟨c, mc⟩; simp
+--   sorry
+
+end Theorem_2_4_3
+
+namespace Corollary_2_4_4
+
+variable
+  {P : Type}
+  {f f' : P → 𝟯}
+  [Fintype P]
+  [DecidableEq P]
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+  [twined : Twined3 S]
+
+open Three.Lemmas
+
+theorem t1 : ⯀(S) (f ∨ f') ≤ (◆(S) f ∨ ◆(S) f') := by
+  have x := Proposition_2_2_2.p9.mp (Theorem_2_4_3.t (f := ¬ f) (f' := ¬ f') (S := S))
+  simpa [← Lemma_2_3_3.p1_2, Lemma_2_3_3.p1_5, Three.Lemmas.neg_and
+        , Lemma_2_3_3.p1_6, Lemma_2_3_3.p1_6] using x
+  
+theorem t2 : ⊨ (⯀(S) (f ∨ f')) → ⊨ (◆(S) f ∨ ◆(S) f') := Three.Lemmas.le_implies_valid t1
+
+end Corollary_2_4_4
