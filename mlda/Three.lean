@@ -205,6 +205,9 @@ scoped notation "⋁" => bigOr
 def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
 scoped prefix:75 "¬" => neg
 
+def isNotByzantine (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotByzantine f
+scoped notation "TF" => isNotByzantine
+
 theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ f) := by rfl
 
 def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
@@ -230,7 +233,11 @@ variable
   {a b c : 𝟯}
   {f f' : X → 𝟯}
 
+@[simp] theorem T_true : T a = true ↔ a = true := by cases a <;> decide
+
 theorem false_or_byzantine_le (a : 𝟯) : (a = Three.false) ∨ .byzantine ≤ a := by cases a <;> decide
+
+theorem true_or_le_byzantine (a : 𝟯) : (a = Three.true) ∨ a ≤ .byzantine := by cases a <;> decide
 
 theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
   cases a <;> cases b <;> simp!
@@ -395,6 +402,25 @@ theorem join_neg : ⋁ P (¬ f) = ¬ ⋀ P f := by
 theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
   intro x; cases a <;> cases b <;> cases x <;> simp at *
 
+@[simp] theorem TF_true_eval : TF true = true := by rfl
+@[simp] theorem TF_false_eval : TF false = true := by rfl
+@[simp] theorem TF_byzantine_eval : TF byzantine = false := by rfl
+
+@[simp] theorem T_true_eval : T true = true := by rfl
+@[simp] theorem T_false_eval : T false = false := by rfl
+@[simp] theorem T_byzantine_eval : T byzantine = false := by rfl
+
+theorem valid_TF : ⊨ (TF a) ↔ a = true ∨ a = false := by
+  constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp
+
+@[simp] theorem valid_T : ⊨ (T a) ↔ a = true := by
+  constructor <;> intro h <;> cases a <;> cases h <;> simp
+
+theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> simp
+
+theorem valid_byzantine_le : ⊨ a ↔ byzantine ≤ a := by cases a <;> simp
+
+@[simp] theorem byzantine_le_T : .byzantine ≤ T a ↔ a = true := by cases a <;> simp
 end Lemmas
 
 end Three

@@ -46,6 +46,38 @@ notation "◆" "(" S ")" => contraquorum (S := S)
 
 end
 
+section
+
+variable
+  {P : Type}
+  [Fintype P]
+  {Q : Finset P}
+  {f f' : P → 𝟯}
+  (a b : 𝟯)
+
+open Three.Lemmas
+
+theorem everywhere_true : □ f = .true ↔ ∀ x, f x = .true := by simp [everywhere, meet_true]
+
+theorem everywhere_byzantine : □ f = .byzantine ↔ (∀ (x : P), Three.byzantine ≤ f x) ∧ ∃ x, f x = Three.byzantine := by
+  simp [everywhere]
+
+theorem somewhere_true : ◇ f = .true ↔ ∃ x, f x = .true := by simp [somewhere, join_true]
+
+variable
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+
+theorem quorum_true : ⯀(S) f = .true ↔ ∃ s ∈ S.Open1, ∀ x ∈ s, f x = .true := by
+  simp [quorum, join_true]
+
+theorem quorum_valid : .byzantine ≤ ⯀(S) f ↔
+                       (∃ s ∈ S.Open1, ∀ x ∈ s, Three.byzantine ≤ f x) := by
+  simp [quorum, le_join, byzantine_le_meet]
+
+end
+
+
 namespace Lemma_2_3_3
 
 variable
@@ -281,7 +313,45 @@ theorem t1 : ⯀(S) (f ∨ f') ≤ (◆(S) f ∨ ◆(S) f') := by
   have x := Proposition_2_2_2.p9.mp (Theorem_2_4_3.t (f := ¬ f) (f' := ¬ f') (S := S))
   simpa [← Lemma_2_3_3.p1_2, Lemma_2_3_3.p1_5, Three.Lemmas.neg_and
         , Lemma_2_3_3.p1_6, Lemma_2_3_3.p1_6] using x
-  
+
 theorem t2 : ⊨ (⯀(S) (f ∨ f')) → ⊨ (◆(S) f ∨ ◆(S) f') := Three.Lemmas.le_implies_valid t1
 
 end Corollary_2_4_4
+
+namespace Remark_2_4_5
+
+open Three.Lemmas
+
+variable
+  {P : Type}
+  {f f' : P → 𝟯}
+  [Fintype P]
+  [DecidableEq P]
+  [TopologicalSpace P]
+  {S : FinSemitopology P}
+  [twined : Twined3 S]
+  (q : ⊨ (⯀(S) (TF f)))
+
+include q
+omit [DecidableEq P]
+theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
+  obtain ⟨s, sm, ps⟩ := by simpa [valid_byzantine_le, quorum_valid] using q
+  exists s; constructor; assumption; intro x xm
+  simpa [valid_byzantine_le] using ps x xm
+
+include q
+theorem t1 : ⊨ (□ f) → ⊨ (T (⯀(S) f)) := by
+  have ⟨qs, qm, p⟩ := q' q;
+  intro k; simp [quorum_true];
+  cases valid_cases.mp k
+  next l =>
+    exists qs; constructor; assumption
+    intro x _; exact everywhere_true.mp l x
+  next l =>
+    obtain l := (everywhere_byzantine.mp l).1
+    exists qs; constructor; assumption; intro x xm
+    specialize l x; cases valid_TF.mp (p _ xm); assumption;
+    next k => rw [k] at l; contradiction
+
+
+end Remark_2_4_5
