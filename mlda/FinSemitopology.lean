@@ -37,12 +37,12 @@ def somewhere := ⋁ ℙ f
 scoped notation "◇" => somewhere
 
 def quorum := ⋁ S.Open1 (fun o => ⋀ o f)
-scoped notation "⯀" => quorum
-notation "⯀" "(" S ")" => quorum (S := S)
+scoped notation "⊡" => quorum
+notation "⊡" "(" S ")" => quorum (S := S)
 
 def contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
-scoped notation "◆" => contraquorum
-notation "◆" "(" S ")" => contraquorum (S := S)
+scoped notation "⟐⟐" => contraquorum
+notation "⟐" "(" S ")" => contraquorum (S := S)
 
 end
 
@@ -68,10 +68,10 @@ variable
   [TopologicalSpace P]
   {S : FinSemitopology P}
 
-theorem quorum_true : ⯀(S) f = .true ↔ ∃ s ∈ S.Open1, ∀ x ∈ s, f x = .true := by
+theorem quorum_true : ⊡(S) f = .true ↔ ∃ s ∈ S.Open1, ∀ x ∈ s, f x = .true := by
   simp [quorum, join_true]
 
-theorem quorum_valid : .byzantine ≤ ⯀(S) f ↔
+theorem quorum_valid : .byzantine ≤ ⊡(S) f ↔
                        (∃ s ∈ S.Open1, ∀ x ∈ s, Three.byzantine ≤ f x) := by
   simp [quorum, le_join, byzantine_le_meet]
 
@@ -100,11 +100,11 @@ theorem p1_4 [Fintype P] : (¬ (□ (¬ f))) = ◇ f := by
   simp [somewhere, everywhere, meet_neg, neg_neg];
 
 theorem p1_5 [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
-  : (¬ (◆(S) (¬ f))) = ⯀(S) f := by
+  : (¬ (⟐(S) (¬ f))) = ⊡(S) f := by
   simp_rw [contraquorum, join_neg, neg_fold, meet_neg, neg_neg]; rfl
 
 theorem p1_6 [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
-  : (¬ (⯀(S) (¬ f))) = ◆(S) f := by
+  : (¬ (⊡(S) (¬ f))) = ⟐(S) f := by
   simp_rw [quorum, meet_neg, neg_fold, join_neg, neg_neg]; rfl
 
 @[simp] theorem p2_1 : (¬ (T (¬ a))) = TB a := by cases a <;> rfl
@@ -159,13 +159,13 @@ theorem map_somewhere [Fintype P] [MapMax M] : ◇ (M ∘ f) = M (◇ f) := by
   simpa [PreservesTruth.map_false] using Finset.fold_hom (b := Three.false) (m := M) map_max
 
 theorem map_quorum [TopologicalSpace P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
-  : ⯀(S) (M ∘ f) = M (⯀(S) f) := by
+  : ⊡(S) (M ∘ f) = M (⊡(S) f) := by
   calc (⋁ Open1 fun o ↦ ⋀ o (M ∘ f)) = ⋁ Open1 fun o ↦ M (⋀ o f) :=
                 by conv => lhs; arg 2; intro o; apply map_meet
        _ = M (⋁ S.Open1 fun o ↦ (⋀ o f)) := by apply map_join
 
 theorem map_contraquorum [TopologicalSpace P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
-  : ◆(S) (M ∘ f) = M (◆(S) f) := by
+  : ⟐(S) (M ∘ f) = M (⟐(S) f) := by
   calc (⋀ Open1 fun o ↦ ⋁ o (M ∘ f)) = ⋀ Open1 fun o ↦ M (⋁ o f) :=
                 by conv => lhs; arg 2; intro o; apply map_join
        _ = M (⋀ S.Open1 fun o ↦ (⋁ o f)) := by apply map_meet (M := M)
@@ -184,7 +184,7 @@ variable
 
 open Three.Lemmas
 
-theorem p1 : (□ f ∧ ⯀(S) f') ≤ ⯀(S) (f ∧ f') := by
+theorem p1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
   apply le_by_cases
   case c1 =>
     intro h1 _
@@ -219,7 +219,7 @@ variable
   [TopologicalSpace P]
   {S : FinSemitopology P}
 
-theorem p1 : (⯀(S) f ∧ ◆(S) f') ≤ ◇ (f ∧ f') := by
+theorem p1 : (⊡(S) f ∧ ⟐(S) f') ≤ ◇ (f ∧ f') := by
   apply le_by_cases;
   case c1 =>
     intro h1 _
@@ -238,10 +238,10 @@ theorem p1 : (⯀(S) f ∧ ◆(S) f') ≤ ◇ (f ∧ f') := by
     exists u; simp [Three.Function.and, le_and];
     exact ⟨fu, f'u⟩
 
-theorem c1 : ⊨ (⯀(S) f ∧ ◆(S) f') → ⊨ (◇ (f ∧ f')) := by
+theorem c1 : ⊨ (⊡(S) f ∧ ⟐(S) f') → ⊨ (◇ (f ∧ f')) := by
   intro x; apply le_implies_valid p1 x
 
--- theorem c2 : ⊨ (◆(S) f') → ⊨ (◇ f') := by
+-- theorem c2 : ⊨ (⟐(S) f') → ⊨ (◇ f') := by
 --   sorry
 
 end Lemma_2_3_7
@@ -264,7 +264,7 @@ variable
   {S : FinSemitopology P}
   [Twined3 S]
 
-theorem t : (⯀(S) f ∧ ⯀(S) f') ≤ ◆(S) (f ∧ f') := by
+theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
   apply le_by_cases
   case c1 =>
     intro h _; obtain ⟨h1, h2⟩ := and_true.mp h
@@ -290,7 +290,7 @@ theorem t : (⯀(S) f ∧ ⯀(S) f') ≤ ◆(S) (f ∧ f') := by
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
 
 -- TODO
--- theorem t' : (⯀(S) f ∧ ⯀(S) f') ≤ ◆(S) (f ∧ f') → Twined3 S := by
+-- theorem t' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') → Twined3 S := by
 --   intro h ⟨a, ma⟩ ⟨b, mb⟩ ⟨c, mc⟩; simp
 --   sorry
 
@@ -309,12 +309,12 @@ variable
 
 open Three.Lemmas
 
-theorem t1 : ⯀(S) (f ∨ f') ≤ (◆(S) f ∨ ◆(S) f') := by
+theorem t1 : ⊡(S) (f ∨ f') ≤ (⟐(S) f ∨ ⟐(S) f') := by
   have x := Proposition_2_2_2.p9.mp (Theorem_2_4_3.t (f := ¬ f) (f' := ¬ f') (S := S))
   simpa [← Lemma_2_3_3.p1_2, Lemma_2_3_3.p1_5, Three.Lemmas.neg_and
         , Lemma_2_3_3.p1_6, Lemma_2_3_3.p1_6] using x
 
-theorem t2 : ⊨ (⯀(S) (f ∨ f')) → ⊨ (◆(S) f ∨ ◆(S) f') := Three.Lemmas.le_implies_valid t1
+theorem t2 : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f ∨ ⟐(S) f') := Three.Lemmas.le_implies_valid t1
 
 end Corollary_2_4_4
 
@@ -330,7 +330,7 @@ variable
   [TopologicalSpace P]
   {S : FinSemitopology P}
   [twined : Twined3 S]
-  (q : ⊨ (⯀(S) (TF f)))
+  (q : ⊨ (⊡(S) (TF f)))
 
 include q
 omit [DecidableEq P]
@@ -340,7 +340,7 @@ theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
   simpa [valid_byzantine_le] using ps x xm
 
 include q
-theorem t1 : ⊨ (□ f) → ⊨ (T (⯀(S) f)) := by
+theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
   have ⟨qs, qm, p⟩ := q' q;
   intro k; simp [quorum_true];
   cases valid_cases.mp k
@@ -352,6 +352,5 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⯀(S) f)) := by
     exists qs; constructor; assumption; intro x xm
     specialize l x; cases valid_TF.mp (p _ xm); assumption;
     next k => rw [k] at l; contradiction
-
 
 end Remark_2_4_5
