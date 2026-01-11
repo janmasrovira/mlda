@@ -41,7 +41,7 @@ scoped notation "⊡" => quorum
 notation "⊡" "(" S ")" => quorum (S := S)
 
 def contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
-scoped notation "⟐⟐" => contraquorum
+scoped notation "⟐" => contraquorum
 notation "⟐" "(" S ")" => contraquorum (S := S)
 
 end
@@ -69,14 +69,16 @@ variable
   {S : FinSemitopology P}
 
 theorem quorum_true : ⊡(S) f = .true ↔ ∃ s ∈ S.Open1, ∀ x ∈ s, f x = .true := by
-  simp [quorum, join_true]
+  simp [quorum]
 
 theorem quorum_valid : .byzantine ≤ ⊡(S) f ↔
                        (∃ s ∈ S.Open1, ∀ x ∈ s, Three.byzantine ≤ f x) := by
   simp [quorum, le_join, byzantine_le_meet]
 
-end
+theorem contraquorum_true : ⟐(S) f = .true ↔ ∀ s ∈ S.Open1, ∃ x ∈ s, f x = .true := by
+  simp [contraquorum]
 
+end
 
 namespace Lemma_2_3_3
 
@@ -289,7 +291,7 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     exists w; constructor; assumption; constructor
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
 
--- TODO
+-- TODO this statement is stated as a footnote
 -- theorem t' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') → Twined3 S := by
 --   intro h ⟨a, ma⟩ ⟨b, mb⟩ ⟨c, mc⟩; simp
 --   sorry
@@ -333,13 +335,14 @@ variable
   (q : ⊨ (⊡(S) (TF f)))
 
 include q
-omit [DecidableEq P]
+omit [DecidableEq P] in
 theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
   obtain ⟨s, sm, ps⟩ := by simpa [valid_byzantine_le, quorum_valid] using q
   exists s; constructor; assumption; intro x xm
   simpa [valid_byzantine_le] using ps x xm
 
 include q
+omit [DecidableEq P] in
 theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
   have ⟨qs, qm, p⟩ := q' q;
   intro k; simp [quorum_true];
@@ -352,5 +355,16 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
     exists qs; constructor; assumption; intro x xm
     specialize l x; cases valid_TF.mp (p _ xm); assumption;
     next k => rw [k] at l; contradiction
+
+omit q [DecidableEq P] in
+theorem t2 : ⊨ (□ f) → ⊨ (T (⟐(S) f)) := by
+  -- have ⟨qs, qm, p⟩ := q' q;
+  simp [contraquorum_true]
+  intro h s s1; 
+  simp [everywhere, valid_byzantine_le, le_meet] at h
+
+
+
+
 
 end Remark_2_4_5
