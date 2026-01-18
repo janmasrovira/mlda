@@ -12,7 +12,6 @@ structure FinSemitopology (P : Type) [TopologicalSpace P] [Fintype P] where
 namespace FinSemitopology
 
 open scoped Three.Function
-open Three.Function
 open Three.Atom
 
 section
@@ -103,11 +102,11 @@ theorem p1_4 [Fintype P] : (¬ (□ (¬ f))) = ◇ f := by
 
 theorem p1_5 [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
   : (¬ (⟐(S) (¬ f))) = ⊡(S) f := by
-  simp_rw [contraquorum, join_neg, neg_fold, meet_neg, neg_neg]; rfl
+  simp_rw [contraquorum, join_neg, Three.Function.neg_fold, meet_neg, neg_neg]; rfl
 
 theorem p1_6 [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
   : (¬ (⊡(S) (¬ f))) = ⟐(S) f := by
-  simp_rw [quorum, meet_neg, neg_fold, join_neg, neg_neg]; rfl
+  simp_rw [quorum, meet_neg, Three.Function.neg_fold, join_neg, neg_neg]; rfl
 
 @[simp] theorem p2_1 : (¬ (T (¬ a))) = TB a := by cases a <;> rfl
 @[simp] theorem p2_2 : (¬ (TB (¬ a))) = T a := by cases a <;> rfl
@@ -118,11 +117,11 @@ namespace Remark_2_3_5
 
 variable
   {P : Type}
-  (f : P → 𝟯)
-  (a : 𝟯)
+  {f : P → 𝟯}
+  {a : 𝟯}
 
 open Three
-open Three.Atom
+open scoped Three.Atom
 
 @[simp] theorem T_idempotent : T (T a) = T a := by cases a <;> rfl
 @[simp] theorem TB_idempotent : TB (TB a) = TB a := by cases a <;> rfl
@@ -249,7 +248,7 @@ theorem c1 : ⊨ (⊡(S) f ∧ ⟐(S) f') → ⊨ (◇ (f ∧ f')) := by
 end Lemma_2_3_7
 
 class Twined3 {P : Type} [TopologicalSpace P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
-  twined : ∀ (a b c : {x | x ∈ S.Open1}), (a.val ∩ b ∩ c) ∈ S.Open1
+  twined : ∀ (a b c : {x | x ∈ S.Open1}), a.val ∩ b ∩ c ∈ S.Open1
 
 export Twined3 (twined)
 
@@ -331,8 +330,7 @@ variable
   [DecidableEq P]
   [TopologicalSpace P]
   {S : FinSemitopology P}
-  [twined : Twined3 S]
-  (q : ⊨ (⊡(S) (TF f)))
+  (q : ⊨ (⊡(S) (TF ∘ f)))
 
 include q
 omit [DecidableEq P] in
@@ -356,15 +354,19 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
     specialize l x; cases valid_TF.mp (p _ xm); assumption;
     next k => rw [k] at l; contradiction
 
-omit q [DecidableEq P] in
-theorem t2 : ⊨ (□ f) → ⊨ (T (⟐(S) f)) := by
-  -- have ⟨qs, qm, p⟩ := q' q;
-  simp [contraquorum_true]
-  intro h s s1; 
-  simp [everywhere, valid_byzantine_le, le_meet] at h
+theorem Twined3.valid_quorum_implies_true [twined : Twined3 S]
+  : ⊨ (⊡(S) f) -> ⊡(S) f = Three.true := by
+  intro h; simp [valid_byzantine_le, quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
+  have ⟨qs, qm, p⟩ := q' q; simp [quorum_true]
+  refine ⟨qs ∩ h1, ?_, ?_⟩;
+  have t := twined.twined ⟨_, qm⟩ ⟨_, qm⟩ ⟨_, h2⟩; simpa using t
+  intro x xq; obtain ⟨x1, x2⟩ := by simpa [Finset.mem_inter] using xq
+  cases valid_TF.mp (p x x1); assumption
+  next h => have := le_meet.mp h3 _ x2; rw [h] at this; contradiction
 
-
-
-
+theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
+  have h := Theorem_2_4_3.t (f := T ∘ f) (f' := T ∘ f) (S := S)
+  intro p; replace p := Twined3.valid_quorum_implies_true q p
+  simpa [Remark_2_3_5.map_contraquorum, Remark_2_3_5.map_quorum, p] using h
 
 end Remark_2_4_5

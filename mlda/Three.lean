@@ -205,8 +205,14 @@ scoped notation "⋁" => bigOr
 def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
 scoped prefix:75 "¬" => neg
 
-def isNotByzantine (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotByzantine f
-scoped notation "TF" => isNotByzantine
+-- def isTrue (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isTrue f
+-- scoped notation "T" => isTrue
+
+-- def isNotByzantine (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotByzantine f
+-- scoped notation "TF" => isNotByzantine
+
+-- def isNotFalse (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotFalse f
+-- scoped notation "TB" => isNotFalse
 
 theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ f) := by rfl
 
@@ -235,9 +241,17 @@ variable
 
 @[simp] theorem T_true : T a = true ↔ a = true := by cases a <;> decide
 
-theorem false_or_byzantine_le (a : 𝟯) : (a = Three.false) ∨ .byzantine ≤ a := by cases a <;> decide
+theorem false_or_byzantine_le : (a = Three.false) ∨ .byzantine ≤ a := by cases a <;> decide
 
-theorem true_or_le_byzantine (a : 𝟯) : (a = Three.true) ∨ a ≤ .byzantine := by cases a <;> decide
+theorem true_or_le_byzantine : (a = Three.true) ∨ a ≤ .byzantine := by cases a <;> decide
+
+@[simp] theorem and_idempotent : (a ∧ a) = a := by cases a <;> simp!
+
+@[simp] theorem or_idempotent : (a ∨ a) = a := by cases a <;> simp!
+
+@[simp] theorem Function.and_idempotent : (f ∧ f) = f := by funext a; simp [Function.and]
+
+@[simp] theorem Function.or_idempotent : (f ∨ f) = f := by funext a; simp [Function.or]
 
 theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
   cases a <;> cases b <;> simp!
