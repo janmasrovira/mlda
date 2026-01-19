@@ -368,7 +368,7 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
     specialize l x; cases valid_TF.mp (p _ xm); assumption;
     next k => rw [k] at l; contradiction
 
-theorem Twined3.valid_quorum_implies_true [twined : Twined3 S]
+theorem valid_quorum_implies_true [twined : Twined3 S]
   : ⊨ (⊡(S) f) -> ⊡(S) f = Three.true := by
   intro h; simp [valid_byzantine_le, quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
   have ⟨qs, qm, p⟩ := q' q; simp [quorum_true]
@@ -380,10 +380,44 @@ theorem Twined3.valid_quorum_implies_true [twined : Twined3 S]
 
 theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
   have h := Theorem_2_4_3.t (f := T ∘ f) (f' := T ∘ f) (S := S)
-  intro p; replace p := Twined3.valid_quorum_implies_true q p
+  intro p; replace p := valid_quorum_implies_true q p
   simpa [Remark_2_3_5.map_contraquorum, Remark_2_3_5.map_quorum, p] using h
 
+omit [DecidableEq P] in
 theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
-  sorry
+  intro k;
+  have ⟨qs, qm, p⟩ := q' q
+  simp [somewhere]
+  simp [valid_byzantine_le, contraquorum, le_meet, le_join] at k
+  obtain ⟨y, ym, yp⟩ := k _ qm; exists y
+  cases valid_TF.mp (p _ ym); assumption
+  next h => rw [h] at yp; contradiction
+
+-- TODO not sure about the statement
+-- theorem t4 : ⊨ ((⊡(S) f) ∧ ⟐(S) (T ∘ f')) → ⊨ (T (◇ f)) := by
+--   intro h
+--   have y := Lemma_2_3_7.c1 (S := S) (f := f) h
+
+omit q in
+theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) := by
+  simp [valid_byzantine_le]; intro h
+  obtain ⟨h1, h2⟩ := le_and.mp h
+  simp [quorum, le_join] at h1 h2
+  replace ⟨h1, h1m, h1p⟩ := h1
+  replace ⟨h2, h2m, h2p⟩ := h2
+  simp [le_meet] at h1p h2p
+  rw [contraquorum, le_meet]; intro w wm; simp [le_join]
+  obtain ⟨k, ⟨lm, l⟩⟩ := by simpa [Open1] using twined.twined ⟨_, h1m⟩ ⟨_, h2m⟩ ⟨_, wm⟩
+  simp [Finset.mem_inter] at l
+  refine ⟨lm, l.2.2, ?_⟩; simp [Three.Function.and, le_and]; constructor
+  exact h1p _ l.1; exact h2p _ l.2.1
+
+omit q in
+theorem t5_11 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) :=
+  le_implies_valid Theorem_2_4_3.t
+
+omit q in
+theorem t5_2 [twined : Twined3 S] : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f ∨ ⟐(S) f') := by
+  intro p; exact Corollary_2_4_4.t2 p
 
 end Remark_2_4_5
