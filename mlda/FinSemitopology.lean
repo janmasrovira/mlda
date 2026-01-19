@@ -1,15 +1,12 @@
 import mlda.Base
 import mlda.Three
 
--- TODO Semitopologies need not be closed under arbitrary intersections.
--- I've added TopologicalSpace P as a constraint because it already exists in mathlib.
--- It should be replaced at some point to drop the isOpen_inter condition.
-structure FinSemitopology (P : Type) [Nonempty P] [TopologicalSpace P] [Fintype P] where
+structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
   empty_open : ∅ ∈ Open
   univ_open : Fintype.elems ∈ Open
   subset_P : Open ⊆ Fintype.elems.powerset
-  all_open : ∀ O ∈ Open, IsOpen (O : Set P)
+  isOpen_sUnion : ∀ s : Finset (Finset P), (∀ t ∈ s, t ∈ Open) → s.biUnion id ∈ Open
 
 namespace FinSemitopology
 
@@ -22,7 +19,7 @@ variable
   {P : Type}
   [Fintype P]
   [Nonempty P]
-  [TopologicalSpace P]
+  [DecidableEq P]
   {Q : Finset P}
   {S : FinSemitopology P}
   (f f' : P → 𝟯)
@@ -67,7 +64,7 @@ theorem everywhere_byzantine : □ f = .byzantine ↔ (∀ (x : P), Three.byzant
 theorem somewhere_true : ◇ f = .true ↔ ∃ x, f x = .true := by simp [somewhere, join_true]
 
 variable
-  [TopologicalSpace P]
+  [DecidableEq P]
   [Nonempty P]
   {S : FinSemitopology P}
 
@@ -104,11 +101,11 @@ theorem p1_3 [Fintype P] : (¬ (◇ (¬ f))) = □ f := by
 theorem p1_4 [Fintype P] : (¬ (□ (¬ f))) = ◇ f := by
   simp [somewhere, everywhere, meet_neg, neg_neg];
 
-theorem p1_5 [Nonempty P] [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
+theorem p1_5 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
   : (¬ (⟐(S) (¬ f))) = ⊡(S) f := by
   simp_rw [contraquorum, join_neg, Three.Function.neg_fold, meet_neg, neg_neg]; rfl
 
-theorem p1_6 [Nonempty P] [Fintype P] [TopologicalSpace P] {S : FinSemitopology P}
+theorem p1_6 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
   : (¬ (⊡(S) (¬ f))) = ⟐(S) f := by
   simp_rw [quorum, meet_neg, Three.Function.neg_fold, join_neg, neg_neg]; rfl
 
@@ -163,13 +160,13 @@ theorem map_everywhere [Fintype P] [MapMin M]
 theorem map_somewhere [Fintype P] [MapMax M] : ◇ (M ∘ f) = M (◇ f) := by
   simpa [PreservesTruth.map_false] using Finset.fold_hom (b := Three.false) (m := M) map_max
 
-theorem map_quorum [Nonempty P] [TopologicalSpace P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
+theorem map_quorum [Nonempty P] [DecidableEq P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
   : ⊡(S) (M ∘ f) = M (⊡(S) f) := by
   calc (⋁ Open1 fun o ↦ ⋀ o (M ∘ f)) = ⋁ Open1 fun o ↦ M (⋀ o f) :=
                 by conv => lhs; arg 2; intro o; apply map_meet
        _ = M (⋁ S.Open1 fun o ↦ (⋀ o f)) := by apply map_join
 
-theorem map_contraquorum [Nonempty P] [TopologicalSpace P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
+theorem map_contraquorum [Nonempty P] [DecidableEq P] [Fintype P] {S : FinSemitopology P} [MapMax M] [MapMin M]
   : ⟐(S) (M ∘ f) = M (⟐(S) f) := by
   calc (⋀ Open1 fun o ↦ ⋁ o (M ∘ f)) = ⋀ Open1 fun o ↦ M (⋁ o f) :=
                 by conv => lhs; arg 2; intro o; apply map_join
@@ -185,7 +182,7 @@ variable
   (a : 𝟯)
   [Fintype P]
   [Nonempty P]
-  [TopologicalSpace P]
+  [DecidableEq P]
   {S : FinSemitopology P}
 
 open Three.Lemmas
@@ -223,7 +220,7 @@ variable
   (a : 𝟯)
   [Fintype P]
   [Nonempty P]
-  [topo : TopologicalSpace P]
+  [topo : DecidableEq P]
   {S : FinSemitopology P}
 
 theorem p1 : (⊡(S) f ∧ ⟐(S) f') ≤ ◇ (f ∧ f') := by
@@ -258,7 +255,7 @@ theorem c2 : ⊨ (⟐(S) f) → ⊨ (◇ f) := by
 
 end Lemma_2_3_7
 
-class Twined3 {P : Type} [Nonempty P] [TopologicalSpace P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
+class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
   twined : ∀ (a b c : {x | x ∈ S.Open1}), a.val ∩ b ∩ c ∈ S.Open1
 
 export Twined3 (twined)
@@ -273,7 +270,6 @@ variable
   [Nonempty P]
   [Fintype P]
   [DecidableEq P]
-  [TopologicalSpace P]
   {S : FinSemitopology P}
   [Twined3 S]
 
@@ -317,7 +313,6 @@ variable
   [Nonempty P]
   [Fintype P]
   [DecidableEq P]
-  [TopologicalSpace P]
   {S : FinSemitopology P}
   [twined : Twined3 S]
 
@@ -342,19 +337,16 @@ variable
   [Fintype P]
   [Nonempty P]
   [DecidableEq P]
-  [TopologicalSpace P]
   {S : FinSemitopology P}
   (q : ⊨ (⊡(S) (TF ∘ f)))
 
-include q
-omit [DecidableEq P] in
+include q in
 theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
   obtain ⟨s, sm, ps⟩ := by simpa [valid_byzantine_le, quorum_valid] using q
   exists s; constructor; assumption; intro x xm
   simpa [valid_byzantine_le] using ps x xm
 
-include q
-omit [DecidableEq P] in
+include q in
 theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
   have ⟨qs, qm, p⟩ := q' q;
   intro k; simp [quorum_true];
@@ -368,6 +360,7 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
     specialize l x; cases valid_TF.mp (p _ xm); assumption;
     next k => rw [k] at l; contradiction
 
+include q in
 theorem valid_quorum_implies_true [twined : Twined3 S]
   : ⊨ (⊡(S) f) -> ⊡(S) f = Three.true := by
   intro h; simp [valid_byzantine_le, quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
@@ -378,12 +371,13 @@ theorem valid_quorum_implies_true [twined : Twined3 S]
   cases valid_TF.mp (p x x1); assumption
   next h => have := le_meet.mp h3 _ x2; rw [h] at this; contradiction
 
+include q in
 theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
   have h := Theorem_2_4_3.t (f := T ∘ f) (f' := T ∘ f) (S := S)
   intro p; replace p := valid_quorum_implies_true q p
   simpa [Remark_2_3_5.map_contraquorum, Remark_2_3_5.map_quorum, p] using h
 
-omit [DecidableEq P] in
+include q in
 theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
   intro k;
   have ⟨qs, qm, p⟩ := q' q
