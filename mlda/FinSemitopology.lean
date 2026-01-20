@@ -415,3 +415,27 @@ theorem t5_2 [twined : Twined3 S] : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f �
   intro p; exact Corollary_2_4_4.t2 p
 
 end Remark_2_4_5
+
+namespace Simple
+
+variable
+  {P : Type}
+  [Fintype P]
+  [Nonempty P]
+  [DecidableEq P]
+  {S : FinSemitopology P}
+  {vote observe : P → 𝟯}
+  {f f' : P → 𝟯}
+  {p : P}
+
+structure Model (S : FinSemitopology P) (vote observe : P → 𝟯) where
+
+class ThyVote (m : Model S vote observe) where
+  observe? : (observe p → ⊡(S) vote) = .true
+  observe! : (⊡(S) vote ⇀ observe p) = .true
+  correct : ⊡(S) (TF ∘ vote) = .true
+  observeN? : (¬ (observe p) → ⊡(S) (¬ vote)) = .true
+  observeN! : (⊡(S) (¬ vote) ⇀ (¬ (observe p))) = .true
+  twined3 : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')
+
+end Simple
