@@ -247,8 +247,8 @@ theorem c1 : ⊨ (⊡(S) f ∧ ⟐(S) f') → ⊨ (◇ (f ∧ f')) := by
 
 theorem c2 : ⊨ (⟐(S) f) → ⊨ (◇ f) := by
   intro p
-  simp [somewhere, valid_byzantine_le, le_join]
-  simp [contraquorum, valid_byzantine_le, le_meet] at p
+  simp [somewhere, le_join]
+  simp [contraquorum, le_meet] at p
   have y := p Finset.univ ?_
   simp [le_join] at y; exact y
   simp [Open1]; exact S.univ_open
@@ -299,9 +299,15 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
 
 -- TODO this statement is stated as a footnote
--- theorem t' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') → Twined3 S := by
---   intro h ⟨a, ma⟩ ⟨b, mb⟩ ⟨c, mc⟩; simp
---   sorry
+-- TODO I don't know how to prove it
+-- theorem t' : (∀ f f',(⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')) → Twined3 S := by
+--   intro h; constructor; intro a b c am bm cm
+--   simp [contraquorum, le_meet, le_join] at h
+--   let fa (p : _) := if p ∈ a then Three.true else .false
+--   let fb (p : _) := if p ∈ b then Three.true else .false
+--   have h' := h fa fb _ am; simp at h'
+--   cases h'; sorry
+
 
 end Theorem_2_4_3
 
@@ -342,9 +348,8 @@ variable
 
 include q in
 theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
-  obtain ⟨s, sm, ps⟩ := by simpa [valid_byzantine_le, quorum_valid] using q
-  exists s; constructor; assumption; intro x xm
-  simpa [valid_byzantine_le] using ps x xm
+  obtain ⟨s, sm, ps⟩ := by simpa [quorum_valid] using q;
+  exists s
 
 include q in
 theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
@@ -363,7 +368,7 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
 include q in
 theorem valid_quorum_implies_true [twined : Twined3 S]
   : ⊨ (⊡(S) f) -> ⊡(S) f = Three.true := by
-  intro h; simp [valid_byzantine_le, quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
+  intro h; simp [quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
   have ⟨qs, qm, p⟩ := q' q; simp [quorum_true]
   refine ⟨qs ∩ h1, ?_, ?_⟩;
   have t := twined.twined qm qm h2; simpa using t
@@ -382,7 +387,7 @@ theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
   intro k;
   have ⟨qs, qm, p⟩ := q' q
   simp [somewhere]
-  simp [valid_byzantine_le, contraquorum, le_meet, le_join] at k
+  simp [contraquorum, le_meet, le_join] at k
   obtain ⟨y, ym, yp⟩ := k _ qm; exists y
   cases valid_TF.mp (p _ ym); assumption
   next h => rw [h] at yp; contradiction
@@ -394,7 +399,7 @@ theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
 
 omit q in
 theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) := by
-  simp [valid_byzantine_le]; intro h
+  simp; intro h
   obtain ⟨h1, h2⟩ := le_and.mp h
   simp [quorum, le_join] at h1 h2
   replace ⟨h1, h1m, h1p⟩ := h1
@@ -416,7 +421,7 @@ theorem t5_2 [twined : Twined3 S] : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f �
 
 end Remark_2_4_5
 
-namespace Simple
+section
 
 variable
   {P : Type}
@@ -425,17 +430,89 @@ variable
   [DecidableEq P]
   {S : FinSemitopology P}
   {vote observe : P → 𝟯}
-  {f f' : P → 𝟯}
-  {p : P}
 
-structure Model (S : FinSemitopology P) (vote observe : P → 𝟯) where
-
-class ThyVote (m : Model S vote observe) where
-  observe? : (observe p → ⊡(S) vote) = .true
-  observe! : (⊡(S) vote ⇀ observe p) = .true
+class ThyVote (S : FinSemitopology P) (vote observe : P → 𝟯) where
+  observe? p : (observe p → ⊡(S) vote) = .true
+  observe! p : (⊡(S) vote ⇀ observe p) = .true
   correct : ⊡(S) (TF ∘ vote) = .true
-  observeN? : (¬ (observe p) → ⊡(S) (¬ vote)) = .true
-  observeN! : (⊡(S) (¬ vote) ⇀ (¬ (observe p))) = .true
-  twined3 : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')
+  observeN? p : (¬ (observe p) → ⊡(S) (¬ vote)) = .true
+  observeN! p : (⊡(S) (¬ vote) ⇀ (¬ (observe p))) = .true
+  twined3 f f' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')
 
-end Simple
+end
+
+namespace Lemma_2_5_6
+
+variable
+  {P : Type}
+  [Fintype P]
+  [Nonempty P]
+  [DecidableEq P]
+  {S : FinSemitopology P}
+  {vote observe : P → 𝟯}
+  [i : ThyVote S vote observe]
+
+open Three.Lemmas
+
+theorem t1 : ⊨ (◇ observe → ⊡(S) vote) := by
+  rw [Proposition_2_2_2.p4]; intro h; obtain ⟨x, t⟩ := somewhere_true.mp h
+  simp [quorum, le_join, le_meet]
+  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observe? x) t
+  refine ⟨_, xo, ?_⟩; intro y ys; simp [sp _ ys]
+
+theorem t2 : ⊨ (⊡(S) vote ⇀ □ observe) := by
+  rw [Proposition_2_2_2.p5, everywhere]; intro h;
+  simp; intro p; exact mp_strong_true (i.observe! p) h
+
+theorem t3 : ⊨ (◇ (¬ observe) → ⊡(S) (¬ vote)) := by
+  rw [Proposition_2_2_2.p4]; intro h; obtain ⟨x, t⟩ := somewhere_true.mp h
+  simp [quorum, le_join, le_meet]
+  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observeN? x) t
+  refine ⟨_, xo, ?_⟩; intro y ys; simp [sp _ ys]
+
+theorem t4 : ⊨ (⊡(S) vote ⇀ □ observe) := by
+  rw [Proposition_2_2_2.p5, everywhere]; intro h;
+  simp; intro p; exact mp_strong_true (i.observe! p) h
+
+end Lemma_2_5_6
+
+namespace Proposition_2_5_7
+variable
+  {P : Type}
+  [Fintype P]
+  [e : Nonempty P]
+  [DecidableEq P]
+  {S : FinSemitopology P}
+  {vote observe : P → 𝟯}
+  [i : ThyVote S vote observe]
+
+open Three.Lemmas
+
+include i in
+theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ observe))) := by
+  apply notValid_by_contra
+  intro h; rw [Valid, le_and] at h; have ⟨h1, h2⟩ := h
+  simp [Remark_2_3_5.map_somewhere, somewhere_true] at h1 h2
+  have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
+  have votep := mp_weak (i.observe? p) px
+  have votep' := mp_weak (i.observeN? p') (by simp [px'])
+  have q : (⊡(S) vote ∧ ⊡(S) (¬ vote)) = .true :=
+    Three.Lemmas.and_true.mpr ⟨votep, votep'⟩
+  have v : (⟐(S) (vote ∧ (¬ vote))) = .true := by 
+    have x := i.twined3 vote (¬ vote); simpa [q] using x
+  rw [contraquorum, meet_true] at v
+  -- have k : ⟐(S) (B ∘ vote) = .byzantine := by
+  --   simp [contraquorum]
+
+  have y := v Fintype.elems
+            (by -- TODO simplify
+              simp [Open1]; constructor;
+              exact univ_open S
+              simp [Finset.Nonempty]; 
+              have ⟨w⟩ := e
+              exists w; exact Fintype.complete w)
+  simp [join_true] at y; have ⟨y, ym, yp⟩ := y; simp [Three.Function.and] at yp
+  have y1 : ⊨ (vote y ∧ ¬ (vote y)) := by simp [yp]
+  have h2 := Proposition_2_2_2.p7.mp y1
+
+end Proposition_2_5_7

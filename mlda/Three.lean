@@ -102,15 +102,6 @@ def strongImpl : 𝟯 → 𝟯 → 𝟯
  | true, _ => false
 scoped infixl:25 " ⇀ " => strongImpl
 
-inductive Valid : 𝟯 → Prop where
-  | true : Valid true
-  | byzantine : Valid byzantine
-scoped notation "⊨" => Valid
-
-inductive NotValid : 𝟯 → Prop where
-  | false : NotValid false
-scoped notation "⊭" => NotValid
-
 instance : Ord 𝟯 where
   compare := fun
    | false, false => .eq
@@ -145,13 +136,19 @@ instance : BoundedOrder Three where
 instance : DistribLattice Three where
   le_sup_inf := by intro a b c; cases a <;> cases b <;> cases c <;> decide
 
+abbrev Valid (p : 𝟯) : Prop := byzantine ≤ p
+scoped notation "⊨" => Valid
+
+abbrev NotValid (p : 𝟯) : Prop := p = .false
+scoped notation "⊭" => NotValid
+
 namespace Proposition_2_2_2
 
 variable {a b : 𝟯}
 
-@[simp] theorem p1_1 : ⊨ true := .true
-@[simp] theorem p1_2 : ⊨ byzantine := .byzantine
-@[simp] theorem p1_3 : ⊭ false := .false
+@[simp] theorem p1_1 : ⊨ true := by decide
+@[simp] theorem p1_2 : ⊨ byzantine := by decide
+@[simp] theorem p1_3 : ⊭ false := by rfl
 @[simp] theorem p1_4 : ¬ (⊨ false) := by intro k; cases k
 @[simp] theorem p1_5 : ¬ (⊭ true) := by intro k; cases k
 @[simp] theorem p1_6 : ¬ (⊭ byzantine) := by intro k; cases k
@@ -166,7 +163,7 @@ theorem p2_2 : ⊨ (a ∧ b) ↔ ⊨ a ∧ ⊨ b := by
   next => cases a <;> cases b <;> cases x <;> simp
   next => rcases x with ⟨k1, k2⟩; cases a <;> cases b <;> cases k1 <;> cases k2 <;> simp!
 
-theorem p3_1 : (a → b) = (¬ a ∨ b) := by cases a <;> cases b <;> rfl
+theorem p3_1 : (a → b) = (¬ a ∨ b) := by rfl
 theorem p3_2 : (a ⇀ b) = (a → T b) := by cases a <;> cases b <;> rfl
 
 theorem p4 : ⊨ (a → b) ↔ ((a = true) → ⊨ (TB b)) := by
@@ -259,6 +256,8 @@ theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
 theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
   cases a <;> cases b <;> simp!
 
+@[simp] theorem Function.neg_applied {x} : (¬ f) x = ¬ (f x) := by simp [Function.neg]
+
 theorem Function.neg_and : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
   rw [Three.Function.and, Three.Function.or, Three.Function.neg]
   funext; apply Lemmas.neg_and
@@ -269,6 +268,12 @@ theorem Function.neg_and : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
 @[simp] theorem Function.neg_neg : (¬ (¬ f)) = f := by
   unfold Three.Function.neg; simp; funext a; rw [Function.comp, Function.comp]
   cases h : f a <;> rfl
+
+@[simp] theorem byzantine_le_neg : byzantine ≤ ¬ a ↔ a ≤ byzantine := by
+  cases a <;> decide
+
+theorem le_or : c ≤ (a ∨ b) ↔ (c ≤ a ∨ c ≤ b) := by
+  cases a <;> cases b <;> cases c <;> decide
 
 theorem le_and : c ≤ (a ∧ b) ↔ (c ≤ a ∧ c ≤ b) := by
   cases a <;> cases b <;> cases c <;> decide
@@ -424,17 +429,48 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 @[simp] theorem T_false_eval : T false = false := by rfl
 @[simp] theorem T_byzantine_eval : T byzantine = false := by rfl
 
+@[simp] theorem neg_true_eval : (¬ true) = false := by rfl
+@[simp] theorem neg_false_eval : (¬ false) = true := by rfl
+@[simp] theorem neg_byzantine_eval : (¬ byzantine) = byzantine := by rfl
+
+@[simp] theorem valid_TB : ⊨ (TB a) ↔ byzantine ≤ a := by
+  constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp!
+
 theorem valid_TF : ⊨ (TF a) ↔ a = true ∨ a = false := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp
 
 @[simp] theorem valid_T : ⊨ (T a) ↔ a = true := by
   constructor <;> intro h <;> cases a <;> cases h <;> simp
 
+theorem T_neg : T (¬ a) = F a := by
+  cases a <;> simp [Atom.isFalse]
+
+theorem Function.T_neg : T ∘ (¬ f) = F ∘ f := by
+  funext a; simp [Lemmas.T_neg, Function.neg]
+
+@[simp] theorem neg_eq_true : (¬ a) = true ↔ a = false := by cases a <;> simp
+  
+@[simp] theorem Function.neg_eq_true {x} : (¬ f) x = true ↔ f x = false := by
+  simp [Function.neg]
+
+theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
+  intro p; cases a; simp;
+  exfalso; refine p ?_; simp
+  exfalso; refine p ?_; simp
+
 theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> simp
 
-theorem valid_byzantine_le : ⊨ a ↔ byzantine ≤ a := by cases a <;> simp
-
 @[simp] theorem byzantine_le_T : .byzantine ≤ T a ↔ a = true := by cases a <;> simp
+
+theorem mp_weak : ((a → b) = true) → a = true → b = true := by
+  cases a <;> cases b <;> simp [Atom.impl, Atom.neg, Atom.or]
+
+theorem mp_strong_true : ((a ⇀ b) = true) → a = true → b = true := by
+  cases a <;> cases b <;> simp [Atom.strongImpl]
+
+theorem mp_strong : (byzantine ≤ (a ⇀ b)) → a = true → b = true := by
+  cases a <;> cases b <;> simp [Atom.strongImpl]
+
 end Lemmas
 
 end Three
