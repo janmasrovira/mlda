@@ -196,7 +196,7 @@ theorem p1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
     obtain pf := meet_true.mp h1
     obtain pf' := meet_true.mp pu
     rw [quorum, join_true]; exists u; constructor; assumption;
-    simp [meet_true]; intro y py; simp [Three.Function.and, Three.Lemmas.and_true]
+    simp [meet_true]; intro y py; simp [Three.Lemmas.and_true]
     exact ⟨pf y (Finset.mem_univ y), pf' y py⟩
   case c2 =>
     intro h1 _
@@ -205,7 +205,7 @@ theorem p1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
     obtain ⟨u, mu, pu⟩ := byzantine_le_join.mp h2
     obtain pu := byzantine_le_meet.mp pu
     rw [quorum, byzantine_le_join]; exists u; constructor; assumption
-    simp [byzantine_le_meet]; intro x xu; simp [Three.Function.and, byzantine_le_and]
+    simp [byzantine_le_meet]; intro x xu; simp [byzantine_le_and]
     exact ⟨h1 x (Finset.mem_univ x), pu x xu⟩
 
 end Lemma_2_3_6
@@ -230,7 +230,7 @@ theorem p1 : (⊡(S) f ∧ ⟐(S) f') ≤ ◇ (f ∧ f') := by
     obtain ⟨h1, h2⟩ := and_true.mp h1
     obtain ⟨s, ms, ps⟩ := join_true.mp h1
     obtain ⟨u, mu, pu⟩ := join_true.mp (meet_true.mp h2 s ms)
-    simp [somewhere, join_true]; exists u; simp [Three.Function.and, Three.Lemmas.and_true];
+    simp [somewhere, join_true]; exists u; simp [Three.Lemmas.and_true];
     constructor; exact meet_true.mp ps u mu; assumption
   case c2 =>
     intro h1 _
@@ -239,7 +239,7 @@ theorem p1 : (⊡(S) f ∧ ⟐(S) f') ≤ ◇ (f ∧ f') := by
     obtain ⟨s, ms, ps⟩ := byzantine_le_join.mp h1
     obtain ⟨u, u1, f'u⟩ := byzantine_le_join.mp (byzantine_le_meet.mp h2 s ms)
     have fu := byzantine_le_meet.mp ps _ u1
-    exists u; simp [Three.Function.and, le_and];
+    exists u; simp [le_and];
     exact ⟨fu, f'u⟩
 
 theorem c1 : ⊨ (⊡(S) f ∧ ⟐(S) f') → ⊨ (◇ (f ∧ f')) := by
@@ -283,7 +283,7 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     have x := twined m1 m2 m3; simp [Open1] at x; rcases x with ⟨x1, w, w1⟩
     simp [Finset.mem_inter] at w1; rcases w1 with ⟨w1, w2, w3⟩
     exists w; constructor; assumption;
-    simp [Three.Function.and, Three.Lemmas.and_true]
+    simp [Three.Lemmas.and_true]
     exact ⟨meet_true.mp p1 _ w1, meet_true.mp p2 _ w2⟩
   case c2 =>
     intro h _;
@@ -408,7 +408,7 @@ theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S)
   rw [contraquorum, le_meet]; intro w wm; simp [le_join]
   obtain ⟨k, ⟨lm, l⟩⟩ := by simpa [Open1] using twined.twined h1m h2m wm
   simp [Finset.mem_inter] at l
-  refine ⟨lm, l.2.2, ?_⟩; simp [Three.Function.and, le_and]; constructor
+  refine ⟨lm, l.2.2, ?_⟩; simp [le_and]; constructor
   exact h1p _ l.1; exact h2p _ l.2.1
 
 omit q in
@@ -501,18 +501,18 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ observe))) := by
   have v : (⟐(S) (vote ∧ (¬ vote))) = .true := by 
     have x := i.twined3 vote (¬ vote); simpa [q] using x
   rw [contraquorum, meet_true] at v
-  -- have k : ⟐(S) (B ∘ vote) = .byzantine := by
-  --   simp [contraquorum]
-
-  have y := v Fintype.elems
-            (by -- TODO simplify
-              simp [Open1]; constructor;
-              exact univ_open S
-              simp [Finset.Nonempty]; 
-              have ⟨w⟩ := e
-              exists w; exact Fintype.complete w)
-  simp [join_true] at y; have ⟨y, ym, yp⟩ := y; simp [Three.Function.and] at yp
-  have y1 : ⊨ (vote y ∧ ¬ (vote y)) := by simp [yp]
-  have h2 := Proposition_2_2_2.p7.mp y1
-
+  have k : ⊨ (⟐(S) (B ∘ vote)) := by -- TODO simplify?
+    simp [contraquorum, le_meet]; intro s sm
+    simp [le_join]
+    have ⟨y, ym, yp⟩ := join_true.mp (v _ sm)
+    refine ⟨_, ym, ?_⟩
+    simp [Three.Function.and] at yp
+    apply Proposition_2_2_2.p7 (a := vote y) |>.mp 
+    simp [yp]
+  have c : ⊡(S) (TF ∘ vote) = .true := i.correct
+  have kc : ⊨ (⊡(S) (TF ∘ vote) ∧ (⟐(S) (B ∘ vote))) := by
+    rw [Valid, le_and]; constructor; simp [c]; exact k
+  have r := Lemma_2_3_7.c1 kc
+  simp [somewhere, le_join] at r
+  
 end Proposition_2_5_7

@@ -202,15 +202,6 @@ scoped notation "⋁" => bigOr
 def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
 scoped prefix:75 "¬" => neg
 
--- def isTrue (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isTrue f
--- scoped notation "T" => isTrue
-
--- def isNotByzantine (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotByzantine f
--- scoped notation "TF" => isNotByzantine
-
--- def isNotFalse (f : X → 𝟯) : X → 𝟯 := lift1 Atom.isNotFalse f
--- scoped notation "TB" => isNotFalse
-
 theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ f) := by rfl
 
 def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
@@ -255,6 +246,9 @@ theorem neg_or : (¬ (a ∨ b)) = (¬ a ∧ ¬ b) := by
 
 theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
   cases a <;> cases b <;> simp!
+
+@[simp] theorem Function.and_applied {x} : (f ∧ f') x = (f x ∧ f' x) := by
+  simp [Function.and]
 
 @[simp] theorem Function.neg_applied {x} : (¬ f) x = ¬ (f x) := by simp [Function.neg]
 
@@ -429,6 +423,10 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 @[simp] theorem T_false_eval : T false = false := by rfl
 @[simp] theorem T_byzantine_eval : T byzantine = false := by rfl
 
+@[simp] theorem B_true_eval : B true = false := by rfl
+@[simp] theorem B_false_eval : B false = false := by rfl
+@[simp] theorem B_byzantine_eval : B byzantine = true := by rfl
+
 @[simp] theorem neg_true_eval : (¬ true) = false := by rfl
 @[simp] theorem neg_false_eval : (¬ false) = true := by rfl
 @[simp] theorem neg_byzantine_eval : (¬ byzantine) = byzantine := by rfl
@@ -460,7 +458,12 @@ theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
 
 theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> simp
 
+@[simp] theorem byzantine_le_B : .byzantine ≤ B a ↔ a = byzantine := by cases a <;> simp
+
 @[simp] theorem byzantine_le_T : .byzantine ≤ T a ↔ a = true := by cases a <;> simp
+
+@[simp] theorem TF_and_B_false : (TF a ∧ B a) = false := by
+  cases a <;> simp [Three.Atom.and]
 
 theorem mp_weak : ((a → b) = true) → a = true → b = true := by
   cases a <;> cases b <;> simp [Atom.impl, Atom.neg, Atom.or]
