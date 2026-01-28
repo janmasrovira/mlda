@@ -392,10 +392,13 @@ theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
   cases valid_TF.mp (p _ ym); assumption
   next h => rw [h] at yp; contradiction
 
--- TODO not sure about the statement
--- theorem t4 : ⊨ ((⊡(S) f) ∧ ⟐(S) (T ∘ f')) → ⊨ (T (◇ f)) := by
---   intro h
---   have y := Lemma_2_3_7.c1 (S := S) (f := f) h
+-- TODO I've adapted the statement
+theorem t4 : ⊨ ((⊡(S) f) ∧ ⟐(S) (T ∘ f')) → ⊨ (T (◇ f')) := by
+  intro h
+  have y := Lemma_2_3_7.c1 (S := S) (f := f) h
+  obtain ⟨y, yp⟩ := by simpa [somewhere, le_join] using y
+  obtain ⟨_, yp⟩ := by simpa [le_and] using yp
+  simp [Valid, somewhere_true]; exists y
 
 omit q in
 theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) := by
@@ -477,6 +480,7 @@ theorem t4 : ⊨ (⊡(S) vote ⇀ □ observe) := by
 end Lemma_2_5_6
 
 namespace Proposition_2_5_7
+
 variable
   {P : Type}
   [Fintype P]
