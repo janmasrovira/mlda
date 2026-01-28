@@ -1,2 +1,10 @@
 * Readme
 Modal logic for declarative distributed algorithms.
+
+This repository contains a Lean4 formalisation (work in progress) of the results
+presented in
+#+begin_quote
+Declarative distributed broadcast using three-valued modal logic and
+semitopologies, by Murdoch J. Gabbay
+#+end_quote
+The [[file:ref/gabbay-2025.pdf][pdf can be found here]].
