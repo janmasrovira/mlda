@@ -15,11 +15,10 @@ class MapMax {A : Type} [Max A] (op : A → A) where
 
 export MapMax (map_max)
 
--- theorem fold_max_top {α β} [LinearOrder β] [BoundedOrder β] [DecidableEq α] {s : Finset α} {f : α → β} {b : β}
---   : Finset.fold max b f s = Top.top ↔ b = Top.top ∨ ∃ a, f a = Top.top := by
---   have := Finset.le_fold_max (s := s) (f := f) (b := b) Top.top
+section
 
+def ExistsAffine.{u} {α : Sort u} (p : α → Prop) : Prop := {a b : α} → p a → p b → a = b
+notation " ∃? " => ExistsAffine
+notation "∃? " x ", " p => ExistsAffine (fun x => p)
 
-
-
-
+end
