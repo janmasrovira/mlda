@@ -66,8 +66,15 @@ def xor : 𝟯 → 𝟯 → 𝟯
   | _, _ => true
 scoped infixl:30 " ⊕ " => xor
 
-abbrev impl (a b : 𝟯) : 𝟯 := (¬ a) ∨ b
+@[simp] abbrev impl (a b : 𝟯) : 𝟯 := (¬ a) ∨ b
 scoped infixl:25 " → " => impl
+
+def eq : 𝟯 → 𝟯 → 𝟯
+  | true, true => true
+  | false, false => true
+  | byzantine, byzantine => true
+  | _, _ => false
+scoped infix:5 " ≡ " => eq
 
 def isTrue : 𝟯 → 𝟯
  | true => true
@@ -190,10 +197,10 @@ namespace Function
 
 variable {X : Type}
 
-abbrev bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.and true f
+abbrev bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold min true f
 scoped notation "⋀" => bigAnd
 
-def bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold Atom.or false f
+abbrev bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold max false f
 scoped notation "⋁" => bigOr
 
 @[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
@@ -232,6 +239,8 @@ variable
 theorem false_or_byzantine_le : (a = Three.false) ∨ .byzantine ≤ a := by cases a <;> decide
 
 theorem true_or_le_byzantine : (a = Three.true) ∨ a ≤ .byzantine := by cases a <;> decide
+
+@[simp] theorem eq_true : ((a ≡ b) = true) ↔ a = b := by cases a <;> cases b <;> decide
 
 @[simp] theorem and_idempotent : (a ∧ a) = a := by cases a <;> simp!
 
@@ -330,8 +339,7 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
     Finset.fold_min_le false
   simpa using h
 
-@[simp] theorem meet_byzantine : ⋀ P f = byzantine ↔ (∀ x ∈ P, byzantine ≤ f x) ∧ ∃ x ∈ P, f x = byzantine := by
-  unfold bigAnd;
+@[simp] theorem meet_byzantine2 : P.fold min true f = byzantine ↔ (∀ x ∈ P, byzantine ≤ f x) ∧ ∃ x ∈ P, f x = byzantine := by
   have h1 : P.fold min true f ≤ byzantine ↔ _ ∨ ∃ x ∈ P, f x ≤ byzantine :=
     Finset.fold_min_le byzantine
   have h2 : byzantine ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, byzantine ≤ f x :=
@@ -362,7 +370,7 @@ theorem join_le_byzantine : ⋁ P f ≤ byzantine ↔ (∀ x ∈ P, f x ≤ byza
     Finset.fold_max_le byzantine
   simpa using h1
 
-theorem byzantine_le_meet : byzantine ≤ ⋀ P f ↔ ∀ x ∈ P, f x ≥ byzantine := by
+@[simp] theorem byzantine_le_meet : byzantine ≤ ⋀ P f ↔ ∀ x ∈ P, f x ≥ byzantine := by
   have h2 : byzantine ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, byzantine ≤ f x :=
     Finset.le_fold_min (f := f) byzantine
   simpa using h2
@@ -378,14 +386,13 @@ theorem le_meet : a ≤ ⋀ P f ↔ ∀ x ∈ P, a ≤ f x := by
 theorem meet_le : ⋀ P f ≤ a ↔ a = true ∨ ∃ x ∈ P, f x ≤ a := by
   simpa using (Finset.fold_min_le (b := true) a)
 
-theorem le_join : a ≤ ⋁ P f ↔ a = false ∨ ∃ x ∈ P, f x ≥ a := by
+theorem le_join : a ≤ P.fold max false f ↔ a = false ∨ ∃ x ∈ P, f x ≥ a := by
   simpa using (Finset.le_fold_max (b := false) a)
 
 theorem join_le : ⋁ P f ≤ a ↔ ∀ x ∈ P, f x ≤ a := by
   simpa using (Finset.fold_max_le (b := false) a)
 
-theorem join_byzantine : ⋁ P f = byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) ∧ ∃ x ∈ P, f x = byzantine := by
-  unfold bigOr;
+theorem join_byzantine : P.fold max false f = byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) ∧ ∃ x ∈ P, f x = byzantine := by
   have h1 : P.fold max false f ≤ byzantine ↔ _ ∧ ∀ x ∈ P, f x ≤ byzantine :=
     Finset.fold_max_le byzantine
   have h2 : byzantine ≤ P.fold max false f ↔ _ ∨ ∃ x ∈ P, f x ≥ byzantine :=
@@ -430,6 +437,32 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 @[simp] theorem neg_true_eval : (¬ true) = false := by rfl
 @[simp] theorem neg_false_eval : (¬ false) = true := by rfl
 @[simp] theorem neg_byzantine_eval : (¬ byzantine) = byzantine := by rfl
+
+@[simp] theorem and_left_false : (false ∧ a) = false := by rfl
+@[simp] theorem and_right_false : (a ∧ false) = false := by cases a <;> rfl
+@[simp] theorem and_left_true : (true ∧ a) = a := by cases a <;> rfl
+@[simp] theorem and_right_true : (a ∧ true) = a := by cases a <;> rfl
+
+@[simp] theorem or_left_false : (false ∨ a) = a := by cases a <;> rfl
+@[simp] theorem or_right_false : (a ∨ false) = a := by cases a <;> rfl
+@[simp] theorem or_left_true : (true ∨ a) = true := by rfl
+@[simp] theorem or_right_true : (a ∨ true) = true := by cases a <;> rfl
+
+@[simp] theorem or_right_byzantine_eq_byzantine : (a ∨ byzantine) = byzantine ↔ a ≤ byzantine := by cases a <;> simp
+@[simp] theorem or_left_byzantine_eq_byzantine : (byzantine ∨ a) = byzantine ↔ a ≤ byzantine := by cases a <;> simp
+@[simp] theorem or_right_byzantine_eq_true : (a ∨ byzantine) = true ↔ a = true := by cases a <;> simp
+@[simp] theorem or_left_byzantine_eq_true : (byzantine ∨ a) = true ↔ a = true := by cases a <;> simp
+
+@[simp] theorem le_or_left : b ≤ (b ∨ a) := by cases a <;> cases b <;> simp
+@[simp] theorem le_or_right : b ≤ (a ∨ b) := by cases a <;> cases b <;> simp
+@[simp] theorem byzantine_eq_and_byzantine : (a ∧ byzantine) = byzantine ↔ byzantine ≤ a := by cases a <;> simp
+@[simp] theorem byzantine_eq_byzantine_and : (byzantine ∧ a) = byzantine ↔ byzantine ≤ a := by cases a <;> simp
+
+@[simp] theorem and_le_left : (a ∧ b) ≤ a := by cases a <;> cases b <;> decide
+@[simp] theorem and_le_right : (b ∧ a) ≤ a := by cases a <;> cases b <;> decide
+
+theorem byzantine_le_impl : byzantine ≤ (a → b) ↔ a ≤ byzantine ∨ byzantine ≤ b := by
+  cases a <;> cases b <;> simp
 
 @[simp] theorem valid_TB : ⊨ (TB a) ↔ byzantine ≤ a := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp!

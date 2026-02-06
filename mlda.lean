@@ -3,3 +3,4 @@
 import mlda.Base
 import mlda.Three
 import mlda.FinSemitopology
+import mlda.Section3

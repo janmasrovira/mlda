@@ -367,7 +367,7 @@ theorem valid_quorum_implies_true [twined : Twined3 S]
   have t := twined.twined qm qm h2; simpa using t
   intro x xq; obtain ⟨x1, x2⟩ := by simpa [Finset.mem_inter] using xq
   cases valid_TF.mp (p x x1); assumption
-  next h => have := le_meet.mp h3 _ x2; rw [h] at this; contradiction
+  next h => have := h3 _ x2; rw [h] at this; contradiction
 
 include q in
 theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
@@ -400,7 +400,6 @@ theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S)
   simp [quorum, le_join] at h1 h2
   replace ⟨h1, h1m, h1p⟩ := h1
   replace ⟨h2, h2m, h2p⟩ := h2
-  simp [le_meet] at h1p h2p
   rw [contraquorum, le_meet]; intro w wm; simp [le_join]
   obtain ⟨k, ⟨lm, l⟩⟩ := by simpa [Open1] using twined.twined h1m h2m wm
   simp [Finset.mem_inter] at l
