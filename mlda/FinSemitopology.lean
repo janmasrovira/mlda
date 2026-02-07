@@ -250,7 +250,7 @@ theorem c2 : ⊨ (⟐(S) f) → ⊨ (◇ f) := by
   simp [somewhere, le_join]
   simp [contraquorum, le_meet] at p
   have y := p Finset.univ ?_
-  simp [le_join] at y; exact y
+  simp at y; exact y
   simp [Open1]; exact S.univ_open
 
 end Lemma_2_3_7
@@ -513,7 +513,6 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ observe))) := by
   rw [contraquorum, meet_true] at v
   have k : ⊨ (⟐(S) (B ∘ vote)) := by -- TODO simplify?
     simp [contraquorum, le_meet]; intro s sm
-    simp [le_join]
     have ⟨y, ym, yp⟩ := join_true.mp (v _ sm)
     refine ⟨_, ym, ?_⟩
     simp [Three.Function.and] at yp

@@ -205,7 +205,66 @@ theorem A_B : P_A f ↔ P_B f := by
     · simpa [existence]
     · assumption
 
-
 end Part_2
+
+namespace Part_3
+
+abbrev P_A := ⊨ (T (∃₀₁ f))
+abbrev P_B := (∃? v, f v = .true) ∧ (∀ v, f v ≠ .byzantine)
+
+-- theorem A_B : P_A f ↔ P_B f := by
+--   simp [P_B]; constructor
+--   · intro h
+--     simp [existence_affine] at h
+--     constructor
+--     · intro a b ta tb;
+--       simpa [ta, tb] using h a b
+--     · intro v b
+--       sorry
+      
+  --   obtain ⟨⟨u, fu⟩, h2⟩ := h
+  --   constructor; 
+  --   · intro a b ta tb
+  --     simpa [ta, tb] using h2 a b
+  --   · intro v e
+  --     have p := h2 u v
+  --     have uv : u ≠ v := sorry
+  --     conv at p => left; right; rw [Lemmas.veq_false.mpr uv]
+  --     simp [Three.Lemmas.and_false] at p; cases p
+  --     next h => rw [fu] at h; contradiction
+  --     next h => rw [e] at h; contradiction
+  -- · rintro ⟨h1, h2⟩
+  --   simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine]; constructor
+  --   · 
+end Part_3
+
+namespace Part_4
+
+abbrev P_A := ⊨ (T (∃₁ f))
+abbrev P_B := (∃! v, f v = .true) ∧ (∀ v, f v ≠ .byzantine)
+
+theorem A_B : P_A f ↔ P_B f := by
+  simp [P_B]; constructor
+  · intro h; simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine] at h
+    obtain ⟨⟨u, ut⟩, h2⟩ := h; constructor
+    · exists u; constructor; assumption
+      intro v vt
+      simpa [Three.Lemmas.and_true, ut, vt] using Three.Lemmas.mp_weak (h2 v u)
+    · intro v vb
+      have e := by simpa [ut, vb] using h2 u v
+      rw [e] at ut; rw [ut] at vb; contradiction
+  rintro ⟨⟨u, ut, uu⟩, h2⟩
+  simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine]; constructor
+  · exists u
+  · intro x y; simp [Three.Lemmas.or_true]
+    if xy : x = y then right; assumption
+    else left; simp [Three.Lemmas.and_false]
+         cases fx : f x <;> cases fy : f y <;> first | contradiction | simp
+         exact h2 x fx; exact h2 x fx; exact h2 y fy
+         have xt := uu _ fx
+         have yt := uu _ fy
+         rw [← yt] at xt; contradiction
+
+end Part_4
 
 end Proposition_3_1_3
