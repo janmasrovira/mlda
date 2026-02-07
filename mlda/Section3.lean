@@ -46,9 +46,12 @@ open Definitions
 
 namespace Lemmas
 
+open scoped Three.Atom
+
 variable
   {f : Value → 𝟯}
   {v v' : Value}
+  {a : 𝟯}
 
 omit [Fintype Value] in
 @[simp] theorem veq_true : (v ≡ v') = .true ↔ v = v' := by simp
@@ -76,6 +79,20 @@ omit [Fintype Value] in
   if h : v = v'
   then simp [h]
   else simp [veq_false.mpr h]
+
+theorem affine_implies_eq : .byzantine ≤ ∃₀₁ f → f v = .true → f v' = .true → v = v' := by
+   intro h vt vt'; simp [existence_affine] at h
+   have p := h v v'; simpa [vt, vt'] using p
+
+theorem unique_implies_existence_affine : a ≤ ∃₁ f → (a ≤ ∃⁎ f) ∧ (a ≤ ∃₀₁ f) := by
+  intro h; simp [existence_unique] at h
+  exact Three.Lemmas.le_and.mp h
+
+theorem unique_implies_affine : a ≤ ∃₁ f → a ≤ ∃₀₁ f := by
+  intro h; exact unique_implies_existence_affine h |>.2
+
+theorem unique_implies_existence : a ≤ ∃₁ f → a ≤ ∃⁎ f := by
+  intro h; exact unique_implies_existence_affine h |>.1
 
 end Lemmas
 
@@ -266,5 +283,16 @@ theorem A_B : P_A f ↔ P_B f := by
          rw [← yt] at xt; contradiction
 
 end Part_4
+
+namespace Part_5
+
+theorem t (h1 : (⊨ (∃₀₁ f) ∨ ⊨ (∃₁ f))) (h2 : ⊨ (T (f v ∧ f v'))) : v = v' := by
+  simp at h1 h2
+  obtain ⟨fv, fv'⟩ := Three.Lemmas.and_true.mp h2
+  cases h1
+  next h => exact Lemmas.affine_implies_eq h fv fv'
+  next h => exact Lemmas.affine_implies_eq (Lemmas.unique_implies_affine h) fv fv'
+
+end Part_5
 
 end Proposition_3_1_3
