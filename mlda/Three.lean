@@ -365,17 +365,17 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
     Finset.fold_max_le false
   simpa using h
 
-theorem join_le_byzantine : ⋁ P f ≤ byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) := by
+@[simp] theorem join_le_byzantine : P.fold max false f ≤ byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) := by
   have h1 : P.fold max false f ≤ byzantine ↔ _ ∧ ∀ x ∈ P, f x ≤ byzantine :=
     Finset.fold_max_le byzantine
   simpa using h1
 
-@[simp] theorem byzantine_le_meet : byzantine ≤ ⋀ P f ↔ ∀ x ∈ P, f x ≥ byzantine := by
+@[simp] theorem byzantine_le_meet : byzantine ≤ P.fold min true f ↔ ∀ x ∈ P, f x ≥ byzantine := by
   have h2 : byzantine ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, byzantine ≤ f x :=
     Finset.le_fold_min (f := f) byzantine
   simpa using h2
 
-theorem byzantine_le_join : byzantine ≤ ⋁ P f ↔ ∃ x ∈ P, f x ≥ byzantine := by
+@[simp] theorem byzantine_le_join : byzantine ≤ P.fold max false f ↔ ∃ x ∈ P, f x ≥ byzantine := by
   have h2 : byzantine ≤ P.fold max false f ↔ _ ∨ ∃ x ∈ P, f x ≥ byzantine :=
     Finset.le_fold_max byzantine
   simpa using h2
@@ -393,17 +393,18 @@ theorem join_le : ⋁ P f ≤ a ↔ ∀ x ∈ P, f x ≤ a := by
   simpa using (Finset.fold_max_le (b := false) a)
 
 theorem join_byzantine : P.fold max false f = byzantine ↔ (∀ x ∈ P, f x ≤ byzantine) ∧ ∃ x ∈ P, f x = byzantine := by
-  have h1 : P.fold max false f ≤ byzantine ↔ _ ∧ ∀ x ∈ P, f x ≤ byzantine :=
-    Finset.fold_max_le byzantine
-  have h2 : byzantine ≤ P.fold max false f ↔ _ ∨ ∃ x ∈ P, f x ≥ byzantine :=
-    Finset.le_fold_max byzantine
-  simp at h2 h1
-  generalize P.fold Atom.or false f = y at *
   constructor
-  rintro ⟨_⟩; constructor; simpa using h1; simp at h1 h2
-  rcases h2 with ⟨u, mu, pu⟩; exists u; exists mu; exact (h1 u mu).antisymm pu
-  rintro ⟨l, ⟨r, mr, pr⟩⟩; have p1 := h1.mpr l; have p2 := h2.mpr ⟨r, mr, ge_of_eq pr⟩
-  exact p1.antisymm p2
+  · intro h
+    obtain ⟨u, um, up⟩ := byzantine_le_join.mp (ge_of_eq h)
+    have h2 := join_le_byzantine.mp (le_of_eq h)
+    constructor; assumption
+    refine ⟨u, um, ?_⟩
+    exact le_antisymm (h2 u um) up
+  · rintro ⟨h1, u, um, up⟩
+    apply le_antisymm
+    apply join_le_byzantine.mpr; assumption
+    apply byzantine_le_join.mpr
+    refine ⟨u, um, ge_of_eq up⟩
 
 @[simp] theorem join_true : ⋁ P f = true ↔ ∃ x ∈ P, f x = true := by
   unfold bigOr;

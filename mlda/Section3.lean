@@ -159,11 +159,11 @@ variable
 
 namespace Part_1
 
-abbrev p_A : Prop := ⊨ (∃₀₁ f)
-abbrev p_B : Prop := .byzantine ≤ ∃₀₁ f
-abbrev p_C : Prop := ∃? v, ⊨ (T (f v))
-abbrev p_D : Prop := ∃? v, f v = .true
-abbrev p_E : Prop := ∀ v v', f v = .true → f v' = .true → v = v'
+abbrev p_A := ⊨ (∃₀₁ f)
+abbrev p_B := .byzantine ≤ ∃₀₁ f
+abbrev p_C := ∃? v, ⊨ (T (f v))
+abbrev p_D := ∃? v, f v = .true
+abbrev p_E := ∀ v v', f v = .true → f v' = .true → v = v'
 
 theorem A_B : p_A f → p_B f := by simp
 
@@ -185,5 +185,27 @@ theorem E_A : p_E f → p_A f := by
   simp [h x y fx fy]
 
 end Part_1
+
+namespace Part_2
+
+abbrev P_A := ⊨ (∃₁ f)
+abbrev P_B := (∃ v, ⊨ (f v)) ∧ ⊨ (∃₀₁ f)
+
+theorem A_B : P_A f ↔ P_B f := by
+  simp [P_B]; constructor
+  · intro h
+    simp [existence_unique, existence, existence_affine, Three.Lemmas.le_and] at h
+    obtain ⟨h1, h2⟩ := h
+    simp [existence_affine]
+    constructor <;> assumption
+  · intro ⟨h1, h2⟩
+    rw [existence_unique]
+    apply Three.Lemmas.le_and.mpr
+    constructor
+    · simpa [existence]
+    · assumption
+
+
+end Part_2
 
 end Proposition_3_1_3
