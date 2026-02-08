@@ -305,23 +305,66 @@ inductive Expr (V P : Type) : Nat → Type where
   | predicate {n} : P → Term V n → Expr V P n
   | exist {n} : Expr V P (n +1) → Expr V P n
   | exist_affine {n} : Expr V P (n +1) → Expr V P n
-
+  
 def Interpretation (V P : Type) := P → V → 𝟯
 
-structure Model (V : Type)
-  [VFin : Fintype V]
-  [ValuDec : DecidableEq V]
-  (P : Type)
-  [PFin : Fintype P]
-  [PDef : DecidableEq P]
-  [PNonempty : Nonempty P]
-  (S : FinSemitopology P)
-  (ς : Interpretation V P)
-  where
+structure Model (V : Type) [VFin : Fintype V] [ValuDec : DecidableEq V]
+  (P : Type) [PFin : Fintype P] [PDef : DecidableEq P] [PNonempty : Nonempty P] where
+  S : FinSemitopology P
+  ς : Interpretation V P
 
 end Types
 
-section Denotation
+namespace Notation
+
+variable
+  {V P : Type}
+  [VFin : Fintype V]
+  [ValuDec : DecidableEq V]
+  [PFin : Fintype P]
+  [PDef : DecidableEq P]
+  [PNonempty : Nonempty P]
+  {n : Nat}
+
+scoped notation "¬ₑ" => Expr.neg
+scoped notation "⊥ₑ" => Expr.bot
+scoped infixl:35 " ∧ₑ " => Expr.and
+scoped notation "⊡ₑ" => Expr.quorum
+scoped notation "TFₑ" => Expr.tf
+scoped notation " ∃ₑ⁎ " => Expr.exist
+scoped notation " ∃ₑ₀₁ " => Expr.exist_affine
+
+abbrev somewhere (φ : Expr V P n) : Expr V P n := .neg (.quorum (.neg φ))
+scoped notation "◇ₑ" => somewhere
+
+abbrev or {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ (¬ₑ φ ∧ₑ ¬ₑ ψ)
+scoped infixl:30 " ∨ₑ " => or
+
+abbrev impl {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ φ ∨ₑ ψ
+scoped infixl:25 " →ₑ " => impl
+
+abbrev for_all {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ¬ₑ (∃ₑ⁎ (¬ₑ φ))
+scoped notation " ∀ₑ " => for_all
+
+abbrev existence_unique {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ∃ₑ⁎ φ ∧ₑ ∃ₑ₀₁ φ
+scoped notation " ∃ₑ₁ " => existence_unique
+
+abbrev is_byzantine {n : Nat} (φ : Expr V P n) : Expr V P n := ¬ₑ (TFₑ φ)
+scoped notation " Bₑ " => is_byzantine
+
+abbrev TF_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (TFₑ (Expr.predicate p (.bound 0)))
+scoped notation " TF[" p "] " => TF_all p
+
+abbrev B_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (Bₑ (Expr.predicate p (.bound 0)))
+scoped notation " B[" p "] " => B_all p
+
+
+end Notation
+
+
+open Notation
+
+namespace Denotation
 
 open scoped Three.Atom
 open scoped FinSemitopology
@@ -333,33 +376,58 @@ variable
   [PFin : Fintype P]
   [PDef : DecidableEq P]
   [PNonempty : Nonempty P]
-  {S : FinSemitopology P}
-  {ς : Interpretation V P}
+  (μ : Model V P)
 
-def go {n : Nat} (Γ : List.Vector V n) (p : P) (φ : Expr V P n) : 𝟯 :=
+def go {n : Nat} (Γ : List.Vector V n) (φ : Expr V P n) (p : P) : 𝟯 :=
   let goTerm (p' : P) (t : Term V n) : 𝟯 := match t with
-      | .bound a => ς p' (Γ.get a)
-      | .val v => ς p' v
+      | .bound a => μ.ς p' (Γ.get a)
+      | .val v => μ.ς p' v
   match φ with
   | .bot => .false
-  | .and l r => go Γ p l ∧ go Γ p r
-  | .tf e => TF (go Γ p e)
-  | .neg e => ¬ (go Γ p e)
-  | .quorum e => ⊡(S) (fun p => go Γ p e)
+  | .and l r => go Γ l p ∧ go Γ r p
+  | .tf e => TF (go Γ e p)
+  | .neg e => ¬ (go Γ e p)
+  | .quorum e => ⊡(μ.S) (fun p => go Γ e p)
   | .predicate p t => goTerm p t
   | .term t => goTerm p t
-  | .exist e => ∃⁎ (fun v => go (n := n +1) (v ::ᵥ Γ) p e)
-  | .exist_affine e => ∃₀₁ (fun v => go (n := n +1) (v ::ᵥ Γ) p e)
+  | .exist e => ∃⁎ (fun v => go (n := n +1) (v ::ᵥ Γ) e p)
+  | .exist_affine e => ∃₀₁ (fun v => go (n := n +1) (v ::ᵥ Γ) e p)
 
-def denotation 
-  (S : FinSemitopology P)
-  (ς : Interpretation V P)
-  (p : P)
-  (φ : Expr V P 0)
-  : 𝟯 := go (ς := ς) (S := S) .nil p φ
+def denotation (φ : Expr V P 0) (p : P) : 𝟯 := go μ .nil φ p
 
-#check denotation
+scoped notation "⟦" φ' "⟧ᵈ" => denotation (φ := φ')
+
+abbrev valid_pred (p : P) (φ : Expr V P 0) : Prop := .byzantine ≤ ⟦ φ ⟧ᵈ μ p 
+abbrev valid (φ : Expr V P 0) := ∀ p, valid_pred μ p φ
+abbrev model (Φ : Finset (Expr V P 0)) := ∀ φ ∈ Φ, valid μ φ
+abbrev entails (Τ Φ : Finset (Expr V P 0)) := model μ Τ → model μ Φ
+
+scoped notation p "⊨[" μ "]" φ => valid_pred μ p φ
+scoped notation "⊨[ " μ " ]" φ => valid μ φ
+scoped notation "⊨*[ " μ " ]" Φ => model μ Φ
+scoped notation Τ "⊨*[" μ "]" Φ => entails μ Τ Φ
 
 end Denotation
+
+open Denotation
+
+namespace Lemmas
+
+open scoped FinSemitopology
+
+variable
+  {V P : Type}
+  [VFin : Fintype V]
+  [ValuDec : DecidableEq V]
+  [PFin : Fintype P]
+  [PDef : DecidableEq P]
+  [PNonempty : Nonempty P]
+  {μ : Model V P}
+  {p : P}
+  {φ : Expr V P 0}
+ 
+theorem valid_somewhere : (p ⊨[ μ ] (◇ₑ φ)) ↔ ⊨[ μ ] φ := by sorry
+
+end Lemmas
 
 end Modal_Logic

@@ -37,11 +37,11 @@ scoped notation "◇" => somewhere
 
 def quorum := ⋁ S.Open1 (fun o => ⋀ o f)
 scoped notation "⊡" => quorum
-notation "⊡" "(" S ")" => quorum (S := S)
+scoped notation "⊡" "(" A ")" => quorum (S := A)
 
 def contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
 scoped notation "⟐" => contraquorum
-notation "⟐" "(" S ")" => contraquorum (S := S)
+scoped notation "⟐" "(" A ")" => contraquorum (S := A)
 
 end
 
