@@ -301,6 +301,7 @@ inductive Expr (V P : Type) : Nat → Type where
   | neg {n} : Expr V P n → Expr V P n
   | and {n} : Expr V P n → Expr V P n → Expr V P n
   | quorum {n} : Expr V P n → Expr V P n
+  | everywhere {n} : Expr V P n → Expr V P n
   | tf {n} : Expr V P n → Expr V P n
   | predicate {n} : P → Term V n → Expr V P n
   | exist {n} : Expr V P (n +1) → Expr V P n
@@ -319,23 +320,27 @@ namespace Notation
 
 variable
   {V P : Type}
-  [VFin : Fintype V]
-  [ValuDec : DecidableEq V]
-  [PFin : Fintype P]
-  [PDef : DecidableEq P]
-  [PNonempty : Nonempty P]
+  [Fintype V]
+  [DecidableEq V]
+  [Fintype P]
+  [DecidableEq P]
+  [Nonempty P]
   {n : Nat}
 
-scoped notation "¬ₑ" => Expr.neg
+scoped notation "¬ₑ " => Expr.neg
 scoped notation "⊥ₑ" => Expr.bot
 scoped infixl:35 " ∧ₑ " => Expr.and
-scoped notation "⊡ₑ" => Expr.quorum
-scoped notation "TFₑ" => Expr.tf
-scoped notation " ∃ₑ⁎ " => Expr.exist
-scoped notation " ∃ₑ₀₁ " => Expr.exist_affine
+scoped notation "⊡ₑ " => Expr.quorum
+scoped notation "□ₑ " => Expr.everywhere
+scoped notation "TFₑ " => Expr.tf
+scoped notation "∃⁎ₑ " => Expr.exist
+scoped notation "∃₀₁ₑ " => Expr.exist_affine
 
-abbrev somewhere (φ : Expr V P n) : Expr V P n := .neg (.quorum (.neg φ))
-scoped notation "◇ₑ" => somewhere
+abbrev somewhere (φ : Expr V P n) : Expr V P n := ¬ₑ (□ₑ (¬ₑ φ))
+scoped notation "◇ₑ " => somewhere
+
+abbrev contraquorum (φ : Expr V P n) : Expr V P n := ¬ₑ (⊡ₑ (¬ₑ φ))
+scoped notation "⟐ₑ " => contraquorum
 
 abbrev or {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ (¬ₑ φ ∧ₑ ¬ₑ ψ)
 scoped infixl:30 " ∨ₑ " => or
@@ -343,24 +348,25 @@ scoped infixl:30 " ∨ₑ " => or
 abbrev impl {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ φ ∨ₑ ψ
 scoped infixl:25 " →ₑ " => impl
 
-abbrev for_all {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ¬ₑ (∃ₑ⁎ (¬ₑ φ))
-scoped notation " ∀ₑ " => for_all
+abbrev for_all {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ¬ₑ (∃⁎ₑ (¬ₑ φ))
+scoped notation "∀ₑ " => for_all
 
-abbrev existence_unique {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ∃ₑ⁎ φ ∧ₑ ∃ₑ₀₁ φ
-scoped notation " ∃ₑ₁ " => existence_unique
+abbrev existence_unique {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ∃⁎ₑ φ ∧ₑ ∃₀₁ₑ φ
+scoped notation "∃₁ₑ " => existence_unique
 
 abbrev is_byzantine {n : Nat} (φ : Expr V P n) : Expr V P n := ¬ₑ (TFₑ φ)
-scoped notation " Bₑ " => is_byzantine
+scoped notation "Bₑ " => is_byzantine
 
-abbrev TF_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (TFₑ (Expr.predicate p (.bound 0)))
-scoped notation " TF[" p "] " => TF_all p
+scoped notation "[" p "]ₑ " t => Expr.predicate p t
+scoped notation "[" p "]ₑ " => Expr.predicate p (Term.bound 0)
 
-abbrev B_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (Bₑ (Expr.predicate p (.bound 0)))
-scoped notation " B[" p "] " => B_all p
+abbrev TF_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (TFₑ [p]ₑ)
+scoped notation "TF[" p "]ₑ " => TF_all p
 
+abbrev B_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (Bₑ [p]ₑ)
+scoped notation "B[" p "]ₑ " => B_all p
 
 end Notation
-
 
 open Notation
 
@@ -371,11 +377,11 @@ open scoped FinSemitopology
 
 variable
   {V P : Type}
-  [VFin : Fintype V]
-  [ValuDec : DecidableEq V]
-  [PFin : Fintype P]
-  [PDef : DecidableEq P]
-  [PNonempty : Nonempty P]
+  [Fintype V]
+  [DecidableEq V]
+  [Fintype P]
+  [DecidableEq P]
+  [Nonempty P]
   (μ : Model V P)
 
 def go {n : Nat} (Γ : List.Vector V n) (φ : Expr V P n) (p : P) : 𝟯 :=
@@ -388,6 +394,7 @@ def go {n : Nat} (Γ : List.Vector V n) (φ : Expr V P n) (p : P) : 𝟯 :=
   | .tf e => TF (go Γ e p)
   | .neg e => ¬ (go Γ e p)
   | .quorum e => ⊡(μ.S) (fun p => go Γ e p)
+  | .everywhere e => □ (fun p => go Γ e p)
   | .predicate p t => goTerm p t
   | .term t => goTerm p t
   | .exist e => ∃⁎ (fun v => go (n := n +1) (v ::ᵥ Γ) e p)
@@ -402,10 +409,10 @@ abbrev valid (φ : Expr V P 0) := ∀ p, valid_pred μ p φ
 abbrev model (Φ : Finset (Expr V P 0)) := ∀ φ ∈ Φ, valid μ φ
 abbrev entails (Τ Φ : Finset (Expr V P 0)) := model μ Τ → model μ Φ
 
-scoped notation p "⊨[" μ "]" φ => valid_pred μ p φ
-scoped notation "⊨[ " μ " ]" φ => valid μ φ
-scoped notation "⊨*[ " μ " ]" Φ => model μ Φ
-scoped notation Τ "⊨*[" μ "]" Φ => entails μ Τ Φ
+scoped notation p " ⊨[" μ "] " φ => valid_pred μ p φ
+scoped notation "⊨[ " μ " ] " φ => valid μ φ
+scoped notation "⊨*[ " μ " ] " Φ => model μ Φ
+scoped notation Τ " ⊨*[" μ "] " Φ => entails μ Τ Φ
 
 end Denotation
 
@@ -414,20 +421,53 @@ open Denotation
 namespace Lemmas
 
 open scoped FinSemitopology
+open scoped Three.Atom
+open scoped Three.Function
 
 variable
   {V P : Type}
-  [VFin : Fintype V]
-  [ValuDec : DecidableEq V]
-  [PFin : Fintype P]
-  [PDef : DecidableEq P]
-  [PNonempty : Nonempty P]
+  [Fintype V]
+  [DecidableEq V]
+  [Fintype P]
+  [DecidableEq P]
+  [Nonempty P]
   {μ : Model V P}
   {p : P}
   {φ : Expr V P 0}
  
-theorem valid_somewhere : (p ⊨[ μ ] (◇ₑ φ)) ↔ ⊨[ μ ] φ := by sorry
 
 end Lemmas
 
+section
+variable
+  {V P : Type}
+  [Fintype V]
+  [Nonempty V]
+  [DecidableEq V]
+
+inductive Tag where
+  | broadcast
+  | echo
+  | ready
+  | deliver
+  deriving DecidableEq, Nonempty, FinEnum
+  
+open Tag
+
+class ThyBB (μ : Model V Tag) where
+  BrDeliver? : ⊨[ μ ] ∀ₑ ([deliver]ₑ →ₑ ⊡ₑ [ready]ₑ)
+  BrReady? : ⊨[ μ ] ∀ₑ ([ready]ₑ →ₑ ⊡ₑ [echo]ₑ)
+  BrEcho? : ⊨[ μ ] ∀ₑ ([echo]ₑ →ₑ ◇ₑ [broadcast]ₑ)
+  BrDeliver! : ⊨[ μ ] ∀ₑ (⊡ₑ [ready]ₑ →ₑ [deliver]ₑ)
+  BrReady! : ⊨[ μ ] ∀ₑ (⊡ₑ [echo]ₑ →ₑ [ready]ₑ)
+  BrEcho! : ⊨[ μ ] ∀ₑ (◇ₑ [broadcast]ₑ →ₑ ∃⁎ₑ [echo]ₑ)
+  BrReady!! : ⊨[ μ ] ∀ₑ (⟐ₑ [ready]ₑ →ₑ ∃⁎ₑ [ready]ₑ)
+  BrEcho01 : ⊨[ μ ] ∃₀₁ₑ [echo]ₑ
+  BrBroadast1 : ⊨[ μ ] ∃₁ₑ (◇ₑ [broadcast]ₑ)
+  BrCorrect : ⊨[ μ ] ∀ₑ (⊡ₑ TF[ready]ₑ ∧ₑ ⊡ₑ TF[echo]ₑ)
+  BrCorrectReady : ⊨[ μ ] ∀ₑ (TF[ready]ₑ ∨ₑ B[ready]ₑ)
+  BrCorrectEcho : ⊨[ μ ] ∀ₑ (TF[echo]ₑ ∨ₑ B[echo]ₑ)
+  BrCorrectBroadcast : ⊨[ μ ] (□ₑ TF[broadcast]ₑ ∨ₑ B[broadcast]ₑ)
+
+end
 end Modal_Logic

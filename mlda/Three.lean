@@ -18,9 +18,7 @@ def neg : 𝟯 → 𝟯
   | false => true
   | byzantine => byzantine
   | true => false
-scoped prefix:75 "¬" => neg
-
-example : 𝟯 := ¬ Three.false
+scoped prefix:75 "¬ " => neg
 
 def and : 𝟯 → 𝟯 → 𝟯
   | true, true => true
@@ -207,9 +205,9 @@ scoped notation "⋁" => bigOr
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
 def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
-scoped prefix:75 "¬" => neg
+scoped prefix:75 "¬ᶠ " => neg
 
-theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ f) := by rfl
+theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ᶠ f) := by rfl
 
 def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
 scoped infixl:35 " ∧ " => and
@@ -259,16 +257,16 @@ theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
 @[simp] theorem Function.and_applied {x} : (f ∧ f') x = (f x ∧ f' x) := by
   simp [Function.and]
 
-@[simp] theorem Function.neg_applied {x} : (¬ f) x = ¬ (f x) := by simp [Function.neg]
+@[simp] theorem Function.neg_applied {x} : (¬ᶠ f) x = ¬ (f x) := by simp [Function.neg]
 
-theorem Function.neg_and : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
+theorem Function.neg_and : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
   rw [Three.Function.and, Three.Function.or, Three.Function.neg]
   funext; apply Lemmas.neg_and
 
 @[simp] theorem neg_neg : (¬ ¬ a) = a := by
   cases a <;> rfl
 
-@[simp] theorem Function.neg_neg : (¬ (¬ f)) = f := by
+@[simp] theorem Function.neg_neg : (¬ᶠ (¬ᶠ f)) = f := by
   unfold Three.Function.neg; simp; funext a; rw [Function.comp, Function.comp]
   cases h : f a <;> rfl
 
@@ -414,11 +412,11 @@ theorem join_byzantine : P.fold max false f = byzantine ↔ (∀ x ∈ P, f x �
     Finset.le_fold_max true
   simpa using h
 
-theorem meet_neg : ⋀ P (¬ f) = ¬ ⋁ P f := by
+theorem meet_neg : ⋀ P (¬ᶠ f) = ¬ ⋁ P f := by
   have := Finset.fold_hom (op := Atom.or) (op' := Atom.and) (b := false) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_or
 
-theorem join_neg : ⋁ P (¬ f) = ¬ ⋀ P f := by
+theorem join_neg : ⋁ P (¬ᶠ f) = ¬ ⋀ P f := by
   have := Finset.fold_hom (op := Atom.and) (op' := Atom.or) (b := true) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_and
 
@@ -479,12 +477,12 @@ theorem valid_TF : ⊨ (TF a) ↔ a = true ∨ a = false := by
 theorem T_neg : T (¬ a) = F a := by
   cases a <;> simp [Atom.isFalse]
 
-theorem Function.T_neg : T ∘ (¬ f) = F ∘ f := by
+theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
   funext a; simp [Lemmas.T_neg, Function.neg]
 
 @[simp] theorem neg_eq_true : (¬ a) = true ↔ a = false := by cases a <;> simp
   
-@[simp] theorem Function.neg_eq_true {x} : (¬ f) x = true ↔ f x = false := by
+@[simp] theorem Function.neg_eq_true {x} : (¬ᶠ f) x = true ↔ f x = false := by
   simp [Function.neg]
 
 theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by

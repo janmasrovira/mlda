@@ -6,6 +6,7 @@ import Mathlib.Data.Vector.Basic
 import Mathlib.Data.Vector.Defs
 import Mathlib.Order.Basic
 import Mathlib.Topology.Basic
+import mlda.Base.FinEnum
 
 class MapMin {A : Type} [Min A] (op : A → A) where
   map_min : ∀ x y, op (min x y) = min (op x) (op y)
