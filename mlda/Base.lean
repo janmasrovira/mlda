@@ -2,6 +2,8 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Defs
 import Mathlib.Data.Finset.Fold
 import Mathlib.Data.Finset.Powerset
+import Mathlib.Data.Vector.Basic
+import Mathlib.Data.Vector.Defs
 import Mathlib.Order.Basic
 import Mathlib.Topology.Basic
 

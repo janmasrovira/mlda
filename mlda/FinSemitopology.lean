@@ -466,7 +466,7 @@ open Three.Lemmas
 theorem t1 : ⊨ (◇ observe → ⊡(S) vote) := by
   rw [Proposition_2_2_2.p4]; intro h; obtain ⟨x, t⟩ := somewhere_true.mp h
   simp [quorum, le_join, le_meet]
-  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observe? x) t
+  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observe? x) (byzantine_le.mpr (.inr t))
   refine ⟨_, xo, ?_⟩; intro y ys; simp [sp _ ys]
 
 theorem t2 : ⊨ (⊡(S) vote ⇀ □ observe) := by
@@ -476,7 +476,7 @@ theorem t2 : ⊨ (⊡(S) vote ⇀ □ observe) := by
 theorem t3 : ⊨ (◇ (¬ observe) → ⊡(S) (¬ vote)) := by
   rw [Proposition_2_2_2.p4]; intro h; obtain ⟨x, t⟩ := somewhere_true.mp h
   simp [quorum, le_join, le_meet]
-  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observeN? x) t
+  obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observeN? x) (byzantine_le.mpr (.inr t))
   refine ⟨_, xo, ?_⟩; intro y ys; simp [sp _ ys]
 
 theorem t4 : ⊨ (⊡(S) vote ⇀ □ observe) := by
@@ -504,7 +504,8 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ observe))) := by
   intro h; rw [Valid, le_and] at h; have ⟨h1, h2⟩ := h
   simp [Remark_2_3_5.map_somewhere, somewhere_true] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
-  have votep := mp_weak (i.observe? p) px
+  have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
+  
   have votep' := mp_weak (i.observeN? p') (by simp [px'])
   have q : (⊡(S) vote ∧ ⊡(S) (¬ vote)) = .true :=
     Three.Lemmas.and_true.mpr ⟨votep, votep'⟩

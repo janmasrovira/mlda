@@ -299,6 +299,9 @@ theorem and_false : (a ∧ b) = Three.false ↔ (a = false ∨ b = false) := by
 theorem or_true : (a ∨ b) = Three.true ↔ (a = true ∨ b = true) := by
   cases a <;> cases b <;> decide
 
+theorem impl_true : (a → b) = Three.true ↔ (byzantine ≤ a → b = true) := by
+  cases a <;> cases b <;> decide
+
 @[simp] theorem bot_le : false ≤ a ↔ True := by
   cases a <;> decide
 
@@ -353,8 +356,7 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
   exists p1; constructor; assumption; exact ge_of_eq p3.symm
   apply h2.mpr; simp; assumption
 
-@[simp] theorem meet_true : ⋀ P f = true ↔ ∀ x ∈ P, f x = true := by
-  unfold bigAnd;
+@[simp] theorem meet_true : P.fold min true f = true ↔ ∀ x ∈ P, f x = true := by
   have h : true ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, true ≤ f x :=
     Finset.le_fold_min true
   simpa using h
@@ -499,7 +501,7 @@ theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> sim
 @[simp] theorem TF_and_B_false : (TF a ∧ B a) = false := by
   cases a <;> simp [Three.Atom.and]
 
-theorem mp_weak : ((a → b) = true) → a = true → b = true := by
+theorem mp_weak : ((a → b) = true) → byzantine ≤ a → b = true := by
   cases a <;> cases b <;> simp [Atom.impl, Atom.neg, Atom.or]
 
 theorem mp_strong_true : ((a ⇀ b) = true) → a = true → b = true := by

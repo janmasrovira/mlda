@@ -2,6 +2,7 @@
 
 import mlda.Base
 import mlda.Three
+import mlda.FinSemitopology
 
 variable
   {Value : Type}
@@ -80,9 +81,13 @@ omit [Fintype Value] in
   then simp [h]
   else simp [veq_false.mpr h]
 
-theorem affine_implies_eq : .byzantine ≤ ∃₀₁ f → f v = .true → f v' = .true → v = v' := by
+theorem byzantine_le_affine_implies_eq : .byzantine ≤ ∃₀₁ f → f v = .true → f v' = .true → v = v' := by
    intro h vt vt'; simp [existence_affine] at h
    have p := h v v'; simpa [vt, vt'] using p
+
+theorem affine_implies_eq : ∃₀₁ f = .true → .byzantine ≤ f v → .byzantine ≤ f v' → v = v' := by
+   intro h vt vt'; simp [existence_affine] at h
+   simpa using Three.Lemmas.mp_weak (h v v') (Three.Lemmas.le_and.mpr ⟨vt, vt'⟩)
 
 theorem unique_implies_existence_affine : a ≤ ∃₁ f → (a ≤ ∃⁎ f) ∧ (a ≤ ∃₀₁ f) := by
   intro h; simp [existence_unique] at h
@@ -227,32 +232,17 @@ end Part_2
 namespace Part_3
 
 abbrev P_A := ⊨ (T (∃₀₁ f))
-abbrev P_B := (∃? v, f v = .true) ∧ (∀ v, f v ≠ .byzantine)
+abbrev P_B := (∃? v, .byzantine ≤ f v)
 
--- theorem A_B : P_A f ↔ P_B f := by
---   simp [P_B]; constructor
---   · intro h
---     simp [existence_affine] at h
---     constructor
---     · intro a b ta tb;
---       simpa [ta, tb] using h a b
---     · intro v b
---       sorry
-      
-  --   obtain ⟨⟨u, fu⟩, h2⟩ := h
-  --   constructor; 
-  --   · intro a b ta tb
-  --     simpa [ta, tb] using h2 a b
-  --   · intro v e
-  --     have p := h2 u v
-  --     have uv : u ≠ v := sorry
-  --     conv at p => left; right; rw [Lemmas.veq_false.mpr uv]
-  --     simp [Three.Lemmas.and_false] at p; cases p
-  --     next h => rw [fu] at h; contradiction
-  --     next h => rw [e] at h; contradiction
-  -- · rintro ⟨h1, h2⟩
-  --   simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine]; constructor
-  --   · 
+theorem A_B : P_A f ↔ P_B f := by
+  simp [P_B]; constructor
+  · intro h x y px py
+    apply Lemmas.affine_implies_eq h px py
+  · intro h
+    simp [existence_affine, Three.Lemmas.impl_true]; intro x y p
+    obtain ⟨h1, h2⟩ := Three.Lemmas.le_and.mp p
+    apply_rules [p]
+
 end Part_3
 
 namespace Part_4
@@ -290,9 +280,86 @@ theorem t (h1 : (⊨ (∃₀₁ f) ∨ ⊨ (∃₁ f))) (h2 : ⊨ (T (f v ∧ f 
   simp at h1 h2
   obtain ⟨fv, fv'⟩ := Three.Lemmas.and_true.mp h2
   cases h1
-  next h => exact Lemmas.affine_implies_eq h fv fv'
-  next h => exact Lemmas.affine_implies_eq (Lemmas.unique_implies_affine h) fv fv'
+  next h => exact Lemmas.byzantine_le_affine_implies_eq h fv fv'
+  next h => exact Lemmas.byzantine_le_affine_implies_eq (Lemmas.unique_implies_affine h) fv fv'
 
 end Part_5
 
 end Proposition_3_1_3
+
+section Modal_Logic
+
+section Types
+
+inductive Term (V : Type) (scope : Nat) where
+  | bound : Fin scope → Term V scope
+  | val : V → Term V scope
+
+inductive Expr (V P : Type) : Nat → Type where
+  | term {n} : Term V n → Expr V P n
+  | bot {n} : Expr V P n
+  | neg {n} : Expr V P n → Expr V P n
+  | and {n} : Expr V P n → Expr V P n → Expr V P n
+  | quorum {n} : Expr V P n → Expr V P n
+  | tf {n} : Expr V P n → Expr V P n
+  | predicate {n} : P → Term V n → Expr V P n
+  | exist {n} : Expr V P (n +1) → Expr V P n
+  | exist_affine {n} : Expr V P (n +1) → Expr V P n
+
+def Interpretation (V P : Type) := P → V → 𝟯
+
+structure Model (V : Type)
+  [VFin : Fintype V]
+  [ValuDec : DecidableEq V]
+  (P : Type)
+  [PFin : Fintype P]
+  [PDef : DecidableEq P]
+  [PNonempty : Nonempty P]
+  (S : FinSemitopology P)
+  (ς : Interpretation V P)
+  where
+
+end Types
+
+section Denotation
+
+open scoped Three.Atom
+open scoped FinSemitopology
+
+variable
+  {V P : Type}
+  [VFin : Fintype V]
+  [ValuDec : DecidableEq V]
+  [PFin : Fintype P]
+  [PDef : DecidableEq P]
+  [PNonempty : Nonempty P]
+  {S : FinSemitopology P}
+  {ς : Interpretation V P}
+
+def go {n : Nat} (Γ : List.Vector V n) (p : P) (φ : Expr V P n) : 𝟯 :=
+  let goTerm (p' : P) (t : Term V n) : 𝟯 := match t with
+      | .bound a => ς p' (Γ.get a)
+      | .val v => ς p' v
+  match φ with
+  | .bot => .false
+  | .and l r => go Γ p l ∧ go Γ p r
+  | .tf e => TF (go Γ p e)
+  | .neg e => ¬ (go Γ p e)
+  | .quorum e => ⊡(S) (fun p => go Γ p e)
+  | .predicate p t => goTerm p t
+  | .term t => goTerm p t
+  | .exist e => ∃⁎ (fun v => go (n := n +1) (v ::ᵥ Γ) p e)
+  | .exist_affine e => ∃₀₁ (fun v => go (n := n +1) (v ::ᵥ Γ) p e)
+
+def denotation 
+  (S : FinSemitopology P)
+  (ς : Interpretation V P)
+  (p : P)
+  (φ : Expr V P 0)
+  : 𝟯 := go (ς := ς) (S := S) .nil p φ
+
+#check denotation
+
+end Denotation
+
+end Modal_Logic
