@@ -205,7 +205,7 @@ scoped notation "⋁" => bigOr
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
 def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
-scoped prefix:75 "¬ᶠ " => neg
+scoped prefix:75 "¬ᶠ" => neg
 
 theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ᶠ f) := by rfl
 
@@ -340,7 +340,7 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
     Finset.fold_min_le false
   simpa using h
 
-@[simp] theorem meet_byzantine2 : P.fold min true f = byzantine ↔ (∀ x ∈ P, byzantine ≤ f x) ∧ ∃ x ∈ P, f x = byzantine := by
+@[simp] theorem meet_byzantine : P.fold min true f = byzantine ↔ (∀ x ∈ P, byzantine ≤ f x) ∧ ∃ x ∈ P, f x = byzantine := by
   have h1 : P.fold min true f ≤ byzantine ↔ _ ∨ ∃ x ∈ P, f x ≤ byzantine :=
     Finset.fold_min_le byzantine
   have h2 : byzantine ≤ P.fold min true f ↔ _ ∧ ∀ x ∈ P, byzantine ≤ f x :=
@@ -385,6 +385,10 @@ theorem le_meet : a ≤ ⋀ P f ↔ ∀ x ∈ P, a ≤ f x := by
 
 theorem meet_le : ⋀ P f ≤ a ↔ a = true ∨ ∃ x ∈ P, f x ≤ a := by
   simpa using (Finset.fold_min_le (b := true) a)
+
+@[simp] theorem meet_le_byzantine : P.fold min true f ≤ byzantine ↔ (∃ x ∈ P, f x ≤ byzantine) := by
+  simp [meet_le]
+
 
 theorem le_join : a ≤ P.fold max false f ↔ a = false ∨ ∃ x ∈ P, f x ≥ a := by
   simpa using (Finset.le_fold_max (b := false) a)
@@ -449,6 +453,8 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 @[simp] theorem or_left_true : (true ∨ a) = true := by rfl
 @[simp] theorem or_right_true : (a ∨ true) = true := by cases a <;> rfl
 
+@[simp] theorem and_neg_neg : (¬ a ∧ ¬ b) = ¬ (a ∨ b) := by cases a <;> cases b <;> rfl
+
 @[simp] theorem or_right_byzantine_eq_byzantine : (a ∨ byzantine) = byzantine ↔ a ≤ byzantine := by cases a <;> simp
 @[simp] theorem or_left_byzantine_eq_byzantine : (byzantine ∨ a) = byzantine ↔ a ≤ byzantine := by cases a <;> simp
 @[simp] theorem or_right_byzantine_eq_true : (a ∨ byzantine) = true ↔ a = true := by cases a <;> simp
@@ -458,6 +464,9 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 @[simp] theorem le_or_right : b ≤ (a ∨ b) := by cases a <;> cases b <;> simp
 @[simp] theorem byzantine_eq_and_byzantine : (a ∧ byzantine) = byzantine ↔ byzantine ≤ a := by cases a <;> simp
 @[simp] theorem byzantine_eq_byzantine_and : (byzantine ∧ a) = byzantine ↔ byzantine ≤ a := by cases a <;> simp
+
+@[simp] theorem isNotByzantine_le_byzantine : isNotByzantine a ≤ Three.byzantine ↔ a = byzantine := by cases a <;> decide
+@[simp] theorem neg_le_byzantine : (¬ a) ≤ byzantine ↔ byzantine ≤ a := by cases a <;> decide
 
 @[simp] theorem and_le_left : (a ∧ b) ≤ a := by cases a <;> cases b <;> decide
 @[simp] theorem and_le_right : (b ∧ a) ≤ a := by cases a <;> cases b <;> decide
@@ -481,9 +490,23 @@ theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
   funext a; simp [Lemmas.T_neg, Function.neg]
 
 @[simp] theorem neg_eq_true : (¬ a) = true ↔ a = false := by cases a <;> simp
+@[simp] theorem neg_eq_false : (¬ a) = false ↔ a = true := by cases a <;> simp
+@[simp] theorem neg_eq_byzantine : (¬ a) = byzantine ↔ a = byzantine := by cases a <;> simp
   
 @[simp] theorem Function.neg_eq_true {x} : (¬ᶠ f) x = true ↔ f x = false := by
   simp [Function.neg]
+
+@[simp] theorem byzantine_meet_left_eq_true : (byzantine ∧ a) = true ↔ False := by
+  cases a <;> simp
+
+@[simp] theorem or_eq_false : (a ∨ b) = false ↔ (a = false ∧ b = false) := by
+  cases a <;> cases b <;> simp
+
+@[simp] theorem byzantine_meet_right_eq_true : (a ∧ byzantine) = true ↔ False := by
+  cases a <;> simp
+
+@[simp] theorem le_or_implies : byzantine ≤ (a ∨ b) ↔ (a = false → byzantine ≤ b) := by
+  cases a <;> cases b <;> simp
 
 theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
   intro p; cases a; simp;
@@ -493,6 +516,8 @@ theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
 theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> simp
 
 @[simp] theorem byzantine_le_B : .byzantine ≤ B a ↔ a = byzantine := by cases a <;> simp
+
+theorem byzantine_le_TF : byzantine ≤ TF a ↔ a ≠ byzantine := by cases a <;> decide
 
 @[simp] theorem byzantine_le_T : .byzantine ≤ T a ↔ a = true := by cases a <;> simp
 

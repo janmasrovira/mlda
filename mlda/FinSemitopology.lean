@@ -29,17 +29,17 @@ abbrev ℙ : Finset P := Finset.univ
 
 def Open1 : Finset (Finset P) := S.Open.filter (·.Nonempty)
 
-def everywhere := ⋀ ℙ f
+abbrev everywhere := ⋀ ℙ f
 scoped notation "□" => everywhere
 
-def somewhere := ⋁ ℙ f
+abbrev somewhere := ⋁ ℙ f
 scoped notation "◇" => somewhere
 
-def quorum := ⋁ S.Open1 (fun o => ⋀ o f)
+abbrev quorum := ⋁ S.Open1 (fun o => ⋀ o f)
 scoped notation "⊡" => quorum
 scoped notation "⊡" "(" A ")" => quorum (S := A)
 
-def contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
+abbrev contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
 scoped notation "⟐" => contraquorum
 scoped notation "⟐" "(" A ")" => contraquorum (S := A)
 
@@ -93,7 +93,7 @@ theorem p1_1 : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
   funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp; cases f x <;> cases f' x <;> simp!
 
 theorem p1_2 : (¬ᶠ (f ∨ f')) = (¬ᶠ f ∧ ¬ᶠ f') := by
-  funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp; cases f x <;> cases f' x <;> simp!
+  funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp
 
 theorem p1_3 [Fintype P] : (¬ (◇ (¬ᶠ f))) = □ f := by
   simp [somewhere, everywhere, join_neg];
@@ -103,11 +103,11 @@ theorem p1_4 [Fintype P] : (¬ (□ (¬ᶠ f))) = ◇ f := by
 
 theorem p1_5 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
   : (¬ (⟐(S) (¬ᶠ f))) = ⊡(S) f := by
-  simp [contraquorum, join_neg, Three.Function.neg_fold, meet_neg]; rfl
+  simp [contraquorum, join_neg, Three.Function.neg_fold, meet_neg]
 
 theorem p1_6 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
   : (¬ (⊡(S) (¬ᶠ f))) = ⟐(S) f := by
-  simp [quorum, meet_neg, Three.Function.neg_fold, join_neg]; rfl
+  simp [quorum, meet_neg, Three.Function.neg_fold, join_neg]
 
 @[simp] theorem p2_1 : (¬ (T (¬ a))) = TB a := by cases a <;> rfl
 @[simp] theorem p2_2 : (¬ (TB (¬ a))) = T a := by cases a <;> rfl
@@ -224,7 +224,7 @@ variable
   {S : FinSemitopology P}
 
 theorem p1 : (⊡(S) f ∧ ⟐(S) f') ≤ ◇ (f ∧ f') := by
-  apply le_by_cases;
+  apply le_by_cases
   case c1 =>
     intro h1 _
     obtain ⟨h1, h2⟩ := and_true.mp h1
@@ -347,7 +347,7 @@ theorem q' : ∃ s ∈ S.Open1, ∀ x ∈ s, ⊨ (TF (f x)) := by
 include q in
 theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
   have ⟨qs, qm, p⟩ := q' q;
-  intro k; simp [quorum_true];
+  intro k; simp;
   cases valid_cases.mp k
   next l =>
     exists qs; constructor; assumption
@@ -362,7 +362,7 @@ include q in
 theorem valid_quorum_implies_true [twined : Twined3 S]
   : ⊨ (⊡(S) f) -> ⊡(S) f = Three.true := by
   intro h; simp [quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
-  have ⟨qs, qm, p⟩ := q' q; simp [quorum_true]
+  have ⟨qs, qm, p⟩ := q' q; simp
   refine ⟨qs ∩ h1, ?_, ?_⟩;
   have t := twined.twined qm qm h2; simpa using t
   intro x xq; obtain ⟨x1, x2⟩ := by simpa [Finset.mem_inter] using xq
@@ -391,7 +391,7 @@ theorem t4 : ⊨ ((⊡(S) f) ∧ ⟐(S) (T ∘ f')) → ⊨ (T (◇ f')) := by
   have y := Lemma_2_3_7.c1 (S := S) (f := f) h
   obtain ⟨y, yp⟩ := by simpa [somewhere, le_join] using y
   obtain ⟨_, yp⟩ := by simpa [le_and] using yp
-  simp [Valid, somewhere_true]; exists y
+  simp [Valid]; exists y
 
 omit q in
 theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) := by
@@ -400,7 +400,7 @@ theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S)
   simp [quorum, le_join] at h1 h2
   replace ⟨h1, h1m, h1p⟩ := h1
   replace ⟨h2, h2m, h2p⟩ := h2
-  rw [contraquorum, le_meet]; intro w wm; simp [le_join]
+  intro w wm
   obtain ⟨k, ⟨lm, l⟩⟩ := by simpa [Open1] using twined.twined h1m h2m wm
   simp [Finset.mem_inter] at l
   refine ⟨lm, l.2.2, ?_⟩; simp [le_and]; constructor
@@ -495,7 +495,7 @@ include i in
 theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
   apply notValid_by_contra
   intro h; rw [Valid, le_and] at h; have ⟨h1, h2⟩ := h
-  simp [Remark_2_3_5.map_somewhere, somewhere_true] at h1 h2
+  simp [Remark_2_3_5.map_somewhere] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
   have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
   
