@@ -4,6 +4,9 @@ import mlda.Base
 import mlda.Three
 import mlda.FinSemitopology
 
+open Three
+open scoped Three.Atom
+
 variable
   {Value : Type}
   [Fintype Value]
@@ -15,9 +18,6 @@ namespace Definitions
 variable
   (f : Value → 𝟯)
   (v v' : Value)
-
-open scoped Three.Atom
-open Three
 
 def allValues : Finset Value := Finset.univ
 
@@ -46,8 +46,6 @@ end Definitions
 open Definitions
 
 namespace Lemmas
-
-open scoped Three.Atom
 
 variable
   {f : Value → 𝟯}
@@ -87,11 +85,11 @@ theorem byzantine_le_affine_implies_eq : .byzantine ≤ ∃₀₁ f → f v = .t
 
 theorem affine_implies_eq : ∃₀₁ f = .true → .byzantine ≤ f v → .byzantine ≤ f v' → v = v' := by
    intro h vt vt'; simp [existence_affine] at h
-   simpa using Three.Lemmas.mp_weak (h v v') (Three.Lemmas.le_and.mpr ⟨vt, vt'⟩)
+   simpa using Lemmas.mp_weak (h v v') (Lemmas.le_and.mpr ⟨vt, vt'⟩)
 
 theorem unique_implies_existence_affine : a ≤ ∃₁ f → (a ≤ ∃⁎ f) ∧ (a ≤ ∃₀₁ f) := by
   intro h; simp [existence_unique] at h
-  exact Three.Lemmas.le_and.mp h
+  exact Lemmas.le_and.mp h
 
 theorem unique_implies_affine : a ≤ ∃₁ f → a ≤ ∃₀₁ f := by
   intro h; exact unique_implies_existence_affine h |>.2
@@ -103,7 +101,6 @@ end Lemmas
 
 namespace Remark_3_1_2
 
-open scoped Three.Atom
 open Lemmas
 
 variable
@@ -119,7 +116,7 @@ theorem t1 : f v = .true → f v' = .true → v ≠ v'
 
 theorem t2 : (∃! v, f v = .true) → (∀ v', f v' ≠ .byzantine) → ∃₁ f = .true := by
   rintro ⟨t, ft, h1⟩ h2
-  simp [existence_unique, Three.Lemmas.and_true]; constructor
+  simp [existence_unique, Lemmas.and_true]; constructor
   exists t; intro x y
   have hx := h2 x; have hy := h2 y
   cases fx : f x <;> first | contradiction | simp
@@ -138,7 +135,7 @@ theorem t3 : (∃! v, f v = .true) → f v' = .byzantine
     exists v'; constructor; intro y
     cases fy : f y <;> first | contradiction | simp [h2]
     exists v; simp [h2, vt]; intro e; rw [e, vt] at h2; contradiction
-  constructor; simp [existence_unique, affine, existence, Three.Lemmas.le_join]
+  constructor; simp [existence_unique, affine, existence, Lemmas.le_join]
   exists v'; simp [h2]; exact affine
 
 -- NOTE I think this theorem is not entirely true and not needed (see pdf). I think it should be removed. It is superseded by t5
@@ -154,7 +151,7 @@ theorem t5 : (∀ v, f v ≤ .byzantine) → v ≠ v' → f v = .byzantine → f
       have := p x; rw [fx] at this; contradiction
     · exists v; simp [fv]
       exists v'; simp [veq_false.mpr ne, fv']
-  simp [existence_unique, affine, existence, Three.Lemmas.le_join]
+  simp [existence_unique, affine, existence, Lemmas.le_join]
   exists v; simp [fv]
 
 theorem t6 : (∀ v, f v = .false) → ∃₁ f = .false ∧ ∃₀₁ f = .true := by
@@ -211,12 +208,12 @@ abbrev P_B := (∃ v, ⊨ (f v)) ∧ ⊨ (∃₀₁ f)
 theorem A_B : P_A f ↔ P_B f := by
   simp [P_B]; constructor
   · intro h
-    simp [existence_unique, existence, existence_affine, Three.Lemmas.le_and] at h
+    simp [existence_unique, existence, existence_affine, Lemmas.le_and] at h
     obtain ⟨h1, h2⟩ := h
     constructor <;> assumption
   · intro ⟨h1, h2⟩
     rw [existence_unique]
-    apply Three.Lemmas.le_and.mpr
+    apply Lemmas.le_and.mpr
     constructor
     · simpa [existence]
     · simpa
@@ -233,8 +230,8 @@ theorem A_B : P_A f ↔ P_B f := by
   · intro h x y px py
     apply Lemmas.affine_implies_eq (by simp; exact h) px py
   · intro h
-    simp [Three.Lemmas.impl_true]; intro x y p
-    obtain ⟨h1, h2⟩ := Three.Lemmas.le_and.mp p
+    simp [Lemmas.impl_true]; intro x y p
+    obtain ⟨h1, h2⟩ := Lemmas.le_and.mp p
     apply_rules [p]
 
 end Part_3
@@ -246,20 +243,20 @@ abbrev P_B := (∃! v, f v = .true) ∧ (∀ v, f v ≠ .byzantine)
 
 theorem A_B : P_A f ↔ P_B f := by
   simp [P_B]; constructor
-  · intro h; simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine] at h
+  · intro h; simp [existence_unique, Lemmas.and_true, existence, existence_affine] at h
     obtain ⟨⟨u, ut⟩, h2⟩ := h; constructor
     · exists u; constructor; assumption
       intro v vt
-      simpa [Three.Lemmas.and_true, ut, vt] using Three.Lemmas.mp_weak (h2 v u)
+      simpa [Lemmas.and_true, ut, vt] using Lemmas.mp_weak (h2 v u)
     · intro v vb
       have e := by simpa [ut, vb] using h2 u v
       rw [e] at ut; rw [ut] at vb; contradiction
   rintro ⟨⟨u, ut, uu⟩, h2⟩
-  simp [existence_unique, Three.Lemmas.and_true, existence, existence_affine]; constructor
+  simp [existence_unique, Lemmas.and_true, existence, existence_affine]; constructor
   · exists u
-  · intro x y; simp [Three.Lemmas.or_true]
+  · intro x y; simp [Lemmas.or_true]
     if xy : x = y then right; assumption
-    else left; simp [Three.Lemmas.and_false]
+    else left; simp [Lemmas.and_false]
          cases fx : f x <;> cases fy : f y <;> first | contradiction | simp
          exact h2 x fx; exact h2 x fx; exact h2 y fy
          have xt := uu _ fx
@@ -272,7 +269,7 @@ namespace Part_5
 
 theorem t (h1 : (⊨ (∃₀₁ f) ∨ ⊨ (∃₁ f))) (h2 : ⊨ (T (f v ∧ f v'))) : v = v' := by
   simp at h1 h2
-  obtain ⟨fv, fv'⟩ := Three.Lemmas.and_true.mp h2
+  obtain ⟨fv, fv'⟩ := Lemmas.and_true.mp h2
   cases h1
   next h => exact Lemmas.byzantine_le_affine_implies_eq (by simp; exact h) fv fv'
   next h => exact Lemmas.byzantine_le_affine_implies_eq (Lemmas.unique_implies_affine h) fv fv'
@@ -356,6 +353,9 @@ scoped notation "Bₑ " => is_byzantine
 scoped notation "[" p ", " t "]ₑ" => Expr.predicate p t
 scoped notation "[" p "]ₑ" => Expr.predicate p (Term.bound 0)
 
+-- abbrev T_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (Tₑ [p]ₑ)
+-- scoped notation "T[" p "]ₑ" => T_all p
+
 abbrev TF_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (TFₑ [p]ₑ)
 scoped notation "TF[" p "]ₑ" => TF_all p
 
@@ -368,7 +368,6 @@ open Notation
 
 namespace Denotation
 
-open scoped Three.Atom
 open scoped FinSemitopology
 
 variable
@@ -418,7 +417,6 @@ open Denotation
 namespace Lemmas
 
 open scoped FinSemitopology
-open scoped Three.Atom
 open scoped Three.Function
 
 variable
@@ -433,7 +431,7 @@ variable
   {φ ψ : Expr V P 0}
  
 @[simp] theorem valid_pred_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ := by
-  simp [denotation, go, Three.Lemmas.le_or]
+  simp [denotation, go, Lemmas.le_or]
 
 end Lemmas
 
@@ -478,16 +476,15 @@ namespace Lemma_4_2_4
 variable
   {V : Type}
   [Fintype V]
-  -- [Nonempty V]
   [DecidableEq V]
   (μ : Model V Tag)
-  -- [twined : FinSemitopology.Twined3 μ.S]
   [bb : ThyBB μ]
+  {p : Tag}
+  {v : V}
 
-open scoped Three.Atom
 
-abbrev P1 := (∀ p, p ⊨[μ] TF[.broadcast]ₑ) ∧ 
-         ∃! v : V, ∀ p, p ⊨[μ] (Tₑ (◇ₑ [broadcast, .val v]ₑ))  
+abbrev P1 := (⊨[μ] TF[.broadcast]ₑ) ∧ 
+             ∃! v, ∀ p, p ⊨[μ] (Tₑ (◇ₑ [broadcast, .val v]ₑ))  
 
 abbrev P2 := ∀ v, ∀ p, p ⊨[μ] Bₑ [broadcast, .val v]ₑ
 
@@ -496,16 +493,16 @@ theorem t : P1 μ ∨ P2 μ := by
   cases Lemmas.valid_pred_or.mp (bb.BrCorrectBroadcast default)
   · next h => left; constructor
               · intro p; simp [denotation, go, existence] at *; intro v; 
-                simp [Three.Lemmas.byzantine_le_TF]
-                intro x; have k := Three.Lemmas.byzantine_le_TF.mp (h v)
+                simp [Lemmas.byzantine_le_TF]
+                intro x; have k := Lemmas.byzantine_le_TF.mp (h v)
                 contradiction
               · have b := bb.BrBroadast1 default
-                simp [denotation, go, existence, Three.Lemmas.le_and] at b
+                simp [denotation, go, existence, Lemmas.le_and] at b
                 have ⟨⟨v, b1⟩, b2⟩ := b; clear b
                 exists v; simp [denotation, go] at h ⊢;
                 have : Model.ς μ broadcast v = Three.true := by
-                  specialize h v; simp [Three.Lemmas.byzantine_le_TF] at h
-                  cases Three.Lemmas.byzantine_le.mp b1; contradiction; assumption
+                  specialize h v; simp [Lemmas.byzantine_le_TF] at h
+                  cases Lemmas.byzantine_le.mp b1; contradiction; assumption
                 constructor
                 · assumption
                 · intro u fx; specialize b2 u v; apply_rules
@@ -513,7 +510,68 @@ theorem t : P1 μ ∨ P2 μ := by
               simp [denotation, go, FinSemitopology.everywhere, existence] at h
               exact h v
 
-
 end Lemma_4_2_4
+
+namespace Lemmas
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model V Tag}
+  [bb : ThyBB μ]
+  {p : Tag}
+  {v : V}
+
+theorem when_broadcast : (Model.ς μ broadcast v = .true) → 
+  Lemma_4_2_4.P1 μ ∧ (∀ v', byzantine ≤ Model.ς μ broadcast v' → v = v') := by
+  intro h; cases Lemma_4_2_4.t μ
+  next k => constructor
+            · assumption
+            · intro v' pv; obtain ⟨h1, ⟨w, p2, q1⟩⟩ := k
+              specialize h1 default; simp [denotation, go] at h1
+              have helper : ∀ {u}, byzantine ≤ Model.ς μ broadcast u → Model.ς μ broadcast u = Three.true := by 
+                intro u pu; cases Lemmas.byzantine_le.mp pu
+                · next h => have x := h1 u; simp [Lemmas.byzantine_le_TF] at x; contradiction
+                · next h => assumption
+              have d1 := q1 v' (by intro p; simp [denotation, go]; exact helper pv)
+              have d2 := q1 v (by intro p; simp [denotation, go]; assumption)
+              subst_vars; rfl
+  next k => simp [Lemma_4_2_4.P2, denotation, go] at k; specialize k v; rw [h] at k; contradiction
+
+end Lemmas
+
+namespace Lemma_4_2_6
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  (μ : Model V Tag)
+  [bb : ThyBB μ]
+  (v : V)
+
+namespace Part_1
+
+theorem t : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ [echo, .val v]ₑ) := by
+  intro p; simp [denotation, go]; intro h
+  have i := bb.BrEcho! p; simp [denotation, go] at i; specialize i v h
+  obtain ⟨v', pv⟩ := i
+  have j := bb.BrCorrectEcho p; simp [denotation, go] at j; specialize j v'; simp [Lemmas.and_le] at j
+  cases j
+  · next k => simp at k; specialize k v'
+              have q := Three.Atom.Proposition_2_2_2.p8 (a := Model.ς μ echo v')
+              simp at q; replace q := q.mp pv; simp [q] at k
+              have brecho? := bb.BrEcho? p; simp [denotation, go] at brecho?; specialize brecho? v'
+              simp [Lemmas.and_le] at brecho?; cases brecho?
+              next u => rw [k] at u; contradiction
+              next u => rwa [Lemmas.when_broadcast h |>.2 v' u]
+  · next k => rw [k v]
+
+
+end Part_1
+
+end Lemma_4_2_6
+
 
 end Modal_Logic
