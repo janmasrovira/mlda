@@ -512,7 +512,7 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
 @[substSimp] theorem substAt_quorum : ₛ[⊡ₑ α, k ↦ v] = (⊡ₑ ₛ[α, k ↦ v]) := by simp
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
-@[substSimp] theorem substAt_bound : Term.substAt 0 v (.bound 0) = (.val v : Term V 0) := by simp
+@[substSimp] theorem substAt_bound {n : Nat} : Term.substAt 0 v (.bound 0) = .val (scope := n) v := by simp
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
 @[substSimp] theorem substAt_predicate : ₛ[Expr.predicate p (.bound 0), 0 ↦ v] = (Expr.predicate p (.val v) : Expr V P 1) := by simp
@@ -688,8 +688,14 @@ theorem t3 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ →ₑ □ₑ [ready, .val v]ₑ)
   apply valid_iff_everywhere.mp; intro p'
   have b := Lemmas.valid_forall₁.mp (bb.BrReady! p') v
   simp only [substSimp, substAt] at b; rw [Lemmas.substAt_bound] at b
-  have := Lemmas.valid_impl.mp b; apply_rules
-  ext w; simpa [den_quorum_global w p]
+  apply Lemmas.valid_impl.mp b; simpa only [den_quorum_global p' p]
+
+theorem t4 : ⊨[μ] (⊡ₑ [ready, .val v]ₑ →ₑ □ₑ [deliver, .val v]ₑ) := by
+  intro p; rw [Lemmas.valid_impl]; intro h; simp only at h
+  apply valid_iff_everywhere.mp; intro p'
+  have b := Lemmas.valid_forall₁.mp (bb.BrDeliver! p') v
+  simp only [substSimp, substAt] at b; rw [Lemmas.substAt_bound] at b
+  apply Lemmas.valid_impl.mp b; simpa only [den_quorum_global p' p]
 
 end Lemma_4_2_6
 
