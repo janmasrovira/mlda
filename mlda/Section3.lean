@@ -3,6 +3,7 @@
 import mlda.Base
 import mlda.Three
 import mlda.FinSemitopology
+import Mathlib.Tactic.Attr.Register
 
 open Three
 open scoped Three.Atom
@@ -10,7 +11,6 @@ open scoped Three.Atom
 variable
   {Value : Type}
   [Fintype Value]
-  -- [Nonempty Value] -- TODO is this needed?
   [DecidableEq Value]
 
 namespace Definitions
@@ -338,7 +338,7 @@ scoped notation "⟐ₑ " => contraquorum
 abbrev or {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ (¬ₑ φ ∧ₑ ¬ₑ ψ)
 scoped infixl:30 " ∨ₑ " => or
 
-abbrev impl {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ φ ∨ₑ ψ
+@[simp] def impl {n : Nat} (φ ψ : Expr V P n) : Expr V P n := ¬ₑ φ ∨ₑ ψ
 scoped infixl:25 " →ₑ " => impl
 
 abbrev for_all {n : Nat} (φ : Expr V P (n +1)) : Expr V P n := ¬ₑ (∃⁎ₑ (¬ₑ φ))
@@ -352,9 +352,6 @@ scoped notation "Bₑ " => is_byzantine
 
 scoped notation "[" p ", " t "]ₑ" => Expr.predicate p t
 scoped notation "[" p "]ₑ" => Expr.predicate p (Term.bound 0)
-
--- abbrev T_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (Tₑ [p]ₑ)
--- scoped notation "T[" p "]ₑ" => T_all p
 
 abbrev TF_all {n : Nat} (p : P) : Expr V P n := ∀ₑ (TFₑ [p]ₑ)
 scoped notation "TF[" p "]ₑ" => TF_all p
@@ -387,7 +384,7 @@ variable
     else if h : i < k then .bound ⟨i, by omega⟩
     else .bound ⟨i - 1, by omega⟩
 
-@[simp] def Expr.substAt {n : Nat} (k : Fin (n + 1)) (v : V) : Expr V P (n + 1) → Expr V P n
+@[simp] def substAt {n : Nat} (k : Fin (n + 1)) (v : V) : Expr V P (n + 1) → Expr V P n
   | .term t        => .term (Term.substAt k v t)
   | .bot           => .bot
   | .neg e         => .neg (substAt k v e)
@@ -406,20 +403,20 @@ def Expr.size {n : Nat} : Expr V P n → Nat
   | .neg e | .quorum e | .everywhere e | .tf e | .t e | .exist e | .exist_affine e => Expr.size e +1
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
-theorem Expr.substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr V P (n + 1)) :
-  Expr.size (Expr.substAt k v φ) = Expr.size φ :=
+theorem substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr V P (n + 1)) :
+  Expr.size (substAt k v φ) = Expr.size φ :=
   match φ with
-  | .bot => by simp [Expr.size, Expr.substAt]
-  | .neg e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
-  | .tf e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
-  | .quorum e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
-  | .predicate p t => by simp [Expr.size, Expr.substAt]
-  | .t e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
-  | .everywhere e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
-  | .and l r => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v l, Expr.substAt_size k v r]
-  | .term t => by simp [Expr.size, Expr.substAt]
-  | .exist e => by simp [Expr.size, Expr.substAt, Expr.substAt_size (n := n + 1) k.succ v e]
-  | .exist_affine e => by simp [Expr.size, Expr.substAt, Expr.substAt_size (n := n + 1) k.succ v e]
+  | .bot => by simp [Expr.size, substAt]
+  | .neg e => by simp [Expr.size, substAt, substAt_size k v e]
+  | .tf e => by simp [Expr.size, substAt, substAt_size k v e]
+  | .quorum e => by simp [Expr.size, substAt, substAt_size k v e]
+  | .predicate p t => by simp [Expr.size, substAt]
+  | .t e => by simp [Expr.size, substAt, substAt_size k v e]
+  | .everywhere e => by simp [Expr.size, substAt, substAt_size k v e]
+  | .and l r => by simp [Expr.size, substAt, substAt_size k v l, substAt_size k v r]
+  | .term t => by simp [Expr.size, substAt]
+  | .exist e => by simp [Expr.size, substAt, substAt_size (n := n + 1) k.succ v e]
+  | .exist_affine e => by simp [Expr.size, substAt, substAt_size (n := n + 1) k.succ v e]
                     
 def denotation (φ : Expr V P 0) (p : P) : 𝟯 :=
   let denTerm (p' : P) (t : Term V 0) : 𝟯 := match t with
@@ -434,12 +431,12 @@ def denotation (φ : Expr V P 0) (p : P) : 𝟯 :=
   | .everywhere e, _ => □ (fun p => denotation e p)
   | .predicate p t, _ => denTerm p t
   | .term t, _ => denTerm p t
-  | .exist e, _ => ∃⁎ (fun v => denotation (Expr.substAt 0 v e) p)
-  | .exist_affine e, _ => ∃₀₁ (fun v => denotation (Expr.substAt 0 v e) p)
+  | .exist e, _ => ∃⁎ (fun v => denotation (substAt 0 v e) p)
+  | .exist_affine e, _ => ∃₀₁ (fun v => denotation (substAt 0 v e) p)
   termination_by Expr.size φ
-  decreasing_by all_goals try simp [Expr.size, Expr.substAt_size] <;> omega
+  decreasing_by all_goals try simp [Expr.size, substAt_size] <;> omega
 
-scoped notation  "ₛ[" φ ", " ix "↦" v "]" => Expr.substAt ix v φ
+scoped notation  "ₛ[" φ ", " ix "↦" v "]" => substAt ix v φ
 scoped notation "⟦" φ' "⟧ᵈ" => denotation (φ := φ')
 
 abbrev valid_pred (p : P) (φ : Expr V P 0) : Prop := .byzantine ≤ ⟦ φ ⟧ᵈ μ p
@@ -466,31 +463,23 @@ variable
   [DecidableEq P]
   [Nonempty P]
   {μ : Model V P}
-  {p : P}
+  {p p' : P}
   {φ : Expr V P 0}
 
-theorem somewhere_global : (p ⊨[μ] (◇ₑ φ)) ↔ ⊨[μ] (◇ₑ φ) := by
-  constructor
-  · intro h p'; simp [denotation] at h ⊢; assumption
-  · intro h; apply_rules
+theorem den_somewhere_global (p p' : P) : ⟦◇ₑ φ⟧ᵈ μ p = ⟦◇ₑ φ⟧ᵈ μ p' := by simp [denotation]
+theorem somewhere_global : (p ⊨[μ] (◇ₑ φ)) → p' ⊨[μ] (◇ₑ φ) := by simp [den_somewhere_global p p']
 
-theorem everywhere_global : (p ⊨[μ] (□ₑ φ)) ↔ ⊨[μ] (□ₑ φ) := by
-  constructor
-  · intro h p'; simp [denotation] at h ⊢; assumption
-  · intro h; apply_rules
+theorem den_everywhere_global (p p' : P) : ⟦□ₑ φ⟧ᵈ μ p = ⟦□ₑ φ⟧ᵈ μ p' := by simp [denotation]
+theorem everywhere_global : (p ⊨[μ] (□ₑ φ)) → p' ⊨[μ] (□ₑ φ) := by simp [den_everywhere_global p p']
 
 theorem valid_iff_everywhere : (⊨[μ] φ) ↔ p ⊨[μ] (□ₑ φ) := by
   simp [valid, denotation]
 
-theorem quorum_global : (p ⊨[μ] (⊡ₑ φ)) ↔ ⊨[μ] (⊡ₑ φ) := by
-  constructor
-  · intro h p'; simp [denotation] at h ⊢; assumption
-  · intro h; apply_rules
+theorem den_quorum_global (p p' : P) : ⟦⊡ₑ φ⟧ᵈ μ p = ⟦⊡ₑ φ⟧ᵈ μ p' := by simp [denotation]
+theorem quorum_global : (p ⊨[μ] (⊡ₑ φ)) ↔ p' ⊨[μ] (⊡ₑ φ) := by simp [den_quorum_global p p']
 
-theorem contraquorum_global : (p ⊨[μ] (⟐ₑ φ)) ↔ ⊨[μ] (⟐ₑ φ) := by
-  constructor
-  · intro h p'; simp [denotation] at h ⊢; assumption
-  · intro h; apply_rules
+theorem den_contraquorum_global (p p' : P) : ⟦⟐ₑ φ⟧ᵈ μ p = ⟦⟐ₑ φ⟧ᵈ μ p' := by simp [denotation]
+theorem contraquorum_global : (p ⊨[μ] (⟐ₑ φ)) → p' ⊨[μ] (⟐ₑ φ) := by simp [den_contraquorum_global p p']
 
 end Notation_3_2_4
 
@@ -509,10 +498,24 @@ variable
   {μ : Model V P}
   {p : P}
   {n : Nat}
+  {k : Fin (n + 1)}
   {v : V}
   {φ ψ : Expr V P 0}
+  {α β : Expr V P (n + 1)}
   {φ₁ : Expr V P 1}
   {Γ : List.Vector V n}
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
+@[substSimp] theorem substAt_impl : ₛ[α →ₑ β, k ↦ v] = (ₛ[α, k ↦ v] →ₑ ₛ[β, k ↦ v]) := by simp
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
+@[substSimp] theorem substAt_quorum : ₛ[⊡ₑ α, k ↦ v] = (⊡ₑ ₛ[α, k ↦ v]) := by simp
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
+@[substSimp] theorem substAt_bound : Term.substAt 0 v (.bound 0) = (.val v : Term V 0) := by simp
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
+@[substSimp] theorem substAt_predicate : ₛ[Expr.predicate p (.bound 0), 0 ↦ v] = (Expr.predicate p (.val v) : Expr V P 1) := by simp
 
 @[simp] theorem denotation_neg : ⟦¬ₑ φ⟧ᵈ μ p = (¬ ⟦φ⟧ᵈ μ p) := by
   simp [denotation]
@@ -534,12 +537,11 @@ theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = Three.t
     · intro _; assumption
   · intro h; apply Decidable.or_iff_not_imp_left.mpr; simpa
 
-axiom axiom_valid_exist : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v])
-
-theorem axiom_valid_exist₁ : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
+theorem valid_exist₁ : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
   cases φ₁ <;> simp [denotation]
 
-axiom axiom_valid_forall : (p ⊨[μ] ∀ₑ φ₁) ↔ (∀ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v])
+theorem valid_forall₁ : (p ⊨[μ] ∀ₑ φ₁) ↔ (∀ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
+  cases φ₁ <;> simp [denotation]
 
 end Lemmas
 
@@ -681,10 +683,13 @@ theorem t1 : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ [echo, .val v]ₑ) :=
   rw [Lemmas.valid_impl] at h1;
   specialize h1 h; apply valid_iff_everywhere.mpr at h1; exact h1 p
 
--- theorem t3 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ →ₑ □ₑ [ready, .val v]ₑ) := by
---   intro p; rw [Lemmas.valid_impl]; intro h; simp only at h
---   have b := bb.BrReady! p
---   simp [denotation, go] at b; specialize b v; simp [Lemmas.and_le] at b
+theorem t3 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ →ₑ □ₑ [ready, .val v]ₑ) := by
+  intro p; rw [Lemmas.valid_impl]; intro h; simp only at h
+  apply valid_iff_everywhere.mp; intro p'
+  have b := Lemmas.valid_forall₁.mp (bb.BrReady! p') v
+  simp only [substSimp, substAt] at b; rw [Lemmas.substAt_bound] at b
+  have := Lemmas.valid_impl.mp b; apply_rules
+  ext w; simpa [den_quorum_global w p]
 
 end Lemma_4_2_6
 
