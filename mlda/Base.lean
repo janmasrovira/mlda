@@ -8,6 +8,8 @@ import Mathlib.Order.Basic
 import Mathlib.Topology.Basic
 import mlda.Base.FinEnum
 
+register_simp_attr substSimp
+
 class MapMin {A : Type} [Min A] (op : A → A) where
   map_min : ∀ x y, op (min x y) = min (op x) (op y)
 
