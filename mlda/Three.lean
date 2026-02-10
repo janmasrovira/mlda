@@ -505,7 +505,10 @@ theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
 @[simp] theorem byzantine_meet_right_eq_true : (a ∧ byzantine) = true ↔ False := by
   cases a <;> simp
 
-@[simp] theorem le_or_implies : byzantine ≤ (a ∨ b) ↔ (a = false → byzantine ≤ b) := by
+@[simp] theorem byzantine_lt : byzantine < a ↔ a = true := by
+  cases a <;> simp
+
+theorem le_or_implies : byzantine ≤ (a ∨ b) ↔ (a = false → byzantine ≤ b) := by
   cases a <;> cases b <;> simp
 
 theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
@@ -528,6 +531,9 @@ theorem byzantine_le_TF : byzantine ≤ TF a ↔ a ≠ byzantine := by cases a <
   cases a <;> simp
 
 @[simp] theorem TF_TF : TF (TF a) = true := by
+  cases a <;> simp
+
+@[simp] theorem TF_eq_false : (TF a) = false ↔ a = byzantine := by
   cases a <;> simp
 
 theorem mp_weak : ((a → b) = true) → byzantine ≤ a → b = true := by
