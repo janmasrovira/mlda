@@ -379,26 +379,7 @@ variable
   [Nonempty P]
   (μ : Model V P)
 
-def go {n : Nat} (Γ : List.Vector V n) (φ : Expr V P n) (p : P) : 𝟯 :=
-  let goTerm (p' : P) (t : Term V n) : 𝟯 := match t with
-      | .bound a => μ.ς p' (Γ.get a)
-      | .val v => μ.ς p' v
-  match φ with
-  | .bot => .false
-  | .and l r => go Γ l p ∧ go Γ r p
-  | .tf e => TF (go Γ e p)
-  | .t e => T (go Γ e p)
-  | .neg e => ¬ (go Γ e p)
-  | .quorum e => ⊡(μ.S) (fun p => go Γ e p)
-  | .everywhere e => □ (fun p => go Γ e p)
-  | .predicate p t => goTerm p t
-  | .term t => goTerm p t
-  | .exist e => ∃⁎ (fun v => go (n := n +1) (v ::ᵥ Γ) e p)
-  | .exist_affine e => ∃₀₁ (fun v => go (n := n +1) (v ::ᵥ Γ) e p)
-
-def denotation (φ : Expr V P 0) (p : P) : 𝟯 := go μ .nil φ p
-
-def Term.substAt {n : Nat} (k : Fin (n + 1)) (v : V) (t : Term V (n + 1)) : Term V n :=
+@[simp] abbrev Term.substAt {n : Nat} (k : Fin (n + 1)) (v : V) (t : Term V (n + 1)) : Term V n :=
   match t with
   | .val w => .val w
   | .bound i =>
@@ -406,7 +387,7 @@ def Term.substAt {n : Nat} (k : Fin (n + 1)) (v : V) (t : Term V (n + 1)) : Term
     else if h : i < k then .bound ⟨i, by omega⟩
     else .bound ⟨i - 1, by omega⟩
 
-def Expr.substAt {n : Nat} (k : Fin (n + 1)) (v : V) : Expr V P (n + 1) → Expr V P n
+@[simp] def Expr.substAt {n : Nat} (k : Fin (n + 1)) (v : V) : Expr V P (n + 1) → Expr V P n
   | .term t        => .term (Term.substAt k v t)
   | .bot           => .bot
   | .neg e         => .neg (substAt k v e)
@@ -419,9 +400,47 @@ def Expr.substAt {n : Nat} (k : Fin (n + 1)) (v : V) : Expr V P (n + 1) → Expr
   | .exist e       => .exist (substAt k.succ v e)
   | .exist_affine e => .exist_affine (substAt k.succ v e)
 
+def Expr.size {n : Nat} : Expr V P n → Nat
+  | .term _ | .bot | .predicate _ _ => 0
+  | .and l r => Expr.size l + Expr.size r +1
+  | .neg e | .quorum e | .everywhere e | .tf e | .t e | .exist e | .exist_affine e => Expr.size e +1
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
+theorem Expr.substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr V P (n + 1)) :
+  Expr.size (Expr.substAt k v φ) = Expr.size φ :=
+  match φ with
+  | .bot => by simp [Expr.size, Expr.substAt]
+  | .neg e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
+  | .tf e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
+  | .quorum e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
+  | .predicate p t => by simp [Expr.size, Expr.substAt]
+  | .t e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
+  | .everywhere e => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v e]
+  | .and l r => by simp [Expr.size, Expr.substAt, Expr.substAt_size k v l, Expr.substAt_size k v r]
+  | .term t => by simp [Expr.size, Expr.substAt]
+  | .exist e => by simp [Expr.size, Expr.substAt, Expr.substAt_size (n := n + 1) k.succ v e]
+  | .exist_affine e => by simp [Expr.size, Expr.substAt, Expr.substAt_size (n := n + 1) k.succ v e]
+                    
+def denotation (φ : Expr V P 0) (p : P) : 𝟯 :=
+  let denTerm (p' : P) (t : Term V 0) : 𝟯 := match t with
+    | .val v => μ.ς p' v
+  match φ, h : Expr.size φ with
+  | .bot, _ => .false
+  | .and l r, _ => denotation l p ∧ denotation r p
+  | .tf e, _ => TF (denotation e p)
+  | .t e, _ => T (denotation e p)
+  | .neg e, _ => ¬ (denotation e p)
+  | .quorum e, _ => ⊡(μ.S) (fun p => denotation e p)
+  | .everywhere e, _ => □ (fun p => denotation e p)
+  | .predicate p t, _ => denTerm p t
+  | .term t, _ => denTerm p t
+  | .exist e, _ => ∃⁎ (fun v => denotation (Expr.substAt 0 v e) p)
+  | .exist_affine e, _ => ∃₀₁ (fun v => denotation (Expr.substAt 0 v e) p)
+  termination_by Expr.size φ
+  decreasing_by all_goals try simp [Expr.size, Expr.substAt_size] <;> omega
+
 scoped notation  "ₛ[" φ ", " ix "↦" v "]" => Expr.substAt ix v φ
 scoped notation "⟦" φ' "⟧ᵈ" => denotation (φ := φ')
-scoped notation "⟦" φ' "," Γ' "⟧ᵈ" => go (Γ := Γ') (φ := φ')
 
 abbrev valid_pred (p : P) (φ : Expr V P 0) : Prop := .byzantine ≤ ⟦ φ ⟧ᵈ μ p
 abbrev valid (φ : Expr V P 0) := ∀ p, valid_pred μ p φ
@@ -452,25 +471,25 @@ variable
 
 theorem somewhere_global : (p ⊨[μ] (◇ₑ φ)) ↔ ⊨[μ] (◇ₑ φ) := by
   constructor
-  · intro h p'; simp [denotation, go] at h ⊢; assumption
+  · intro h p'; simp [denotation] at h ⊢; assumption
   · intro h; apply_rules
 
 theorem everywhere_global : (p ⊨[μ] (□ₑ φ)) ↔ ⊨[μ] (□ₑ φ) := by
   constructor
-  · intro h p'; simp [denotation, go] at h ⊢; assumption
+  · intro h p'; simp [denotation] at h ⊢; assumption
   · intro h; apply_rules
 
 theorem valid_iff_everywhere : (⊨[μ] φ) ↔ p ⊨[μ] (□ₑ φ) := by
-  simp [valid, denotation, go]
+  simp [valid, denotation]
 
 theorem quorum_global : (p ⊨[μ] (⊡ₑ φ)) ↔ ⊨[μ] (⊡ₑ φ) := by
   constructor
-  · intro h p'; simp [denotation, go] at h ⊢; assumption
+  · intro h p'; simp [denotation] at h ⊢; assumption
   · intro h; apply_rules
 
 theorem contraquorum_global : (p ⊨[μ] (⟐ₑ φ)) ↔ ⊨[μ] (⟐ₑ φ) := by
   constructor
-  · intro h p'; simp [denotation, go] at h ⊢; assumption
+  · intro h p'; simp [denotation] at h ⊢; assumption
   · intro h; apply_rules
 
 end Notation_3_2_4
@@ -491,25 +510,24 @@ variable
   {p : P}
   {n : Nat}
   {v : V}
-  {φ ψ : Expr V P n}
-  {φ₀ ψ₀ : Expr V P 0}
+  {φ ψ : Expr V P 0}
   {φ₁ : Expr V P 1}
   {Γ : List.Vector V n}
 
-@[simp] theorem denotation_neg : ⟦¬ₑ φ, Γ⟧ᵈ μ p = (¬ ⟦ φ, Γ⟧ᵈ μ p) := by
-  simp [go]
+@[simp] theorem denotation_neg : ⟦¬ₑ φ⟧ᵈ μ p = (¬ ⟦φ⟧ᵈ μ p) := by
+  simp [denotation]
 
-@[simp] theorem denotation_or : ⟦φ ∨ₑ ψ, Γ⟧ᵈ μ p = (⟦ φ, Γ⟧ᵈ μ p ∨ ⟦ψ, Γ⟧ᵈ μ p) := by
-  simp [go]
+@[simp] theorem denotation_or : ⟦φ ∨ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p ∨ ⟦ψ⟧ᵈ μ p) := by
+  simp [denotation]
 
-theorem denotation_impl : ⟦φ →ₑ ψ, Γ⟧ᵈ μ p = (⟦φ, Γ⟧ᵈ μ p → ⟦ψ, Γ⟧ᵈ μ p) := by
-  simp [go, Three.Atom.impl, Lemmas.neg_and]
+theorem denotation_impl : ⟦φ →ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p → ⟦ψ⟧ᵈ μ p) := by
+  simp [denotation, Three.Atom.impl, Lemmas.neg_and]
 
-theorem valid_or : (p ⊨[μ] φ₀ ∨ₑ ψ₀) ↔ (p ⊨[μ] φ₀) ∨ p ⊨[μ] ψ₀ := by
-  simp [denotation, go, Lemmas.le_or]
+theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ := by
+  simp [denotation, denotation, Lemmas.le_or]
 
-theorem valid_impl : (p ⊨[μ] (φ₀ →ₑ ψ₀)) ↔ ((⟦φ₀⟧ᵈ μ p = Three.true) → p ⊨[μ] ψ₀) := by
-  simp [denotation, go, Lemmas.and_le]
+theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = Three.true) → p ⊨[μ] ψ) := by
+  simp [denotation, denotation, Lemmas.and_le]
   constructor
   · rintro (h | h)
     · intro h1; rw [h1] at h; contradiction
@@ -517,6 +535,10 @@ theorem valid_impl : (p ⊨[μ] (φ₀ →ₑ ψ₀)) ↔ ((⟦φ₀⟧ᵈ μ p 
   · intro h; apply Decidable.or_iff_not_imp_left.mpr; simpa
 
 axiom axiom_valid_exist : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v])
+
+theorem axiom_valid_exist₁ : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
+  cases φ₁ <;> simp [denotation]
+
 axiom axiom_valid_forall : (p ⊨[μ] ∀ₑ φ₁) ↔ (∀ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v])
 
 end Lemmas
@@ -568,7 +590,6 @@ variable
   {p : Tag}
   {v : V}
 
-
 abbrev P1 := (⊨[μ] TF[.broadcast]ₑ) ∧
              ∃! v, ∀ p, p ⊨[μ] (Tₑ (◇ₑ [broadcast, .val v]ₑ))
 
@@ -578,14 +599,14 @@ theorem t : P1 μ ∨ P2 μ := by
   simp [P1, P2]
   cases Lemmas.valid_or.mp (bb.BrCorrectBroadcast default)
   · next h => left; constructor
-              · intro p; simp [denotation, go, existence] at *; intro v;
+              · intro p; simp [denotation, existence] at *; intro v;
                 simp [Lemmas.byzantine_le_TF]
                 intro x; have k := Lemmas.byzantine_le_TF.mp (h v)
                 contradiction
               · have b := bb.BrBroadast1 default
-                simp [denotation, go, existence, Lemmas.le_and] at b
+                simp [denotation, existence, Lemmas.le_and] at b
                 have ⟨⟨v, b1⟩, b2⟩ := b; clear b
-                exists v; simp [denotation, go] at h ⊢;
+                exists v; simp [denotation] at h ⊢;
                 have : Model.ς μ broadcast v = Three.true := by
                   specialize h v; simp [Lemmas.byzantine_le_TF] at h
                   cases Lemmas.byzantine_le.mp b1; contradiction; assumption
@@ -593,8 +614,8 @@ theorem t : P1 μ ∨ P2 μ := by
                 · assumption
                 · intro u fx; specialize b2 u v;
                   simp [Lemmas.le_or_implies] at b2; apply_rules
-  · next h => right; intro v p; simp [denotation, go];
-              simp [denotation, go, FinSemitopology.everywhere, existence] at h
+  · next h => right; intro v p; simp [denotation];
+              simp [denotation, FinSemitopology.everywhere, existence] at h
               exact h v
 
 end Lemma_4_2_4
@@ -616,15 +637,15 @@ theorem when_broadcast : (Model.ς μ broadcast v = .true) →
   next k => constructor
             · assumption
             · intro v' pv; obtain ⟨h1, ⟨w, p2, q1⟩⟩ := k
-              specialize h1 default; simp [denotation, go] at h1
+              specialize h1 default; simp [denotation] at h1
               have helper : ∀ {u}, byzantine ≤ Model.ς μ broadcast u → Model.ς μ broadcast u = Three.true := by
                 intro u pu; cases Lemmas.byzantine_le.mp pu
                 · next h => have x := h1 u; simp [Lemmas.byzantine_le_TF] at x; contradiction
                 · next h => assumption
-              have d1 := q1 v' (by intro p; simp [denotation, go]; exact helper pv)
-              have d2 := q1 v (by intro p; simp [denotation, go]; assumption)
+              have d1 := q1 v' (by intro p; simp [denotation]; exact helper pv)
+              have d2 := q1 v (by intro p; simp [denotation]; assumption)
               subst_vars; rfl
-  next k => simp [Lemma_4_2_4.P2, denotation, go] at k; specialize k v; rw [h] at k; contradiction
+  next k => simp [Lemma_4_2_4.P2, denotation] at k; specialize k v; rw [h] at k; contradiction
 
 end Lemmas
 
@@ -639,16 +660,16 @@ variable
   {v : V}
 
 theorem t2 : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [echo, .val v]ₑ) := by
-  intro p; rw [Lemmas.valid_impl]; simp [denotation, go]; intro h
-  have i := bb.BrEcho! p; simp [denotation, go] at i; specialize i v
+  intro p; rw [Lemmas.valid_impl]; simp [denotation]; intro h
+  have i := bb.BrEcho! p; simp [denotation] at i; specialize i v
   simp [Lemmas.le_or] at i; apply Decidable.or_iff_not_imp_left.mp at i; simp at i; specialize i h
   obtain ⟨v', pv⟩ := i
-  have j := bb.BrCorrectEcho p; simp [denotation, go] at j; specialize j v'; simp [Lemmas.and_le] at j
+  have j := bb.BrCorrectEcho p; simp [denotation] at j; specialize j v'; simp [Lemmas.and_le] at j
   cases j
   · next k => simp at k; specialize k v'
               have q := Three.Atom.Proposition_2_2_2.p8 (a := Model.ς μ echo v')
               simp at q; replace q := q.mp pv; simp [q] at k
-              have brecho? := bb.BrEcho? p; simp [denotation, go] at brecho?; specialize brecho? v'
+              have brecho? := bb.BrEcho? p; simp [denotation] at brecho?; specialize brecho? v'
               simp [Lemmas.and_le] at brecho?; cases brecho?
               next u => rw [k] at u; contradiction
               next u => rwa [Lemmas.when_broadcast h |>.2 v' u]
