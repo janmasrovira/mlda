@@ -7,6 +7,8 @@ import Mathlib.Tactic.Attr.Register
 
 open Three
 open scoped Three.Atom
+open scoped Three.Function
+open FinSemitopology
 
 variable
   {Value : Type}
@@ -417,7 +419,7 @@ theorem substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr V P (n + 1))
   | .term t => by simp [Expr.size, substAt]
   | .exist e => by simp [Expr.size, substAt, substAt_size (n := n + 1) k.succ v e]
   | .exist_affine e => by simp [Expr.size, substAt, substAt_size (n := n + 1) k.succ v e]
-                    
+
 def denotation (φ : Expr V P 0) (p : P) : 𝟯 :=
   let denTerm (p' : P) (t : Term V 0) : 𝟯 := match t with
     | .val v => μ.ς p' v
@@ -477,6 +479,10 @@ theorem valid_iff_everywhere : (⊨[μ] φ) ↔ p ⊨[μ] (□ₑ φ) := by
 
 theorem den_quorum_global (p p' : P) : ⟦⊡ₑ φ⟧ᵈ μ p = ⟦⊡ₑ φ⟧ᵈ μ p' := by simp [denotation]
 theorem quorum_global : (p ⊨[μ] (⊡ₑ φ)) ↔ p' ⊨[μ] (⊡ₑ φ) := by simp [den_quorum_global p p']
+theorem quorum_global' : (p ⊨[μ] (⊡ₑ φ)) ↔ ⊨[μ] (⊡ₑ φ) := by
+  constructor <;> intro h
+  intro p'; apply quorum_global.mp h
+  exact h p
 
 theorem den_contraquorum_global (p p' : P) : ⟦⟐ₑ φ⟧ᵈ μ p = ⟦⟐ₑ φ⟧ᵈ μ p' := by simp [denotation]
 theorem contraquorum_global : (p ⊨[μ] (⟐ₑ φ)) → p' ⊨[μ] (⟐ₑ φ) := by simp [den_contraquorum_global p p']
@@ -518,14 +524,14 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
 @[substSimp] theorem substAt_tf : ₛ[TFₑ α, k ↦ v] = TFₑ ₛ[α, k ↦ v] := by simp
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
-@[substSimp] theorem substAt_tf_all : ₛ[TF[p]ₑ, k ↦ v] = TF[p]ₑ := by 
+@[substSimp] theorem substAt_tf_all : ₛ[TF[p]ₑ, k ↦ v] = TF[p]ₑ := by
   simp; intro q; exact absurd q (Fin.succ_ne_zero k).symm
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
 @[substSimp] theorem substAt_quorum : ₛ[⊡ₑ α, k ↦ v] = (⊡ₑ ₛ[α, k ↦ v]) := by simp
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
-@[substSimp] theorem substAt_predicate {t : Term V (n +1)} 
+@[substSimp] theorem substAt_predicate {t : Term V (n +1)}
   : ₛ[[ p, t]ₑ, k ↦ v] = [p, Term.substAt k v t]ₑ := by simp [substAt]
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
@@ -539,6 +545,9 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Nonempty P] in
 
 theorem denotation_impl : ⟦φ →ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p → ⟦ψ⟧ᵈ μ p) := by
   simp [denotation, Three.Atom.impl, Lemmas.neg_and]
+
+@[simp] theorem valid_T : (p ⊨[μ] Tₑ φ) ↔ ⟦φ⟧ᵈ μ p = .true := by
+  simp [denotation, denotation]
 
 theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ := by
   simp [denotation, denotation, Lemmas.le_or]
@@ -567,7 +576,6 @@ section
 variable
   {V : Type}
   [Fintype V]
-  [Nonempty V]
   [DecidableEq V]
 
 inductive Tag where
@@ -595,6 +603,24 @@ class ThyBB (μ : Model V Tag) where
   BrCorrectReady : ⊨[μ] ∀ₑ (TF[ready]ₑ ∨ₑ B[ready]ₑ) -- BrCorrect'
   BrCorrectEcho : ⊨[μ] ∀ₑ (TF[echo]ₑ ∨ₑ B[echo]ₑ) -- BrCorrect'
   BrCorrectBroadcast : ⊨[μ] (□ₑ TF[broadcast]ₑ ∨ₑ □ₑ B[broadcast]ₑ) -- BrCorrect''
+
+theorem BrCorrectTFReady {μ : Model V Tag} [bb : ThyBB μ] : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [ready, .val v]ₑ) := by
+  intro p v
+  have b := Lemmas.valid_forall₁.mp (bb.BrCorrect p) v
+  simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.1
+  rw [TF_all] at b
+  simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+  simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
+  exact b3 x xb1 v
+
+theorem BrCorrectTFEcho {μ : Model V Tag} [bb : ThyBB μ] : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [echo, .val v]ₑ) := by
+  intro p v
+  have b := Lemmas.valid_forall₁.mp (bb.BrCorrect p) v
+  simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.2
+  rw [TF_all] at b
+  simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+  simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
+  exact b3 x xb1 v
 
 end
 
@@ -726,7 +752,7 @@ variable
   [bb : ThyBB μ]
   {v : V}
 
-theorem t1 (h : ⊨[μ] □ₑ [echo, .val v]ₑ) : ⊨[μ] (Tₑ (⊡ₑ [echo, .val v]ₑ)) := by
+theorem t1 (h : ⊨[μ] □ₑ [echo, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := by
   intro p
   have b := Lemmas.valid_forall₁.mp (bb.BrCorrect p) v
   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.2
@@ -736,7 +762,7 @@ theorem t1 (h : ⊨[μ] □ₑ [echo, .val v]ₑ) : ⊨[μ] (Tₑ (⊡ₑ [echo,
   have i := b3 x xb1 v; specialize h echo; simp [denotation] at h
   rw [Atom.Proposition_2_2_2.p8.mp h] at i; simp at i; assumption
 
-theorem t2 (h : ⊨[μ] □ₑ [ready, .val v]ₑ) : ⊨[μ] (Tₑ (⊡ₑ [ready, .val v]ₑ)) := by
+theorem t2 (h : ⊨[μ] □ₑ [ready, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := by
   intro p
   have b := Lemmas.valid_forall₁.mp (bb.BrCorrect p) v
   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.1
@@ -747,5 +773,90 @@ theorem t2 (h : ⊨[μ] □ₑ [ready, .val v]ₑ) : ⊨[μ] (Tₑ (⊡ₑ [read
   rw [Atom.Proposition_2_2_2.p8.mp h] at i; simp at i; assumption
 
 end Lemma_4_2_8
+
+namespace Proposition_4_2_9
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model V Tag}
+  [bb : ThyBB μ]
+  {v : V}
+
+theorem t : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [deliver, .val v]ₑ) := by
+  intro p; rw [Lemmas.valid_impl]; intro h
+  have h1 : ∀ p', ⟦◇ₑ [broadcast, .val v]ₑ⟧ᵈ μ p' = .true := by
+    intro p'; rw [den_somewhere_global p p'] at h; rw [h]
+  have h2 : ⊨[μ] □ₑ [echo, .val v]ₑ := by
+    intro p'; apply Lemmas.valid_impl.mp (Lemma_4_2_6.t2 p') (h1 p')
+  have h3 : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := Lemma_4_2_8.t1 h2
+  have h3' : ∀ p, ⟦⊡ₑ [echo, .val v]ₑ⟧ᵈ μ p = .true := by
+    intro p; simpa using h3 p
+  have h4 : ⊨[μ] □ₑ [ready, .val v]ₑ := by
+    intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_6.t3 p') (h3' p')
+  have h4 : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := Lemma_4_2_8.t2 h4
+  have h5 : ⊨[μ] □ₑ [deliver, .val v]ₑ := by
+    intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_6.t4 p') (by simpa using h4 p')
+  exact h5 p
+
+end Proposition_4_2_9
+
+namespace Lemma_4_2_10
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model V Tag}
+  [bb : ThyBB μ]
+  {v v' : V}
+  {tag : Tag}
+
+omit bb in
+theorem taux1 (h : ⊨[μ] (⊡ₑ [tag, .val v]ₑ)) (t : ⊨[μ] (⊡ₑ (TFₑ [tag, .val v]ₑ)))
+  : ∀ p, ⟦[tag, .val v ]ₑ⟧ᵈ μ p = .true := by
+  intro p
+  have l : ⊨[μ] (⟐ₑ (Tₑ [tag, .val v]ₑ)) := by
+     intro p; simp [denotation]; intro x xm; constructor
+     · simp [Open1, Finset.Nonempty] at xm; exact xm.2
+     · specialize h p; specialize t p
+       simp [denotation] at h t
+       obtain ⟨h1, h2, h3⟩ := h; obtain ⟨t1, t2, t3⟩ := t
+       simp [Open1, Finset.Nonempty] at h2 t2
+       obtain ⟨_, hm⟩ := h2.2; obtain ⟨_, tm⟩ := t2.2
+       have x1 := h3 _ hm; simp at x1
+       have x2 := t3 _ tm; simp at x2
+       apply Lemmas.valid_and_TF x1 x2
+  simp [denotation]
+  specialize l p; simp [denotation] at l
+  have ll := l ?_ ?_
+  exact ll.2
+  exact Finset.univ; simp [Open1]; exact μ.S.univ_open
+
+ theorem tauxReady (h : ⊨[μ] (⊡ₑ [ready, .val v]ₑ))
+  : ∀ p, ⟦[ready, .val v ]ₑ⟧ᵈ μ p = .true := by
+   intro p; apply taux1 h
+   intro p; exact BrCorrectTFReady p v
+
+ theorem tauxEcho (h : ⊨[μ] (⊡ₑ [echo, .val v]ₑ))
+  : ∀ p, ⟦[echo, .val v ]ₑ⟧ᵈ μ p = .true := by
+   intro p; apply taux1 h
+   intro p; exact BrCorrectTFEcho p v
+
+theorem t1 : (⊨[μ] ⊡ₑ [ready, .val v]ₑ) → ⊨[μ] Tₑ (⟐ₑ [ready, .val v]ₑ) := by
+  intro h p; have a := tauxReady h p; simp [denotation] at a
+  simp [denotation]; intro x x1; simp [Open1, Finset.Nonempty] at x1; constructor
+  exact x1.2; assumption
+
+theorem t2 (h : ⊨[μ] (⊡ₑ [echo, .val v]ₑ ∧ₑ ⊡ₑ [echo, .val v']ₑ))
+  : ⊨[μ] (Tₑ (◇ₑ ([echo, .val v]ₑ ∧ₑ [echo, .val v']ₑ))) := by
+  intro p
+  have ⟨hv, hv'⟩ := Lemmas.valid_and.mp (h p)
+  have tv := tauxEcho (quorum_global'.mp hv) p
+  have tv' := tauxEcho (quorum_global'.mp hv') p; simp [denotation] at tv tv'
+  simp [denotation, tv, tv']
+
+end Lemma_4_2_10
 
 end Modal_Logic

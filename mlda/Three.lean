@@ -477,6 +477,8 @@ theorem byzantine_le_impl : byzantine ≤ (a → b) ↔ a ≤ byzantine ∨ byza
 @[simp] theorem valid_TB : ⊨ (TB a) ↔ byzantine ≤ a := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp!
 
+theorem valid_and_TF : ⊨ a → ⊨ (TF a) → a = true := by cases a <;> simp
+
 theorem valid_TF : ⊨ (TF a) ↔ a = true ∨ a = false := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp
 
