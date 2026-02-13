@@ -302,7 +302,7 @@ inductive Expr (V P : Type) : Nat → Type where
   | exist {n} : Expr V P (n +1) → Expr V P n
   | exist_affine {n} : Expr V P (n +1) → Expr V P n
 
-def Interpretation (V P : Type) := P → V → 𝟯
+abbrev Interpretation (V P : Type) := P → V → 𝟯
 
 structure Model (V : Type) [VFin : Fintype V] [ValuDec : DecidableEq V]
   (P : Type) [PFin : Fintype P] [PDef : DecidableEq P] [PNonempty : Nonempty P] where
@@ -881,6 +881,7 @@ theorem t3 (h : ⊨[μ] (⊡ₑ [ready, .val v]ₑ ∧ₑ ⊡ₑ [ready, .val v'
 end Lemma_4_2_10
 
 namespace Proposition_4_2_11
+
 variable
   {V : Type}
   [Fintype V]
@@ -924,5 +925,68 @@ theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
   apply Lemmas.byzantine_le_affine_implies_eq.mp z he.1 he.2
 
 end Proposition_4_2_11
+
+namespace Proposition_4_2_12
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model V Tag}
+  [bb : ThyBB μ]
+  {v : V}
+
+-- theorem t : ⊨[μ] ([deliver, .val v]ₑ →ₑ ◇ₑ [broadcast, .val v]ₑ) := by
+--   intro p; rw [Lemmas.valid_impl]; intro h
+--   simp [denotation] at h
+--   have t := Lemmas.valid_forall.mp (bb.BrDeliver? p) v; simp only [substSimp, Lemmas.valid_impl] at t
+--   rw [Lemmas.substAt_bound] at t; specialize t (by simp [denotation]; exact h)
+--   have t1 : p ⊨[μ] Tₑ (⟐ₑ [ready, Term.val v]ₑ) := Lemma_4_2_10.t1 (quorum_global'.mp t) p
+
+
+end Proposition_4_2_12
+
+namespace Example
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {v v' : V}
+
+inductive P where
+  | p1 : P
+  | p2 : P
+  deriving DecidableEq, FinEnum, Nonempty
+
+variable
+  {tag : P}
+
+export P (p1 p2)
+
+@[simp] def μ : Model V P where
+  ς (t : P) (_ : V) :=
+    match t with
+    | p1 => Three.true
+    | p2 => Three.byzantine
+
+  S := {
+       Open := {∅, {p1}, {p1, p2}}
+       univ_open := by decide
+       subset_P := by decide}
+
+theorem h : ⊨[μ] (⊡ₑ [tag, .val v]ₑ) := by
+  intro p; simp [denotation]
+  cases tag
+  · exists {p1}
+  · exists {p1}
+
+theorem t : ⊨[μ] (⊡ₑ (TFₑ [tag, .val v]ₑ)) := by
+  intro p; simp [denotation]
+  cases tag
+  · simp; exists {p1}
+  · simp; sorry
+
+end Example
 
 end Modal_Logic

@@ -3,10 +3,10 @@ import mlda.Three
 
 structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
-  empty_open : ∅ ∈ Open
+  -- empty_open : ∅ ∈ Open -- TODO is this needed?
   univ_open : Fintype.elems ∈ Open
   subset_P : Open ⊆ Fintype.elems.powerset
-  isOpen_sUnion : ∀ s : Finset (Finset P), (∀ t ∈ s, t ∈ Open) → s.biUnion id ∈ Open
+  -- isOpen_sUnion : ∀ s : Finset (Finset P), (∀ t ∈ s, t ∈ Open) → s.biUnion id ∈ Open -- TODO I've never used this
 
 namespace FinSemitopology
 
@@ -498,11 +498,11 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
   simp [Remark_2_3_5.map_somewhere] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
   have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
-  
+
   have votep' := mp_weak (i.observeN? p') (by simp [px'])
   have q : (⊡(S) vote ∧ ⊡(S) (¬ᶠ vote)) = .true :=
     Three.Lemmas.and_true.mpr ⟨votep, votep'⟩
-  have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = .true := by 
+  have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = .true := by
     have x := i.twined3 vote (¬ᶠ vote); simpa [q] using x
   rw [contraquorum, meet_true] at v
   have k : ⊨ (⟐(S) (B ∘ vote)) := by -- TODO simplify?
@@ -510,12 +510,12 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
     have ⟨y, ym, yp⟩ := join_true.mp (v _ sm)
     refine ⟨_, ym, ?_⟩
     simp [Three.Function.and] at yp
-    apply Proposition_2_2_2.p7 (a := vote y) |>.mp 
+    apply Proposition_2_2_2.p7 (a := vote y) |>.mp
     simp [yp]
   have c : ⊡(S) (TF ∘ vote) = .true := i.correct
   have kc : ⊨ (⊡(S) (TF ∘ vote) ∧ (⟐(S) (B ∘ vote))) := by
     rw [Valid, le_and]; constructor; simp [c]; exact k
   have r := Lemma_2_3_7.c1 kc
   simp [somewhere, le_join] at r
-  
+
 end Proposition_2_5_7
