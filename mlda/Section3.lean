@@ -697,6 +697,7 @@ variable
   {p p' : P}
   {v v' : V}
 
+-- This lemma is similar to Lemma 4.2.6 in the pdf
 theorem when_broadcast : μ.ς broadcast p v = .true →
   Lemma_4_2_4.P1 μ ∧ 
   ∀ {v' : V} {p' : P}, μ.ς broadcast p' v' = .true → v' = v := by
@@ -729,7 +730,7 @@ theorem echo_byzantine : μ.ς echo p v = .byzantine → μ.ς echo p v' = .byza
 
 end Lemmas
 
-namespace Lemma_4_2_6
+namespace Lemma_4_2_7
 
 variable
   {V P : Type}
@@ -777,67 +778,73 @@ theorem t4 : ⊨[μ] (⊡ₑ [ready, .val v]ₑ →ₑ □ₑ [deliver, .val v]�
   simp only [substSimp] at b; rw [Lemmas.substAt_bound] at b
   apply Lemmas.valid_impl.mp b; simpa only [den_quorum_global p' p]
 
-end Lemma_4_2_6
+end Lemma_4_2_7
 
--- namespace Lemma_4_2_8
+namespace Lemma_4_2_9
 
--- variable
---   {V : Type}
---   [Fintype V]
---   [DecidableEq V]
---   {μ : Model BBSig P V}
---   [bb : ThyBB μ]
---   {v : V}
+variable
+  {V P : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+  {v : V}
 
--- theorem t1 (h : ⊨[μ] □ₑ [echo, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := by
---   intro p
---   have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
---   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.2
---   rw [TF_all] at b
---   simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
---   simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
---   have i := b3 x xb1 v; specialize h echo; simp [denotation] at h
---   rw [Atom.Proposition_2_2_2.p8.mp h] at i; simp at i; assumption
+theorem t1 (h : ⊨[μ] □ₑ [echo, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := by
+  intro p
+  have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
+  simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.2
+  rw [TF_all] at b
+  simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+  simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
+  have i := b3 x xb1 v; specialize h x; simp [denotation] at h
+  exact Lemmas.valid_and_TF (h x) i
 
--- theorem t2 (h : ⊨[μ] □ₑ [ready, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := by
---   intro p
---   have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
---   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.1
---   rw [TF_all] at b
---   simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
---   simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
---   have i := b3 x xb1 v; specialize h echo; simp [denotation] at h
---   rw [Atom.Proposition_2_2_2.p8.mp h] at i; simp at i; assumption
+theorem t2 (h : ⊨[μ] □ₑ [ready, .val v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := by
+  intro p
+  have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
+  simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.1
+  rw [TF_all] at b
+  simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+  simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
+  have i := b3 x xb1 v; specialize h x; simp [denotation] at h
+  exact Lemmas.valid_and_TF (h x) i
 
--- end Lemma_4_2_8
+end Lemma_4_2_9
 
--- namespace Proposition_4_2_9
+namespace Proposition_4_2_10
 
--- variable
---   {V : Type}
---   [Fintype V]
---   [DecidableEq V]
---   {μ : Model BBSig P V}
---   [bb : ThyBB μ]
---   {v : V}
+variable
+  {V P : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+  {v : V}
 
--- theorem t : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [deliver, .val v]ₑ) := by
---   intro p; rw [Lemmas.valid_impl]; intro h
---   have h1 : ∀ p', ⟦◇ₑ [broadcast, .val v]ₑ⟧ᵈ μ p' = .true := by
---     intro p'; rw [den_somewhere_global p p'] at h; rw [h]
---   have h2 : ⊨[μ] □ₑ [echo, .val v]ₑ := by
---     intro p'; apply Lemmas.valid_impl.mp (Lemma_4_2_6.t2 p') (h1 p')
---   have h3 : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := Lemma_4_2_8.t1 h2
---   have h3' : ∀ p, ⟦⊡ₑ [echo, .val v]ₑ⟧ᵈ μ p = .true := by
---     intro p; simpa using h3 p
---   have h4 : ⊨[μ] □ₑ [ready, .val v]ₑ := by
---     intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_6.t3 p') (h3' p')
---   have h4 : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := Lemma_4_2_8.t2 h4
---   have h5 : ⊨[μ] □ₑ [deliver, .val v]ₑ := by
---     intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_6.t4 p') (by simpa using h4 p')
---   exact h5 p
+theorem t : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [deliver, .val v]ₑ) := by
+  intro p; rw [Lemmas.valid_impl]; intro h
+  have h1 : ∀ p', ⟦◇ₑ [broadcast, .val v]ₑ⟧ᵈ μ p' = .true := by
+    intro p'; rw [den_somewhere_global p p'] at h; rw [h]
+  have h2 : ⊨[μ] □ₑ [echo, .val v]ₑ := by
+    intro p'; apply Lemmas.valid_impl.mp (Lemma_4_2_7.t2 p') (h1 p')
+  have h3 : ⊨[μ] Tₑ (⊡ₑ [echo, .val v]ₑ) := Lemma_4_2_9.t1 h2
+  have h3' : ∀ p, ⟦⊡ₑ [echo, .val v]ₑ⟧ᵈ μ p = .true := by
+    intro p; simpa using h3 p
+  have h4 : ⊨[μ] □ₑ [ready, .val v]ₑ := by
+    intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_7.t3 p') (h3' p')
+  have h4 : ⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ) := Lemma_4_2_9.t2 h4
+  have h5 : ⊨[μ] □ₑ [deliver, .val v]ₑ := by
+    intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_7.t4 p') (by simpa using h4 p')
+  exact h5 p
 
--- end Proposition_4_2_9
+end Proposition_4_2_10
 
 -- -- NOTE: I dropped the assumption for S to be 3-Twined
 -- namespace Lemma_4_2_10
