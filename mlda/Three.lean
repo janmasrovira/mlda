@@ -474,6 +474,9 @@ theorem le_implies_valid (p : a ≤ b) : ⊨ a → ⊨ b := by
 theorem byzantine_le_impl : byzantine ≤ (a → b) ↔ a ≤ byzantine ∨ byzantine ≤ b := by
   cases a <;> cases b <;> simp
 
+theorem byzantine_le_cases : byzantine ≤ a ↔ a = byzantine ∨ a = true := by
+  cases a <;> simp
+
 @[simp] theorem valid_TB : ⊨ (TB a) ↔ byzantine ≤ a := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp!
 
