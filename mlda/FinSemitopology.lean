@@ -256,7 +256,7 @@ theorem c2 : ⊨ (⟐(S) f) → ⊨ (◇ f) := by
 end Lemma_2_3_7
 
 class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
-  twined : ∀ {a b c}, a ∈ S.Open1 -> b ∈ S.Open1 → c ∈ S.Open1 → a ∩ b ∩ c ∈ S.Open1
+  twined : ∀ {a b c}, a ∈ S.Open1 → b ∈ S.Open1 → c ∈ S.Open1 → a ∩ b ∩ c ∈ S.Open1
 
 export Twined3 (twined)
 
@@ -301,6 +301,12 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     simp [Finset.mem_inter] at w1; obtain ⟨w1, w2, w3⟩ := w1
     exists w; constructor; assumption; constructor
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
+
+theorem t2 : ⊨ (⊡(S) f ∧ ⊡(S) f') → (⊨ (⟐(S) (f ∧ f'))) := by
+  apply le_implies_valid t
+
+theorem t2' : .byzantine ≤ (⊡(S) f ∧ ⊡(S) f') → (⊨ (⟐(S) (f ∧ f'))) := by
+  apply le_implies_valid t
 
 end Theorem_2_4_4
 
@@ -498,11 +504,11 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
   simp [Remark_2_3_5.map_somewhere] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
   have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
-  
+
   have votep' := mp_weak (i.observeN? p') (by simp [px'])
   have q : (⊡(S) vote ∧ ⊡(S) (¬ᶠ vote)) = .true :=
     Three.Lemmas.and_true.mpr ⟨votep, votep'⟩
-  have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = .true := by 
+  have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = .true := by
     have x := i.twined3 vote (¬ᶠ vote); simpa [q] using x
   rw [contraquorum, meet_true] at v
   have k : ⊨ (⟐(S) (B ∘ vote)) := by -- TODO simplify?
@@ -510,12 +516,12 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
     have ⟨y, ym, yp⟩ := join_true.mp (v _ sm)
     refine ⟨_, ym, ?_⟩
     simp [Three.Function.and] at yp
-    apply Proposition_2_2_2.p7 (a := vote y) |>.mp 
+    apply Proposition_2_2_2.p7 (a := vote y) |>.mp
     simp [yp]
   have c : ⊡(S) (TF ∘ vote) = .true := i.correct
   have kc : ⊨ (⊡(S) (TF ∘ vote) ∧ (⟐(S) (B ∘ vote))) := by
     rw [Valid, le_and]; constructor; simp [c]; exact k
   have r := Lemma_2_3_7.c1 kc
   simp [somewhere, le_join] at r
-  
+
 end Proposition_2_5_7

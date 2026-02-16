@@ -554,6 +554,9 @@ theorem denotation_everywhere : ⟦□ₑ φ⟧ᵈ μ p = □ (fun p => ⟦φ⟧
 theorem denotation_somewhere : ⟦◇ₑ φ⟧ᵈ μ p = ◇ (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation, ← Lemmas.join_neg]; congr; ext k; simp
 
+theorem denotation_quorum : ⟦⊡ₑ φ⟧ᵈ μ p = ⊡(μ.S) (fun p => ⟦φ⟧ᵈ μ p) := by
+  simp [denotation]
+
 theorem denotation_atom : ⟦[s, .val v]ₑ⟧ᵈ μ p = μ.ς s p v  := by
   simp [denotation]
 
@@ -618,8 +621,14 @@ class ThyBB (μ : Model BBSig P V) where
   BrCorrectEcho : ⊨[μ] ∀ₑ (TF[echo]ₑ ∨ₑ B[echo]ₑ) -- BrCorrect'
   BrCorrectBroadcast : ⊨[μ] (□ₑ TF[broadcast]ₑ ∨ₑ □ₑ B[broadcast]ₑ) -- BrCorrect''
 
-theorem BrCorrectTFReady {μ : Model BBSig P V} [bb : ThyBB μ] : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [ready, .val v]ₑ) := by
-  intro p v
+
+section
+  variable
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+
+theorem BrCorrectTFReady : ∀ v, ⊨[μ] ⊡ₑ (TFₑ [ready, .val v]ₑ) := by
+  intro v p
   have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.1
   rw [TF_all] at b
@@ -627,7 +636,7 @@ theorem BrCorrectTFReady {μ : Model BBSig P V} [bb : ThyBB μ] : ∀ p, ∀ v, 
   simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
   exact b3 x xb1 v
 
-theorem BrCorrectTFEcho {μ : Model BBSig P V} [bb : ThyBB μ] : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [echo, .val v]ₑ) := by
+theorem BrCorrectTFEcho : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [echo, .val v]ₑ) := by
   intro p v
   have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v
   simp only [substSimp] at b; replace b := Lemmas.valid_and.mp b |>.2
@@ -699,7 +708,7 @@ variable
 
 -- This lemma is similar to Lemma 4.2.6 in the pdf
 theorem when_broadcast : μ.ς broadcast p v = .true →
-  Lemma_4_2_4.P1 μ ∧ 
+  Lemma_4_2_4.P1 μ ∧
   ∀ {v' : V} {p' : P}, μ.ς broadcast p' v' = .true → v' = v := by
   intro h; cases Lemma_4_2_4.t μ
   next k => constructor
@@ -710,8 +719,8 @@ theorem when_broadcast : μ.ς broadcast p v = .true →
               have := f h; have := f b; subst_vars; rfl
   next k => simp [Lemma_4_2_4.P2, denotation] at k; specialize k v p; rw [h] at k; contradiction
 
-theorem broadcast_true : μ.ς broadcast p v = .true 
-        → byzantine ≤ μ.ς broadcast p' v' 
+theorem broadcast_true : μ.ς broadcast p v = .true
+        → byzantine ≤ μ.ς broadcast p' v'
         → μ.ς broadcast p' v' = .true := by
         intro h1 h2
         have l := bb.BrCorrectBroadcast default; rw [valid_or] at l; simp [denotation] at l
@@ -750,7 +759,7 @@ theorem t2 : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [echo, .val v]
   specialize i' p h; obtain ⟨v', e⟩ := i'
   rw [Lemmas.byzantine_le_cases] at e; cases e
   · next g => have e : Model.ς μ echo p' v = .byzantine:= Lemmas.echo_byzantine g; rw [e]
-  · next g => 
+  · next g =>
       have ⟨⟨_, unV, unVp, _⟩, i⟩ := Lemmas.when_broadcast h
       simp [denotation] at unVp; obtain ⟨x1, x2⟩ := unVp
       have e2 := Lemmas.valid_forall.mp (bb.BrEcho? p') v'; simp only [substSimp, Lemmas.valid_impl] at e2; simp [denotation] at e2
@@ -846,71 +855,66 @@ theorem t : ⊨[μ] (◇ₑ [broadcast, .val v]ₑ →ₑ □ₑ [deliver, .val 
 
 end Proposition_4_2_10
 
--- -- NOTE: I dropped the assumption for S to be 3-Twined
--- namespace Lemma_4_2_10
+namespace Lemma_4_2_11
 
--- variable
---   {V : Type}
---   [Fintype V]
---   [DecidableEq V]
---   {μ : Model BBSig P V}
---   [bb : ThyBB μ]
---   {v v' : V}
---   {tag : BBSig}
+variable
+  {V P : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [twined : Twined3 μ.S]
+  [bb : ThyBB μ]
+  {v v' : V}
+  {tag : BBSig}
 
--- omit bb in
--- theorem taux1 (h : ⊨[μ] (⊡ₑ [tag, .val v]ₑ)) (t : ⊨[μ] (⊡ₑ (TFₑ [tag, .val v]ₑ)))
---   : ∀ p, ⟦[tag, .val v ]ₑ⟧ᵈ μ p = .true := by
---   intro p
---   have l : ⊨[μ] (⟐ₑ (Tₑ [tag, .val v]ₑ)) := by
---      intro p; simp [denotation]; intro x xm; constructor
---      · simp [Open1, Finset.Nonempty] at xm; exact xm.2
---      · specialize h p; specialize t p
---        simp [denotation] at h t
---        obtain ⟨h1, h2, h3⟩ := h; obtain ⟨t1, t2, t3⟩ := t
---        simp [Open1, Finset.Nonempty] at h2 t2
---        obtain ⟨_, hm⟩ := h2.2; obtain ⟨_, tm⟩ := t2.2
---        have x1 := h3 _ hm; simp at x1
---        have x2 := t3 _ tm; simp at x2
---        apply Lemmas.valid_and_TF x1 x2
---   simp [denotation]
---   specialize l p; simp [denotation] at l
---   have ll := l ?_ ?_
---   exact ll.2
---   exact Finset.univ; simp [Open1]; exact μ.S.univ_open
+omit bb in
+theorem t1_aux {p} {s : BBSig}
+  (h1 : p ⊨[μ] ⊡ₑ [s, Term.val v]ₑ)
+  (h2 : p ⊨[μ] ⊡ₑ TF[s]ₑ)
+  : p ⊨[μ] Tₑ (⟐ₑ [s, Term.val v]ₑ) := by
+  rw [valid_pred] at h1 h2; simp only [Lemmas.denotation_quorum] at h1 h2
+  have r := Theorem_2_4_4.t2' (Lemmas.le_and.mpr ⟨h1,h2⟩)
+  simp at r; simp [denotation]; intro x xm
+  have ⟨_, y2, y3⟩ := r _ xm; simp [denotation, Lemmas.le_and] at y3; obtain ⟨y3, y3'⟩ := y3
+  refine ⟨_, y2, ?_⟩; refine Lemmas.valid_and_TF y3 (y3' v)
 
---  theorem tauxReady (h : ⊨[μ] (⊡ₑ [ready, .val v]ₑ))
---   : ∀ p, ⟦[ready, .val v ]ₑ⟧ᵈ μ p = .true := by
---    intro p; apply taux1 h
---    intro p; exact BrCorrectTFReady p v
+theorem t1 : (⊨[μ] ⊡ₑ [ready, .val v]ₑ) → ⊨[μ] Tₑ (⟐ₑ [ready, .val v]ₑ) := by
+  intro h p; specialize h p
+  have b := Lemmas.valid_forall.mp (bb.BrCorrect p) v; simp only [substSimp, Lemmas.valid_and] at b
+  exact t1_aux h b.1
 
---  theorem tauxEcho (h : ⊨[μ] (⊡ₑ [echo, .val v]ₑ))
---   : ∀ p, ⟦[echo, .val v ]ₑ⟧ᵈ μ p = .true := by
---    intro p; apply taux1 h
---    intro p; exact BrCorrectTFEcho p v
+theorem t2 (h1 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ ∧ₑ ⊡ₑ [echo, .val v']ₑ))
+  : ⊨[μ] (Tₑ (◇ₑ ([echo, .val v]ₑ ∧ₑ [echo, .val v']ₑ))) := by
+  intro p; specialize h1 p
+  have h2 := Lemmas.valid_forall.mp (bb.BrCorrect p) v; simp only [substSimp, Lemmas.valid_and] at h2
+  replace h2 := h2.2; simp [denotation]
+  simp [denotation] at h1 h2; simp [Lemmas.le_and] at h1
+  obtain ⟨⟨s1, s12, s13⟩, s2, s3, s4⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
+  have t := twined.twined s12 s3 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
+  exists t2; simp [Lemmas.and_true]
+  obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3; obtain ⟨m2, m3⟩ := Finset.mem_inter.mp m2;
+  constructor
+  apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
+  apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
 
--- theorem t1 : (⊨[μ] ⊡ₑ [ready, .val v]ₑ) → ⊨[μ] Tₑ (⟐ₑ [ready, .val v]ₑ) := by
---   intro h p; have a := tauxReady h p; simp [denotation] at a
---   simp [denotation]; intro x x1; simp [Open1, Finset.Nonempty] at x1; constructor
---   exact x1.2; assumption
+theorem t3 (h1 : ⊨[μ] (⊡ₑ [ready, .val v]ₑ ∧ₑ ⊡ₑ [ready, .val v']ₑ))
+  : ⊨[μ] (Tₑ (◇ₑ ([ready, .val v]ₑ ∧ₑ [ready, .val v']ₑ))) := by
+  intro p; specialize h1 p
+  have h2 := Lemmas.valid_forall.mp (bb.BrCorrect p) v; simp only [substSimp, Lemmas.valid_and] at h2
+  replace h2 := h2.1; simp [denotation]
+  simp [denotation] at h1 h2; simp [Lemmas.le_and] at h1
+  obtain ⟨⟨s1, s12, s13⟩, s2, s3, s4⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
+  have t := twined.twined s12 s3 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
+  exists t2; simp [Lemmas.and_true]
+  obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3; obtain ⟨m2, m3⟩ := Finset.mem_inter.mp m2;
+  constructor
+  apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
+  apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
 
--- theorem t2 (h : ⊨[μ] (⊡ₑ [echo, .val v]ₑ ∧ₑ ⊡ₑ [echo, .val v']ₑ))
---   : ⊨[μ] (Tₑ (◇ₑ ([echo, .val v]ₑ ∧ₑ [echo, .val v']ₑ))) := by
---   intro p
---   have ⟨hv, hv'⟩ := Lemmas.valid_and.mp (h p)
---   have tv := tauxEcho (quorum_global'.mp hv) p
---   have tv' := tauxEcho (quorum_global'.mp hv') p; simp [denotation] at tv tv'
---   simp [denotation, tv, tv']
-
--- theorem t3 (h : ⊨[μ] (⊡ₑ [ready, .val v]ₑ ∧ₑ ⊡ₑ [ready, .val v']ₑ))
---   : ⊨[μ] (Tₑ (◇ₑ ([ready, .val v]ₑ ∧ₑ [ready, .val v']ₑ))) := by
---   intro p
---   have ⟨hv, hv'⟩ := Lemmas.valid_and.mp (h p)
---   have tv := tauxReady (quorum_global'.mp hv) p
---   have tv' := tauxReady (quorum_global'.mp hv') p; simp [denotation] at tv tv'
---   simp [denotation, tv, tv']
-
--- end Lemma_4_2_10
+end Lemma_4_2_11
 
 -- namespace Proposition_4_2_11
 -- variable
