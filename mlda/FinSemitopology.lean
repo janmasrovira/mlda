@@ -29,6 +29,9 @@ abbrev ℙ : Finset P := Finset.univ
 
 def Open1 : Finset (Finset P) := S.Open.filter (·.Nonempty)
 
+def univ_in_Open1 : Finset.univ ∈ S.Open1 := by
+  simp [Open1]; exact S.univ_open
+
 abbrev everywhere := ⋀ ℙ f
 scoped notation "□" => everywhere
 

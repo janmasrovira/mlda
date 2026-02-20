@@ -548,6 +548,9 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 theorem denotation_impl : ⟦φ →ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p → ⟦ψ⟧ᵈ μ p) := by
   simp [denotation, Three.Atom.impl, Lemmas.neg_and]
 
+theorem denotation_true : ⟦Tₑ φ⟧ᵈ μ p = T (⟦φ⟧ᵈ μ p) := by
+  simp [denotation]
+
 theorem denotation_everywhere : ⟦□ₑ φ⟧ᵈ μ p = □ (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation]
 
@@ -556,6 +559,11 @@ theorem denotation_somewhere : ⟦◇ₑ φ⟧ᵈ μ p = ◇ (fun p => ⟦φ⟧�
 
 theorem denotation_quorum : ⟦⊡ₑ φ⟧ᵈ μ p = ⊡(μ.S) (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation]
+
+theorem denotation_contraquorum : ⟦⟐ₑ φ⟧ᵈ μ p = ⟐(μ.S) (fun p => ⟦φ⟧ᵈ μ p) := by
+  simp [denotation, FinSemitopology.contraquorum, FinSemitopology.quorum, ← Lemmas.meet_neg]
+  congr; ext k; simp [← Lemmas.join_neg, Function.neg]
+  congr 1; ext _; simp
 
 theorem denotation_atom : ⟦[s, .val v]ₑ⟧ᵈ μ p = μ.ς s p v  := by
   simp [denotation]
@@ -900,6 +908,16 @@ theorem t2 (h1 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ ∧ₑ ⊡ₑ [echo, .val v']
   apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
   apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
 
+theorem t2' (h1 : ⊨[μ] (⊡ₑ [echo, .val v]ₑ)) : ⊨[μ] (Tₑ (◇ₑ [echo, .val v]ₑ)) := by
+  intro p; specialize h1 p
+  have h2 := Lemmas.valid_forall.mp (bb.BrCorrect p) v; simp only [substSimp, Lemmas.valid_and] at h2
+  replace h2 := h2.2; simp [denotation]
+  simp [denotation] at h1 h2
+  obtain ⟨s1, s12, s13⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
+  have t := twined.twined s12 s12 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
+  exists t2; obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3
+  apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
+
 theorem t3 (h1 : ⊨[μ] (⊡ₑ [ready, .val v]ₑ ∧ₑ ⊡ₑ [ready, .val v']ₑ))
   : ⊨[μ] (Tₑ (◇ₑ ([ready, .val v]ₑ ∧ₑ [ready, .val v']ₑ))) := by
   intro p; specialize h1 p
@@ -916,49 +934,86 @@ theorem t3 (h1 : ⊨[μ] (⊡ₑ [ready, .val v]ₑ ∧ₑ ⊡ₑ [ready, .val v
 
 end Lemma_4_2_11
 
--- namespace Proposition_4_2_11
--- variable
---   {V : Type}
---   [Fintype V]
---   [DecidableEq V]
---   {μ : Model BBSig P V}
---   [bb : ThyBB μ]
---   {v : V}
+namespace Proposition_4_2_12
 
--- theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
---   intro p;
---   simp only [valid_pred, Lemmas.denotation_exists_affine, substSimp, Lemmas.byzantine_le_affine_implies_eq]
---   intro v1 v2 h1 h2; simp [denotation] at h1 h2
---   have h {u} (tu : Model.ς μ deliver u = Three.true)
---        : ⊨[μ] ⊡ₑ [ready, Term.val u]ₑ := by
---     intro p'
---     have g := Lemmas.valid_forall.mp (bb.BrDeliver? p) u; simp only [substSimp] at g
---     rw [Lemmas.valid_impl, Lemmas.substAt_bound, Lemmas.denotation_atom] at g
---     exact quorum_global (g tu)
---   have d1 := h h1; have d2 := h h2
---   have mke {v} (x : Model.ς μ ready v = Three.true) : ⊨[μ] (⊡ₑ [echo, .val v]ₑ) := by
---     intro p';
---     have h := Lemmas.valid_forall.mp (bb.BrReady? p') v
---     simp only [substSimp] at h; simp only [Lemmas.valid_impl] at h
---     rw [Lemmas.substAt_bound] at h; simp only [denotation] at h
---     exact h x
---   have hr : ⊨[μ] (Tₑ (◇ₑ ([ready, .val v1]ₑ ∧ₑ [ready, .val v2]ₑ))) := by
---     apply Lemma_4_2_10.t3; intro p
---     apply Lemmas.valid_and.mpr
---     exact ⟨d1 p, d2 p⟩
---   have vready : (Model.ς μ ready v1 = Three.true) ∧ Model.ς μ ready v2 = Three.true := by
---     specialize hr default
---     simpa [denotation, Lemmas.and_true] using hr
---   have he : ⊨[μ] (Tₑ (◇ₑ ([echo, .val v1]ₑ ∧ₑ [echo, .val v2]ₑ))) := by
---     apply Lemma_4_2_10.t2; intro p
---     apply Lemmas.valid_and.mpr
---     refine ⟨mke vready.1 p, mke vready.2 p⟩
---   have z := bb.BrEcho01 p
---   rw [valid_pred, Lemmas.denotation_exists_affine] at z; simp only at z
---   conv at z => right; right; ext v; simp [Lemmas.substAt_atom, Lemmas.substAt_bound, denotation]
---   specialize he p; simp [denotation, Lemmas.and_true] at he
---   apply Lemmas.byzantine_le_affine_implies_eq.mp z he.1 he.2
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+  [twined : Twined3 μ.S]
+  {v : V}
 
--- end Proposition_4_2_11
+theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
+  intro p;
+  simp only [valid_pred, Lemmas.denotation_exists_affine, substSimp, Lemmas.byzantine_le_affine_implies_eq]
+  intro v1 v2 h1 h2; simp [denotation] at h1 h2; obtain ⟨u1, u2⟩ := h1; obtain ⟨w1, w2⟩ := h2
+  have h {p'} {u} (tu : μ.ς deliver p' u = .true)
+       : ⊨[μ] ⊡ₑ [ready, Term.val u]ₑ := by
+    intro _
+    have g := Lemmas.valid_forall.mp (bb.BrDeliver? p') u; simp only [substSimp] at g
+    rw [Lemmas.valid_impl, Lemmas.substAt_bound, Lemmas.denotation_atom] at g
+    exact quorum_global (g tu)
+
+  have d1 := h u2; have d2 := h w2
+  have mke {p'} {v} (x : Model.ς μ ready p' v = .true) : ⊨[μ] (⊡ₑ [echo, .val v]ₑ) := by
+    intro p2;
+    have h := Lemmas.valid_forall.mp (bb.BrReady? p') v
+    simp only [substSimp] at h; simp only [Lemmas.valid_impl] at h
+    rw [Lemmas.substAt_bound] at h; simp only [denotation] at h
+    exact quorum_global'.mp (h x) p2
+  have hr : ⊨[μ] (Tₑ (◇ₑ ([ready, .val v1]ₑ ∧ₑ [ready, .val v2]ₑ))) := by
+    apply Lemma_4_2_11.t3; intro p
+    apply Lemmas.valid_and.mpr
+    exact ⟨d1 p, d2 p⟩
+  have exvready : ∃ p', (Model.ς μ ready p' v1 = Three.true) ∧ Model.ς μ ready p' v2 = Three.true := by
+    specialize hr default
+    simpa [denotation, Lemmas.and_true] using hr
+  obtain ⟨r, r1, r2⟩ := exvready
+  have he : ⊨[μ] (Tₑ (◇ₑ ([echo, .val v1]ₑ ∧ₑ [echo, .val v2]ₑ))) := by
+    apply Lemma_4_2_11.t2; intro p
+    apply Lemmas.valid_and.mpr
+    constructor; apply mke r1; apply mke r2
+  specialize he default; simp [denotation, Lemmas.and_true] at he; obtain ⟨y, y1, y2⟩ := he
+  have z := bb.BrEcho01 y
+  rw [valid_pred, Lemmas.denotation_exists_affine] at z; simp only at z
+  conv at z => right; right; ext v; simp [Lemmas.substAt_atom, Lemmas.substAt_bound, denotation]
+  apply Lemmas.byzantine_le_affine_implies_eq.mp z y1 y2
+
+end Proposition_4_2_12
+
+namespace Proposition_4_2_13
+
+variable
+  {V : Type}
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+  [twined : Twined3 μ.S]
+  {v : V}
+
+theorem t : ⊨[μ] ([deliver, .val v]ₑ →ₑ ◇ₑ [broadcast, .val v]ₑ) := by
+  intro p; rw [Lemmas.valid_impl]; simp [denotation]; intro h
+  have l := Lemmas.valid_forall.mp (bb.BrDeliver? p) v
+  simp only [substSimp, Lemmas.valid_impl] at l; specialize l (by simpa [denotation] using h)
+  have s1 : ⊨[μ] Tₑ (⟐ₑ [ready, Term.val v]ₑ) := Lemma_4_2_11.t1 (quorum_global'.mp l)
+  have s2 : ⊨[μ] Tₑ (◇ₑ [ready, Term.val v]ₑ) := by
+    intro _; simp [denotation]
+    specialize s1 default; simp [denotation] at s1; specialize s1 Finset.univ univ_in_Open1
+    simpa using s1
+  specialize s2 default; simp [denotation] at s2; obtain ⟨x1, x2⟩ := s2
+  have t : ⊨[μ] ⊡ₑ [echo, .val v]ₑ := by 
+    have t' := Lemmas.valid_forall.mp (bb.BrReady? x1) v; simp only [substSimp, Lemmas.valid_impl] at t'
+    specialize t' (by simpa [denotation] using x2)
+    exact quorum_global'.mp t'
+  have t2 : ⊨[μ] Tₑ (◇ₑ [echo, .val v]ₑ) := Lemma_4_2_11.t2' t
+  specialize t2 default; simp [denotation] at t2; obtain ⟨y1, y2⟩ := t2
+  have r := Lemma_4_2_11.t1 (quorum_global'.mp l) default; simp [denotation] at r
+  have b := Lemmas.valid_forall.mp (bb.BrEcho? y1) v; simp only [substSimp, Lemmas.valid_impl] at b
+  simp [denotation] at b; exact b y2
+    
+end Proposition_4_2_13
 
 -- end Modal_Logic
