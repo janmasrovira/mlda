@@ -341,8 +341,14 @@ scoped notation "⟐ₑ " => contraquorum
 abbrev or {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := ¬ₑ (¬ₑ φ ∧ₑ ¬ₑ ψ)
 scoped infixl:30 " ∨ₑ " => or
 
+abbrev xor {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := sorry
+scoped infixl:30 " ⊕ₑ " => xor
+
 @[simp] def impl {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := ¬ₑ φ ∨ₑ ψ
 scoped infixl:25 " →ₑ " => impl
+
+abbrev simpl {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := φ →ₑ Tₑ ψ
+scoped infixl:25 " ⇀ₑ " => simpl
 
 abbrev for_all {n : Nat} (φ : Expr S P V (n +1)) : Expr S P V n := ¬ₑ (∃⁎ₑ (¬ₑ φ))
 scoped notation "∀ₑ " => for_all
