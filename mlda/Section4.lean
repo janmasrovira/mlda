@@ -50,6 +50,7 @@ class ThyBB (μ : Model BBSig P V) where
   BrCorrectBroadcast : ⊨[μ] (□ₑ TF[broadcast]ₑ ∨ₑ □ₑ B[broadcast]ₑ) -- BrCorrect''
 
 namespace ThyBB
+
   variable
   {μ : Model BBSig P V}
   [bb : ThyBB μ]
