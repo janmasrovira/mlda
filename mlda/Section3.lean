@@ -533,6 +533,10 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 @[substSimp] theorem substAt_quorum : ₛ[⊡ₑ α, k ↦ v] = (⊡ₑ ₛ[α, k ↦ v]) := by simp
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
+@[substSimp] theorem substAt_exists {n} {k : Fin (n + 1)} {α : Expr S P V (n + 2)} :
+  ₛ[∃⁎ₑ α, k ↦ v] = ∃⁎ₑ ₛ[α, k.succ ↦ v] := by simp
+
+omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 @[substSimp] theorem substAt_atom {t : Term V (n +1)}
   : ₛ[[ s, t]ₑ, k ↦ v] = ([s, Term.substAt k v t]ₑ : Expr S P V _) := by simp [substAt]
 
@@ -621,7 +625,7 @@ class ThyBB (μ : Model BBSig P V) where
   BrDeliver! : ⊨[μ] ∀ₑ (⊡ₑ [ready]ₑ →ₑ [deliver]ₑ)
   BrReady! : ⊨[μ] ∀ₑ (⊡ₑ [echo]ₑ →ₑ [ready]ₑ)
   BrEcho! : ⊨[μ] ∀ₑ (◇ₑ [broadcast]ₑ →ₑ ∃⁎ₑ [echo]ₑ)
-  BrReady!! : ⊨[μ] ∀ₑ (⟐ₑ [ready]ₑ →ₑ ∃⁎ₑ [ready]ₑ)
+  BrReady!! : ⊨[μ] ∀ₑ (⟐ₑ [ready]ₑ →ₑ [ready]ₑ)
   BrEcho01 : ⊨[μ] ∃₀₁ₑ [echo]ₑ
   BrBroadast1 : ⊨[μ] ∃₁ₑ (◇ₑ [broadcast]ₑ)
   BrCorrect : ⊨[μ] ∀ₑ (⊡ₑ TF[ready]ₑ ∧ₑ ⊡ₑ TF[echo]ₑ)
@@ -629,11 +633,30 @@ class ThyBB (μ : Model BBSig P V) where
   BrCorrectEcho : ⊨[μ] ∀ₑ (TF[echo]ₑ ∨ₑ B[echo]ₑ) -- BrCorrect'
   BrCorrectBroadcast : ⊨[μ] (□ₑ TF[broadcast]ₑ ∨ₑ □ₑ B[broadcast]ₑ) -- BrCorrect''
 
-
-section
+namespace ThyBB
   variable
   {μ : Model BBSig P V}
   [bb : ThyBB μ]
+
+theorem BrDeliver!' {p} {v} : (⊨[μ] Tₑ (⊡ₑ [ready, .val v]ₑ)) → .byzantine ≤ μ.ς deliver p v := by
+  intro h; have b := bb.BrDeliver!
+  specialize b p; rw [Lemmas.valid_forall] at b; specialize b v
+  simp only [substSimp, Lemmas.valid_impl] at b
+  conv at b => rhs; simp [denotation]
+  apply b; specialize h p; rw [Lemmas.valid_T] at h; exact h
+
+theorem BrDeliver?' {p} {v} : μ.ς deliver p v = .true → ⊨[μ] (⊡ₑ [ready, .val v]ₑ) := by
+  have b := bb.BrDeliver? p; simp only [Lemmas.valid_forall, substSimp] at b; specialize b v
+  rw [Lemmas.substAt_bound, Lemmas.valid_impl] at b
+  intro h; exact quorum_global'.mp (b (by simpa [denotation] using h))
+
+theorem BrReady!!' {v} : (⊨[μ] Tₑ (⟐ₑ [ready, .val v]ₑ)) → ⊨[μ] [ready, .val v]ₑ := by
+   intro h p;
+   have b := bb.BrReady!! p
+   simp only [Lemmas.valid_forall] at b; specialize b v; simp only [substSimp, Lemmas.valid_impl] at b
+   conv at b => right; simp [substSimp, Term.substAt]
+   apply b; specialize h p; simp only [Lemmas.valid_T] at h
+   simp [denotation] at h ⊢; exact h
 
 theorem BrCorrectTFReady : ∀ v, ⊨[μ] ⊡ₑ (TFₑ [ready, .val v]ₑ) := by
   intro v p
@@ -652,6 +675,8 @@ theorem BrCorrectTFEcho : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [echo, .val v]�
   simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
   simp [denotation]; refine ⟨b1, b2, ?_⟩; intro x xb1
   exact b3 x xb1 v
+
+end ThyBB
 
 end
 
@@ -937,7 +962,10 @@ end Lemma_4_2_11
 namespace Proposition_4_2_12
 
 variable
-  {V : Type}
+  {P V : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
   [Fintype V]
   [DecidableEq V]
   {μ : Model BBSig P V}
@@ -949,14 +977,7 @@ theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
   intro p;
   simp only [valid_pred, Lemmas.denotation_exists_affine, substSimp, Lemmas.byzantine_le_affine_implies_eq]
   intro v1 v2 h1 h2; simp [denotation] at h1 h2; obtain ⟨u1, u2⟩ := h1; obtain ⟨w1, w2⟩ := h2
-  have h {p'} {u} (tu : μ.ς deliver p' u = .true)
-       : ⊨[μ] ⊡ₑ [ready, Term.val u]ₑ := by
-    intro _
-    have g := Lemmas.valid_forall.mp (bb.BrDeliver? p') u; simp only [substSimp] at g
-    rw [Lemmas.valid_impl, Lemmas.substAt_bound, Lemmas.denotation_atom] at g
-    exact quorum_global (g tu)
-
-  have d1 := h u2; have d2 := h w2
+  have d1 := bb.BrDeliver?' u2; have d2 := bb.BrDeliver?' w2
   have mke {p'} {v} (x : Model.ς μ ready p' v = .true) : ⊨[μ] (⊡ₑ [echo, .val v]ₑ) := by
     intro p2;
     have h := Lemmas.valid_forall.mp (bb.BrReady? p') v
@@ -986,7 +1007,10 @@ end Proposition_4_2_12
 namespace Proposition_4_2_13
 
 variable
-  {V : Type}
+  {P V : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
   [Fintype V]
   [DecidableEq V]
   {μ : Model BBSig P V}
@@ -996,24 +1020,46 @@ variable
 
 theorem t : ⊨[μ] ([deliver, .val v]ₑ →ₑ ◇ₑ [broadcast, .val v]ₑ) := by
   intro p; rw [Lemmas.valid_impl]; simp [denotation]; intro h
-  have l := Lemmas.valid_forall.mp (bb.BrDeliver? p) v
-  simp only [substSimp, Lemmas.valid_impl] at l; specialize l (by simpa [denotation] using h)
-  have s1 : ⊨[μ] Tₑ (⟐ₑ [ready, Term.val v]ₑ) := Lemma_4_2_11.t1 (quorum_global'.mp l)
+  have l := bb.BrDeliver?' (by simpa [denotation] using h)
+  have s1 : ⊨[μ] Tₑ (⟐ₑ [ready, Term.val v]ₑ) := Lemma_4_2_11.t1 l
   have s2 : ⊨[μ] Tₑ (◇ₑ [ready, Term.val v]ₑ) := by
     intro _; simp [denotation]
     specialize s1 default; simp [denotation] at s1; specialize s1 Finset.univ univ_in_Open1
     simpa using s1
   specialize s2 default; simp [denotation] at s2; obtain ⟨x1, x2⟩ := s2
-  have t : ⊨[μ] ⊡ₑ [echo, .val v]ₑ := by 
+  have t : ⊨[μ] ⊡ₑ [echo, .val v]ₑ := by
     have t' := Lemmas.valid_forall.mp (bb.BrReady? x1) v; simp only [substSimp, Lemmas.valid_impl] at t'
     specialize t' (by simpa [denotation] using x2)
     exact quorum_global'.mp t'
   have t2 : ⊨[μ] Tₑ (◇ₑ [echo, .val v]ₑ) := Lemma_4_2_11.t2' t
   specialize t2 default; simp [denotation] at t2; obtain ⟨y1, y2⟩ := t2
-  have r := Lemma_4_2_11.t1 (quorum_global'.mp l) default; simp [denotation] at r
+  have r := Lemma_4_2_11.t1 l default; simp [denotation] at r
   have b := Lemmas.valid_forall.mp (bb.BrEcho? y1) v; simp only [substSimp, Lemmas.valid_impl] at b
   simp [denotation] at b; exact b y2
-    
+
 end Proposition_4_2_13
 
--- end Modal_Logic
+namespace Proposition_4_2_14
+
+variable
+  {P V : Type}
+  [Fintype P]
+  [DecidableEq P]
+  [Inhabited P]
+  [Fintype V]
+  [DecidableEq V]
+  {μ : Model BBSig P V}
+  [bb : ThyBB μ]
+  [twined : Twined3 μ.S]
+  {v : V}
+
+theorem t : ⊨[μ] (◇ₑ [deliver, .val v]ₑ →ₑ □ₑ [deliver, .val v]ₑ) := by
+  intro _; simp only [Lemmas.valid_impl]; simp [denotation]
+  intro p1 h p2
+  have r := Lemma_4_2_11.t1 (bb.BrDeliver?' h)
+  apply bb.BrDeliver!'; apply Lemma_4_2_9.t2
+  have rr := bb.BrReady!!' r
+  intro _; simp [denotation]; intro p3
+  specialize rr p3; simpa [denotation] using rr
+
+end Proposition_4_2_14
