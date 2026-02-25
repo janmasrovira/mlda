@@ -361,7 +361,8 @@ scoped notation "∃₁ₑ " => existence_unique
 abbrev is_byzantine {n : Nat} (φ : Expr S P V n) : Expr S P V n := ¬ₑ (TFₑ φ)
 scoped notation "Bₑ " => is_byzantine
 
-scoped notation "[" s ", " t "]ₑ" => Expr.atom s t
+scoped notation "[" s "; " t "]ₑ" => Expr.atom s t
+scoped notation "[" s ", " t "]ₑ" => Expr.atom s (Term.val t)
 scoped notation "[" s "]ₑ" => Expr.atom s (Term.bound 0)
 
 abbrev TF_all {n : Nat} (s : S) : Expr S P V n := ∀ₑ (TFₑ [s]ₑ)
@@ -548,7 +549,7 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 @[substSimp] theorem substAt_atom {t : Term V (n +1)}
-  : ₛ[[ s, t]ₑ, k ↦ v] = ([s, Term.substAt k v t]ₑ : Expr S P V _) := by simp [substAt]
+  : ₛ[[ s; t]ₑ, k ↦ v] = ([s; Term.substAt k v t]ₑ : Expr S P V _) := by simp [substAt]
 
 omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 @[substSimp] theorem substAt_bound {n : Nat} : Term.substAt (n := n) 0 v (.bound 0) = .val (scope := n) v := by simp
@@ -582,7 +583,7 @@ theorem denotation_contraquorum : ⟦⟐ₑ φ⟧ᵈ μ p = ⟐(μ.S) (fun p => 
   congr; ext k; simp [← Lemmas.join_neg, Function.neg]
   congr 1; ext _; simp
 
-theorem denotation_atom : ⟦[s, .val v]ₑ⟧ᵈ μ p = μ.ς s p v  := by
+theorem denotation_atom : ⟦[s, v]ₑ⟧ᵈ μ p = μ.ς s p v  := by
   simp [denotation]
 
 theorem denotation_exists_affine : ⟦∃₀₁ₑ φ₁⟧ᵈ μ p = ∃₀₁ (fun v => ⟦ₛ[φ₁, 0 ↦ v]⟧ᵈ μ p) := by

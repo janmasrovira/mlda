@@ -27,25 +27,65 @@ variable
   [DecidableEq V]
 
 inductive Val where
-  | zero
+  | v0
   | half
-  | one
-  deriving DecidableEq, FinEnum
+  | v1
+  deriving DecidableEq, FinEnum, Ord
 
-instance : OfNat Val 0 where
-  ofNat := .zero
+instance : Max Val where
+  max a b := match a, b with
+   | .v1, _  => .v1
+   | _, .v1  => .v1
+   | .half, _  => .half
+   | _, .half  => .half
+   | _, _ => .v0
 
-instance : OfNat Val 1 where
-  ofNat := .one
+instance : Min Val where
+  min a b := match a, b with
+   | .v0, _  => .v0
+   | _, .v0  => .v0
+   | .half, _  => .half
+   | _, .half  => .half
+   | _, _ => .v1
 
-class inductive NotHalf : Val → Prop
-  | zero : NotHalf 0
-  | one : NotHalf 1
+instance : LinearOrder Val := by
+  let toFin : Val → Fin 3
+    | .v0 => 0
+    | .half => 1
+    | .v1 => 2
+  apply LinearOrder.liftWithOrd toFin
+  intro x y p; cases x <;> cases y <;> cases p <;> rfl
+  repeat (intro x y; cases x <;> cases y <;> rfl)
 
-instance : NotHalf 0 := .zero
-instance : NotHalf 1 := .one
+namespace Val
 
 scoped notation " ½ " => Val.half
+
+class inductive NotHalf : Val → Prop
+  | v0 : NotHalf v0
+  | v1 : NotHalf v1
+
+scoped notation "≠½ " => NotHalf
+
+instance : ≠½ v0 := .v0
+instance : ≠½ v1 := .v1
+
+abbrev complement : Val → Val
+  | .v0 => v1
+  | .v1 => v0
+  | .half => ½
+
+scoped notation "~" => complement
+
+@[simp] theorem complement_v0 : ~ v0 = v1 := rfl
+@[simp] theorem complement_v1 : ~ v1 = v0 := rfl
+@[simp] theorem complement_half : ~ ½ = ½ := rfl
+@[simp] theorem complement_complement {v : Val} : ~ (~ v) = v := by cases v <;> rfl
+
+end Val
+
+open scoped Val
+open Val
 
 inductive Sig where
   | input
@@ -58,27 +98,27 @@ export Sig (input echo₁ echo₂ output)
 class Thy (μ : Model Sig P Val) where
   CaEcho1? : ⊨[μ] ∀ₑ ([echo₁]ₑ ⇀ₑ ◇ₑ [input]ₑ)
   CaEcho2? : ⊨[μ] ∀ₑ ([echo₂]ₑ ⇀ₑ ⊡ₑ [echo₁]ₑ)
-  CaOutput? : ⊨[μ] ([output, .val 0]ₑ →ₑ ⊡ₑ [echo₂, .val 0]ₑ) ∧ₑ
-                     ([output, .val 1]ₑ →ₑ ⊡ₑ [echo₂, .val 1]ₑ)
-  CaOutput'? : ⊨[μ] [output, .val ½]ₑ →ₑ (⊡ₑ [echo₁, .val 0]ₑ ∧ₑ ⊡ₑ [echo₁, .val 1]ₑ)
+  CaOutput? : ⊨[μ] ([output, v0]ₑ →ₑ ⊡ₑ [echo₂, v0]ₑ) ∧ₑ
+                     ([output, v1]ₑ →ₑ ⊡ₑ [echo₂, v1]ₑ)
+  CaOutput'? : ⊨[μ] [output, ½]ₑ →ₑ (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ)
   CaCorrect (s : Sig) : ⊨[μ] ⊡ₑ TF[s]ₑ
-  CaCorrect' {s : Sig} := ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
-  CaInput : ⊨[μ] ([input, .val 0]ₑ ⊕ₑ [input, .val 1]ₑ) ∧ₑ (¬ₑ [input, .val ½]ₑ)
+  CaCorrect' (s : Sig) : ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
+  CaInput : ⊨[μ] ([input, v0]ₑ ⊕ₑ [input, v1]ₑ) ∧ₑ (¬ₑ [input, ½]ₑ)
   CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ
   CaEcho1! : ⊨[μ] ∀ₑ (([input]ₑ ∨ₑ ⟐ₑ [echo₁]ₑ) →ₑ [echo₁]ₑ)
   CaEcho2! : ⊨[μ] (∃⁎ₑ (⊡ₑ [echo₁]ₑ)) →ₑ ∃⁎ₑ [echo₂]ₑ
   CaOutput! : ⊨[μ] ∀ₑ (⊡ₑ [echo₂]ₑ →ₑ [output]ₑ)
-  CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, .val 0]ₑ ∧ₑ ⊡ₑ [echo₁, .val 1]ₑ) →ₑ [output, .val ½]ₑ
+  CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ) →ₑ [output, ½]ₑ
 
 namespace Thy
 
 variable
-  (μ : Model Sig P Val)
+  {μ : Model Sig P Val}
   [ca : Thy μ]
   {p : P}
   {v v' : Val}
 
-theorem CaOutput?_simp [n : NotHalf v] : μ.ς output p v = .true → ⊨[μ] ⊡ₑ [echo₂, .val v]ₑ := by
+theorem CaOutput?_simp [n : ≠½ v] : μ.ς output p v = .true → ⊨[μ] ⊡ₑ [echo₂, v]ₑ := by
   cases n
   · intro h;
     have c1 := ca.CaOutput?; specialize c1 p; rw [Lemmas.valid_and] at c1; obtain ⟨c0, c1⟩ := c1
@@ -86,6 +126,64 @@ theorem CaOutput?_simp [n : NotHalf v] : μ.ς output p v = .true → ⊨[μ] �
   · intro h;
     have c1 := ca.CaOutput?; specialize c1 p; rw [Lemmas.valid_and] at c1; obtain ⟨c0, c1⟩ := c1
     rw [Lemmas.valid_impl] at c0 c1; apply quorum_global'.mp; apply c1; simp [denotation]; exact h
+
+theorem CaCorrect'_byzantine {s : Sig} (h : μ.ς s p v = byzantine) : ∀ {v'}, μ.ς s p v' = byzantine := by
+  intro v'; have b := ca.CaCorrect' s p; simp only [Lemmas.valid_or] at b; cases b
+  · next g => simp [denotation] at g; specialize g v; rw [h] at g; contradiction
+  · next g => simp [denotation] at g; exact g v'
+
+theorem CaCorrect'_true {s : Sig} (h : μ.ς s p v ≠ byzantine) : ∀ {v'}, byzantine ≤ μ.ς s p v' → μ.ς s p v' = .true := by
+  intro v' w; have b := ca.CaCorrect' s p; simp only [Lemmas.valid_or] at b; cases b
+  · next g => simp [denotation] at g; specialize g v'; exact Lemmas.valid_and_TF w g
+  · next g => simp [denotation] at g; rw [g v] at h; contradiction
+
+theorem CaCorrect'_false {s : Sig} (h : μ.ς s p v ≠ byzantine) : ∀ {v'}, μ.ς s p v' ≤ byzantine → μ.ς s p v' = .false := by
+  intro v' w; have b := ca.CaCorrect' s p; simp only [Lemmas.valid_or] at b; cases b
+  · next g => simp [denotation] at g; specialize g v';
+              simp [Lemmas.byzantine_le_TF] at g
+              simp [Lemmas.le_byzantine] at w; cases w; assumption; contradiction
+  · next g => simp [denotation] at g; rw [g v] at h; contradiction
+
+theorem CaInput_half : μ.ς input p ½ ≤ byzantine := by
+  have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; exact b.2
+
+theorem CaInput_1_le (h1 : byzantine ≤ μ.ς input p v0) : μ.ς input p v1 ≤ byzantine := by
+  have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
+  simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
+  · next h => exact h.2
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v0 = byzantine := by grind
+              rw [ca.CaCorrect'_byzantine b]
+
+theorem CaInput_0_le (h1 : byzantine ≤ μ.ς input p v1) : μ.ς input p v0 ≤ byzantine := by
+  have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
+  simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v1 = byzantine := by grind
+              rw [ca.CaCorrect'_byzantine b]
+  · next h => exact h.1
+
+theorem CaInput_le_0 (h1 : μ.ς input p v1 ≤ byzantine) : byzantine ≤ μ.ς input p v0 := by
+  have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
+  simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
+  · next h => exact h.1
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v1 = byzantine := by grind
+              rw [ca.CaCorrect'_byzantine b]
+
+theorem CaInput_le_1 (h1 : μ.ς input p v0 ≤ byzantine) : byzantine ≤ μ.ς input p v1 := by
+  have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
+  simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v0 = byzantine := by grind
+              rw [ca.CaCorrect'_byzantine b]
+  · next h => exact h.2
+
+theorem CaInput_v_le {v} [n : ≠½ v] (h1 : byzantine ≤ μ.ς input p (~ v)) : μ.ς input p v ≤ byzantine := by
+  cases n
+  · exact CaInput_0_le h1
+  · exact CaInput_1_le h1
+
+theorem CaInput_le_v {v} [n : ≠½ v] (h1 : μ.ς input p (~ v) ≤ byzantine) : byzantine ≤ μ.ς input p v := by
+  cases n
+  · exact CaInput_le_0 h1
+  · exact CaInput_le_1 h1
 
 end Thy
 
@@ -96,22 +194,22 @@ variable
   [ca : Thy μ]
   [twined : Twined3 μ.S]
   {v v' : Val}
-  [NotHalf v] [NotHalf v']
+  [≠½ v] [≠½ v']
 
-theorem t : ⊨[μ] ((◇ₑ [output, .val v]ₑ ∧ₑ ◇ₑ [output, .val v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
+theorem t : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h; obtain ⟨⟨h1, h2⟩, ⟨g1, g2⟩⟩ := h
-  have q1 : ⊨[μ] ⊡ₑ [echo₂, Term.val v]ₑ := by apply ca.CaOutput?_simp; assumption
-  have q2 : ⊨[μ] ⊡ₑ [echo₂, Term.val v']ₑ := by apply ca.CaOutput?_simp; assumption
-  have q1' : ⊨[μ] ⟐ₑ ([echo₂, Term.val v]ₑ ∧ₑ [echo₂, Term.val v']ₑ) := by
+  have q1 : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := by apply ca.CaOutput?_simp; assumption
+  have q2 : ⊨[μ] ⊡ₑ [echo₂, v']ₑ := by apply ca.CaOutput?_simp; assumption
+  have q1' : ⊨[μ] ⟐ₑ ([echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ) := by
     intro _; simp only [valid_pred, Lemmas.denotation_contraquorum, denotation]
     apply Theorem_2_4_4.t2'; rw [Lemmas.le_and]; constructor
     · simpa [denotation] using q1 p
     · simpa [denotation] using q2 p
   have c2 : ⊨[μ] (⊡ₑ TF[echo₂]ₑ) := ca.CaCorrect echo₂
-  have h3 : ⊨[μ] (Tₑ (◇ₑ ([echo₂, .val v]ₑ ∧ₑ [echo₂, .val v']ₑ))):= by
+  have h3 : ⊨[μ] (Tₑ (◇ₑ ([echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ))):= by
     intro _; simp [denotation];
-    have l : ⊨ (T (◇ (⟦[echo₂, .val v]ₑ ∧ₑ [echo₂, .val v']ₑ⟧ᵈ μ))) := by
+    have l : ⊨ (T (◇ (⟦[echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ⟧ᵈ μ))) := by
          apply Lemma_2_3_7.c3
          · simp
            specialize c2 default; simp [denotation] at c2; obtain ⟨x1, x2, x3⟩ := c2; exists x1
@@ -127,5 +225,51 @@ theorem t : ⊨[μ] ((◇ₑ [output, .val v]ₑ ∧ₑ ◇ₑ [output, .val v']
   simp [Lemmas.neg_and, Lemmas.le_or_implies] at u; apply u p2.1 p2.2
 
 end Proposition_5_3_3
+
+namespace Lemma_5_3_5
+
+variable
+  {μ : Model Sig P Val}
+  [ca : Thy μ]
+  {v v' : Val}
+  {p : P}
+
+theorem t1 : p ⊨[μ] ¬ₑ [input, ½]ₑ := by
+  simp [denotation]; exact ca.CaInput_half
+
+theorem t2 [i : ≠½ v] : (p ⊨[μ] [input, v]ₑ) ↔ p ⊨[μ] ¬ₑ [input, (~ v)]ₑ := by
+  by_cases e : μ.ς input p v = byzantine
+  · simp [denotation, ca.CaCorrect'_byzantine e]
+  · simp [denotation]; cases i
+    · simp!; constructor
+      · exact ca.CaInput_1_le
+      · exact ca.CaInput_le_0
+    · simp!; constructor
+      · exact ca.CaInput_0_le
+      · exact ca.CaInput_le_1
+
+theorem t3_aux (o : v ≤ v') (h1 : p ⊨[μ] Tₑ [input, v]ₑ) (h2 : p ⊨[μ] Tₑ [input, v']ₑ) : v = v' := by
+  simp [denotation] at h1 h2
+  rcases lt_trichotomy v v' with h | h | h
+  · exfalso; clear o; cases v <;> cases v' <;> try contradiction
+    · have b := t1 (p := p) (μ := μ); simp [denotation, h2] at b
+    · have b := t2 (p := p) (μ := μ) (v := v1).mp; simp! [denotation, h1, h2] at b
+    · have b := t1 (p := p) (μ := μ); simp [denotation, h1] at b
+  · assumption
+  · exact absurd h (not_lt.mpr o)
+
+theorem t3 (h1 : p ⊨[μ] Tₑ [input, v]ₑ) (h2 : p ⊨[μ] Tₑ [input, v']ₑ) : v = v' := by
+  cases LinearOrder.le_total v v'
+  · next h => apply t3_aux (μ := μ) h h1 h2
+  · next h => apply Eq.symm; apply t3_aux (μ := μ) h h2 h1
+
+theorem t4 (h1 : p ⊨[μ] □ₑ [input, v]ₑ) (h2 : p ⊨[μ] Tₑ (◇ₑ [input, v']ₑ)) : v = v' := by
+  simp [denotation] at h1 h2; obtain ⟨p', h2⟩ := h2; specialize h1 p'
+  have t : Model.ς μ input p' v = Three.true := ca.CaCorrect'_true (by intro x; rw [x] at h2; contradiction) h1
+  apply t3 (μ := μ)
+  · simp [denotation]; exact t
+  · simp [denotation]; exact h2
+
+end Lemma_5_3_5
 
 end CA
