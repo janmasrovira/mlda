@@ -293,6 +293,7 @@ inductive Expr (S P V : Type) : Nat → Type where
   | bot {n} : Expr S P V n
   | neg {n} : Expr S P V n → Expr S P V n
   | and {n} : Expr S P V n → Expr S P V n → Expr S P V n
+  | eq {n} : Term V n → Term V n → Expr S P V n
   | quorum {n} : Expr S P V n → Expr S P V n
   | everywhere {n} : Expr S P V n → Expr S P V n
   | tf {n} : Expr S P V n → Expr S P V n
@@ -325,6 +326,7 @@ variable
 scoped notation "¬ₑ " => Expr.neg
 scoped notation "⊥ₑ" => Expr.bot
 scoped infixl:35 " ∧ₑ " => Expr.and
+scoped infix:5 " =ₑ " => Expr.eq
 scoped notation "⊡ₑ " => Expr.quorum
 scoped notation "□ₑ " => Expr.everywhere
 scoped notation "TFₑ " => Expr.tf
@@ -341,7 +343,7 @@ scoped notation "⟐ₑ " => contraquorum
 abbrev or {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := ¬ₑ (¬ₑ φ ∧ₑ ¬ₑ ψ)
 scoped infixl:30 " ∨ₑ " => or
 
-abbrev xor {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := sorry
+abbrev xor {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := (φ ∧ₑ ¬ₑ ψ) ∨ₑ (¬ₑ φ ∧ₑ ψ)
 scoped infixl:30 " ⊕ₑ " => xor
 
 @[simp] def impl {n : Nat} (φ ψ : Expr S P V n) : Expr S P V n := ¬ₑ φ ∨ₑ ψ
@@ -402,11 +404,12 @@ variable
   | .tf e          => .tf (substAt k v e)
   | .t e           => .t (substAt k v e)
   | .atom p t      => .atom p (Term.substAt k v t)
+  | .eq t1 t2      => .eq (Term.substAt k v t1) (Term.substAt k v t2)
   | .exist e       => .exist (substAt k.succ v e)
   | .exist_affine e => .exist_affine (substAt k.succ v e)
 
 def Expr.size {n : Nat} : Expr S P V n → Nat
-  | .bot | .atom _ _ => 0
+  | .bot | .atom _ _ | .eq _ _ => 0
   | .and l r => Expr.size l + Expr.size r +1
   | .neg e | .quorum e | .everywhere e | .tf e | .t e | .exist e | .exist_affine e => Expr.size e +1
 
@@ -415,6 +418,7 @@ theorem substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr S P V (n + 1
   Expr.size (substAt k v φ) = Expr.size φ :=
   match φ with
   | .bot => by simp [Expr.size, substAt]
+  | .eq _ _ => by simp [Expr.size, substAt]
   | .neg e => by simp [Expr.size, substAt, substAt_size k v e]
   | .tf e => by simp [Expr.size, substAt, substAt_size k v e]
   | .quorum e => by simp [Expr.size, substAt, substAt_size k v e]
@@ -426,12 +430,14 @@ theorem substAt_size {n : Nat} (k : Fin (n + 1)) (v : V) (φ : Expr S P V (n + 1
   | .exist_affine e => by simp [Expr.size, substAt, substAt_size (n := n + 1) k.succ v e]
 
 def denotation (φ : Expr S P V 0) (p : P) : 𝟯 :=
-  let denTerm (s : S) (p' : P) (t : Term V 0) : 𝟯 := match t with
-    | .val v => μ.ς s p' v
+  let termVal (t : Term V 0) : V := match t with
+    | .val v => v
+  let denTerm (s : S) (p' : P) (t : Term V 0) : 𝟯 := μ.ς s p' (termVal t)
   match φ, h : Expr.size φ with
   | .bot, _ => .false
   | .and l r, _ => denotation l p ∧ denotation r p
   | .tf e, _ => TF (denotation e p)
+  | .eq t1 t2, _ => if termVal t1 = termVal t2 then .true else .false
   | .t e, _ => T (denotation e p)
   | .neg e, _ => ¬ (denotation e p)
   | .quorum e, _ => ⊡(μ.S) (fun p => denotation e p)

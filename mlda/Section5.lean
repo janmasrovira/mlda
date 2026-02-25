@@ -62,5 +62,17 @@ class Thy (μ : Model Sig P Val) where
   CaEcho2! : ⊨[μ] (∃⁎ₑ (⊡ₑ [echo₁]ₑ)) →ₑ ∃⁎ₑ [echo₂]ₑ
   CaOutput! : ⊨[μ] ∀ₑ (⊡ₑ [echo₂]ₑ →ₑ [output]ₑ)
   CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, .val 0]ₑ ∧ₑ ⊡ₑ [echo₁, .val 1]ₑ) →ₑ [output, .val ½]ₑ
+  
+namespace Proposition_5_3_3
+
+variable
+  (μ : Model Sig P Val)
+  [ca : Thy μ]
+  [twined : Twined3 μ.S]
+  {v v' : Val}
+  
+theorem t : ⊨[μ] ((◇ₑ [output, .val v]ₑ ∧ₑ ◇ₑ [output, .val v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := sorry
+
+end Proposition_5_3_3
 
 end CA
