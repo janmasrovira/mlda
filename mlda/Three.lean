@@ -80,22 +80,22 @@ def isTrue : 𝟯 → 𝟯
 scoped notation "T" => isTrue
 
 def isByzantine : 𝟯 → 𝟯
- | byzantine => true 
+ | byzantine => true
  | _ => false
 scoped notation "B" => isByzantine
 
 def isFalse : 𝟯 → 𝟯
- | false => true 
+ | false => true
  | _ => false
 scoped notation "F" => isFalse
 
 def isNotFalse : 𝟯 → 𝟯
- | false => false 
+ | false => false
  | _ => true
 scoped notation "TB" => isNotFalse
 
 def isNotByzantine : 𝟯 → 𝟯
- | byzantine => false 
+ | byzantine => false
  | _ => true
 scoped notation "TF" => isNotByzantine
 
@@ -103,7 +103,7 @@ def strongImpl : 𝟯 → 𝟯 → 𝟯
  | false, _ => true
  | byzantine, true => true
  | byzantine, _ => byzantine
- | true, true => true 
+ | true, true => true
  | true, _ => false
 scoped infixl:25 " ⇀ " => strongImpl
 
@@ -347,7 +347,7 @@ theorem le_by_cases (c1 : a = true → b ≤ byzantine → b = true)
     Finset.le_fold_min byzantine
   generalize P.fold Atom.and true f = y at *
   constructor
-  intro x; rw [x] at h1 h2; simp at h1 h2; 
+  intro x; rw [x] at h1 h2; simp at h1 h2;
   constructor; assumption; rcases h1 with ⟨p1, p2, p3⟩; exists p1; constructor; assumption
   apply le_antisymm; assumption; apply h2; assumption
   rintro ⟨a, b⟩; apply le_antisymm; apply h1.mpr; simp; rcases b with ⟨p1, p2, p3⟩;
@@ -497,7 +497,7 @@ theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
 @[simp] theorem neg_eq_true : (¬ a) = true ↔ a = false := by cases a <;> simp
 @[simp] theorem neg_eq_false : (¬ a) = false ↔ a = true := by cases a <;> simp
 @[simp] theorem neg_eq_byzantine : (¬ a) = byzantine ↔ a = byzantine := by cases a <;> simp
-  
+
 @[simp] theorem Function.neg_eq_true {x} : (¬ᶠ f) x = true ↔ f x = false := by
   simp [Function.neg]
 
@@ -523,11 +523,15 @@ theorem notValid_by_contra : (¬ ⊨ a) → ⊭ a := by
 
 theorem valid_cases : ⊨ a ↔ a = true ∨ a = byzantine := by cases a <;> simp
 
-@[simp] theorem byzantine_le_B : .byzantine ≤ B a ↔ a = byzantine := by cases a <;> simp
+@[simp] theorem byzantine_le_B : byzantine ≤ B a ↔ a = byzantine := by cases a <;> simp
 
 theorem byzantine_le_TF : byzantine ≤ TF a ↔ a ≠ byzantine := by cases a <;> decide
 
-@[simp] theorem byzantine_le_T : .byzantine ≤ T a ↔ a = true := by cases a <;> simp
+@[simp] theorem byzantine_le_T : byzantine ≤ T a ↔ a = true := by cases a <;> simp
+
+theorem byzantine_le_TF_and : byzantine ≤ TF (a ∧ b)
+  ↔ ((byzantine ≤ a ∧ byzantine ≤ b) → a = true ∧ b = true) := by
+  cases a <;> cases b <;> simp
 
 @[simp] theorem TF_and_B_false : (TF a ∧ B a) = false := by
   cases a <;> simp [Three.Atom.and]

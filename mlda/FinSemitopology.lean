@@ -310,6 +310,12 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     exists w; constructor; assumption; constructor
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
 
+theorem t' : ⊡(S) f ≤ ⟐(S) f := by
+  simpa using t (f := f) (f' := f)
+
+theorem t'' : ⊨ (⊡(S) f) → ⊨ (⟐(S) f) := by
+  apply le_implies_valid t'
+
 theorem t2 : ⊨ (⊡(S) f ∧ ⊡(S) f') → (⊨ (⟐(S) (f ∧ f'))) := by
   apply le_implies_valid t
 
