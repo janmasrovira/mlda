@@ -256,6 +256,11 @@ theorem c2 : ⊨ (⟐(S) f) → ⊨ (◇ f) := by
   simp at y; exact y
   simp [Open1]; exact S.univ_open
 
+theorem c3 : ⊨ (⊡(S) (TF ∘ f)) → ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
+  intro h g; rw [Valid] at h g; have l := le_and.mpr ⟨h, g⟩
+  have y := c1 l; simp at y; obtain ⟨y1, y2⟩ := y; simp [le_and] at y2; obtain ⟨y2, y3⟩ := y2
+  simp; exists y1; exact valid_and_TF y3 y2
+
 end Lemma_2_3_7
 
 class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where

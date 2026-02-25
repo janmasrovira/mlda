@@ -54,7 +54,7 @@ class Thy (μ : Model Sig P Val) where
   CaOutput? : ⊨[μ] ([output, .val 0]ₑ →ₑ ⊡ₑ [echo₂, .val 0]ₑ) ∧ₑ
                      ([output, .val 1]ₑ →ₑ ⊡ₑ [echo₂, .val 1]ₑ)
   CaOutput'? : ⊨[μ] [output, .val ½]ₑ →ₑ (⊡ₑ [echo₁, .val 0]ₑ ∧ₑ ⊡ₑ [echo₁, .val 1]ₑ)
-  CaCorrectInput {s : Sig} : ⊨[μ] ⊡ₑ TF[s]ₑ
+  CaCorrect (s : Sig) : ⊨[μ] ⊡ₑ TF[s]ₑ
   CaCorrect' {s : Sig} := ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
   CaInput : ⊨[μ] ([input, .val 0]ₑ ⊕ₑ [input, .val 1]ₑ) ∧ₑ (¬ₑ [input, .val ½]ₑ)
   CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ
@@ -71,7 +71,14 @@ variable
   [twined : Twined3 μ.S]
   {v v' : Val}
   
-theorem t : ⊨[μ] ((◇ₑ [output, .val v]ₑ ∧ₑ ◇ₑ [output, .val v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := sorry
+theorem t : ⊨[μ] ((◇ₑ [output, .val v]ₑ ∧ₑ ◇ₑ [output, .val v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
+  intro p; simp only [Lemmas.valid_impl]; intro h
+  simp [denotation] at h; obtain ⟨⟨h1, h2⟩, ⟨g1, g2⟩⟩ := h
+  have c1 := ca.CaOutput?
+  have c2 := ca.CaCorrect echo₂
+  have h3 : ⊨[μ] (Tₑ (◇ₑ ([echo₂, .val v]ₑ ∧ₑ [echo₂, .val v]ₑ))):= by
+    have := Lemma_2_3_7.c2
+
 
 end Proposition_5_3_3
 

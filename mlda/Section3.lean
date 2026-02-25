@@ -556,11 +556,14 @@ omit [Fintype V] [DecidableEq V] [Fintype P] [DecidableEq P] [Inhabited P] in
 @[simp] theorem denotation_neg : ⟦¬ₑ φ⟧ᵈ μ p = (¬ ⟦φ⟧ᵈ μ p) := by
   simp [denotation]
 
-@[simp] theorem denotation_or : ⟦φ ∨ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p ∨ ⟦ψ⟧ᵈ μ p) := by
+@[simp] theorem denotation_and : ⟦φ ∧ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p ∧ ⟦ψ⟧ᵈ μ p) := by
   simp [denotation]
 
+@[simp] theorem denotation_or : ⟦φ ∨ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p ∨ ⟦ψ⟧ᵈ μ p) := by
+  simp
+
 theorem denotation_impl : ⟦φ →ₑ ψ⟧ᵈ μ p = (⟦φ⟧ᵈ μ p → ⟦ψ⟧ᵈ μ p) := by
-  simp [denotation, Three.Atom.impl, Lemmas.neg_and]
+  simp [Three.Atom.impl, Lemmas.neg_and]
 
 theorem denotation_true : ⟦Tₑ φ⟧ᵈ μ p = T (⟦φ⟧ᵈ μ p) := by
   simp [denotation]
@@ -589,13 +592,13 @@ theorem denotation_exists_affine : ⟦∃₀₁ₑ φ₁⟧ᵈ μ p = ∃₀₁ 
   simp [denotation, denotation]
 
 theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ := by
-  simp [denotation, denotation, Lemmas.le_or]
+  simp [Lemmas.le_or]
 
 theorem valid_and : (p ⊨[μ] φ ∧ₑ ψ) ↔ (p ⊨[μ] φ) ∧ p ⊨[μ] ψ := by
-  simp [denotation, denotation, Lemmas.le_and]
+  simp [Lemmas.le_and]
 
 theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = Three.true) → p ⊨[μ] ψ) := by
-  simp [denotation, denotation, Lemmas.and_le]
+  simp [Lemmas.and_le]
   constructor
   · rintro (h | h)
     · intro h1; rw [h1] at h; contradiction
