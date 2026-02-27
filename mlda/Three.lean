@@ -545,6 +545,9 @@ theorem byzantine_le_TF_and : byzantine ≤ TF (a ∧ b)
 @[simp] theorem TF_eq_false : (TF a) = false ↔ a = byzantine := by
   cases a <;> simp
 
+@[simp] theorem neg_TF : ¬ (TF a) = B a := by
+  cases a <;> simp
+
 theorem mp_weak : ((a → b) = true) → byzantine ≤ a → b = true := by
   cases a <;> cases b <;> simp [Atom.impl, Atom.neg, Atom.or]
 

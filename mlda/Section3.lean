@@ -583,7 +583,7 @@ theorem denotation_contraquorum : ⟦⟐ₑ φ⟧ᵈ μ p = ⟐(μ.S) (fun p => 
   congr; ext k; simp [← Lemmas.join_neg, Function.neg]
   congr 1; ext _; simp
 
-theorem denotation_atom : ⟦[s, v]ₑ⟧ᵈ μ p = μ.ς s p v  := by
+theorem denotation_atom : ⟦[s, v]ₑ⟧ᵈ μ p = μ.ς s p v := by
   simp [denotation]
 
 theorem denotation_exists_affine : ⟦∃₀₁ₑ φ₁⟧ᵈ μ p = ∃₀₁ (fun v => ⟦ₛ[φ₁, 0 ↦ v]⟧ᵈ μ p) := by
@@ -607,9 +607,12 @@ theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = Three.t
   · intro h; apply Decidable.or_iff_not_imp_left.mpr; simpa
 
 theorem valid_exist : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
-  cases φ₁ <;> simp [denotation]
+  simp [denotation]
 
 theorem valid_forall : (p ⊨[μ] ∀ₑ φ₁) ↔ (∀ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
-  cases φ₁ <;> simp [denotation]
+  simp [denotation]
+
+theorem valid_quorum : (p ⊨[μ] ⊡ₑ φ) ↔ ⊨ (⊡(μ.S) (⟦φ⟧ᵈ μ)) := by
+  simp [denotation]
 
 end Lemmas

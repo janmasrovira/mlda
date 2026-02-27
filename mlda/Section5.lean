@@ -97,7 +97,7 @@ export Sig (input echo₁ echo₂ output)
 
 class Thy (μ : Model Sig P Val) where
   CaEcho1? : ⊨[μ] ∀ₑ ([echo₁]ₑ ⇀ₑ ◇ₑ [input]ₑ)
-  CaEcho2? : ⊨[μ] ∀ₑ ([echo₂]ₑ ⇀ₑ ⊡ₑ [echo₁]ₑ)
+  CaEcho2? : ⊨[μ] ∀ₑ ([echo₂]ₑ →ₑ ⊡ₑ [echo₁]ₑ)
   CaOutput? : ⊨[μ] ([output, v0]ₑ →ₑ ⊡ₑ [echo₂, v0]ₑ) ∧ₑ
                      ([output, v1]ₑ →ₑ ⊡ₑ [echo₂, v1]ₑ)
   CaOutput'? : ⊨[μ] [output, ½]ₑ →ₑ (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ)
@@ -126,6 +126,17 @@ theorem CaOutput?_simp [n : ≠½ v] : μ.ς output p v = .true → ⊨[μ] ⊡�
   · intro h;
     have c1 := ca.CaOutput?; specialize c1 p; rw [Lemmas.valid_and] at c1; obtain ⟨c0, c1⟩ := c1
     rw [Lemmas.valid_impl] at c0 c1; apply quorum_global'.mp; apply c1; simp [denotation]; exact h
+
+theorem CaEcho1?_simp : μ.ς echo₁ p v = .true → ∃ p, μ.ς input p v = .true := by
+  have b := ca.CaEcho1? p; simp only [Lemmas.valid_forall, substSimp] at b; specialize b v
+  simp only [Lemmas.valid_impl] at b; simp [denotation] at b
+  assumption
+
+theorem CaEcho2?_simp : μ.ς echo₂ p v = .true → ⊨[μ] ⊡ₑ [echo₁, v]ₑ := by
+  intro h
+  have b := ca.CaEcho2? p; simp only [Lemmas.valid_forall, substSimp] at b; specialize b v
+  simp only [Lemmas.valid_impl] at b; specialize b (by simpa [denotation] using h)
+  apply quorum_global'.mp b
 
 theorem CaCorrect'_byzantine {s : Sig} (h : μ.ς s p v = byzantine) : ∀ {v'}, μ.ς s p v' = byzantine := by
   intro v'; have b := ca.CaCorrect' s p; simp only [Lemmas.valid_or] at b; cases b
@@ -271,5 +282,64 @@ theorem t4 (h1 : p ⊨[μ] □ₑ [input, v]ₑ) (h2 : p ⊨[μ] Tₑ (◇ₑ [i
   · simp [denotation]; exact h2
 
 end Lemma_5_3_5
+
+namespace Proposition_5_3_6
+
+variable
+  {μ : Model Sig P Val}
+  [ca : Thy μ]
+  [twined : Twined3 μ.S]
+  {v v' : Val}
+  {p : P}
+
+theorem t1 [≠½ v] : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ◇ₑ [input, v]ₑ := by
+  intro _; simp only [Lemmas.valid_impl]; simp [denotation]; intro p h
+  have q1 : ⊨ (T (◇ (fun p => μ.ς echo₂ p v))) := by
+    have b : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := ca.CaOutput?_simp h
+    have q : ⊨ (⟐(μ.S) fun p ↦ Model.ς μ echo₂ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using b p)
+    apply Lemma_2_3_7.c3; have b := ca.CaCorrect echo₂ p
+    simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+    simp; refine ⟨_, b2, ?_⟩; intro x; specialize b x; intro a; apply b3
+    exact a; exact q
+  simp at q1; obtain ⟨q1, q1'⟩ := q1
+  have q2 : ⊨ (T (◇ (fun p => μ.ς echo₁ p v))) := by
+    have b : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := ca.CaOutput?_simp h
+    have qe : ⊨[μ] ⊡ₑ [echo₁, v]ₑ := ca.CaEcho2?_simp q1'
+    have q : ⊨ (⟐(μ.S) fun p ↦ Model.ς μ echo₁ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using qe p)
+    apply Lemma_2_3_7.c3
+    have b := ca.CaCorrect echo₁ p
+    simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
+    simp; refine ⟨_, b2, ?_⟩; intro x; specialize b x; intro a; apply b3
+    exact a; exact q
+  simp at q2; obtain ⟨q2, q2'⟩ := q2
+  apply ca.CaEcho1?_simp q2'
+
+theorem t2 [≠½ v'] (h1 : ⊨[μ] □ₑ [input, v]ₑ) (h2 : ⊨[μ] Tₑ [output, v']ₑ) : v = v' := by
+  apply Lemma_5_3_5.t4 (h1 default)
+  have b := t1 (μ := μ) (P := P) (v := v') default
+  simp only [Lemmas.valid_impl] at b; apply b
+  simp [denotation]; specialize h2 default; simp [denotation] at h2
+  exists default
+
+end Proposition_5_3_6
+
+namespace Lemma_5_3_8
+
+variable
+  {μ : Model Sig P Val}
+  [ca : Thy μ]
+  [twined : Twined3 μ.S]
+  {v v' : Val}
+  {p : P}
+
+theorem t1 (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := sorry
+
+theorem t2 (h : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) : ⊨[μ] □ₑ [echo₁, v]ₑ := sorry
+
+theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := sorry
+
+theorem t (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := (t3 ∘ t2 ∘ t1) h
+
+end Lemma_5_3_8
 
 end CA
