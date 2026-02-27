@@ -190,7 +190,7 @@ variable
 
 open Three.Lemmas
 
-theorem p1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
+theorem t1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
   apply le_by_cases
   case c1 =>
     intro h1 _
@@ -210,6 +210,16 @@ theorem p1 : (□ f ∧ ⊡(S) f') ≤ ⊡(S) (f ∧ f') := by
     rw [quorum, byzantine_le_join]; exists u; constructor; assumption
     simp [byzantine_le_meet]; intro x xu; simp [byzantine_le_and]
     exact ⟨h1 x (Finset.mem_univ x), pu x xu⟩
+
+theorem t2 : ⊨ (□ f ∧ ⊡(S) f') → ⊨ (⊡(S) (f ∧ f')) := by
+  apply le_implies_valid; apply t1
+
+theorem t3 : ⊨ (□ f ∧ ⊡(S) (TF ∘ f)) → ⊨ (T (⊡(S) f)) := by
+  have b : ⊨ (□ f ∧ ⊡(S) (TF ∘ f)) → ⊨ (⊡(S) (f ∧ (TF ∘ f))) := t2 (f' := TF ∘ f) (f := f)
+  intro h; have h' := b h
+  simp at h' ⊢; obtain ⟨h1, h2, h3⟩ := h'
+  refine ⟨_, h2, ?_⟩; intro _ ym; specialize h3 _ ym; rw [le_and] at h3
+  apply valid_and_TF h3.1 h3.2
 
 end Lemma_2_3_6
 

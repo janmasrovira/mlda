@@ -34,6 +34,9 @@ scoped infix:4 " ≡ " => veq
 @[simp] def and_implies_eq_all : 𝟯 :=
   allValues |>.fold min true fun v' => and_implies_eq f v v'
 
+abbrev for_all : 𝟯 := allValues |>.fold min true f
+scoped notation " ∀⁎ " => for_all
+
 abbrev existence : 𝟯 := allValues |>.fold max false f
 scoped notation " ∃⁎ " => existence
 
@@ -575,12 +578,18 @@ theorem denotation_everywhere : ⟦□ₑ φ⟧ᵈ μ p = □ (fun p => ⟦φ⟧
 theorem denotation_somewhere : ⟦◇ₑ φ⟧ᵈ μ p = ◇ (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation, ← Lemmas.join_neg]; congr; ext k; simp
 
+theorem denotation_T : ⟦Tₑ φ⟧ᵈ μ p = T (⟦φ⟧ᵈ μ p) := by
+  simp [denotation]
+
+theorem denotation_TF : ⟦TFₑ φ⟧ᵈ μ p = TF (⟦φ⟧ᵈ μ p) := by
+  simp [denotation]
+
 theorem denotation_quorum : ⟦⊡ₑ φ⟧ᵈ μ p = ⊡(μ.S) (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation]
 
 theorem denotation_contraquorum : ⟦⟐ₑ φ⟧ᵈ μ p = ⟐(μ.S) (fun p => ⟦φ⟧ᵈ μ p) := by
   simp [denotation, FinSemitopology.contraquorum, FinSemitopology.quorum, ← Lemmas.meet_neg]
-  congr; ext k; simp [← Lemmas.join_neg, Function.neg]
+  congr 1; ext k; simp [← Lemmas.join_neg, Function.neg]
   congr 1; ext _; simp
 
 theorem denotation_atom : ⟦[s, v]ₑ⟧ᵈ μ p = μ.ς s p v := by
@@ -588,6 +597,10 @@ theorem denotation_atom : ⟦[s, v]ₑ⟧ᵈ μ p = μ.ς s p v := by
 
 theorem denotation_exists_affine : ⟦∃₀₁ₑ φ₁⟧ᵈ μ p = ∃₀₁ (fun v => ⟦ₛ[φ₁, 0 ↦ v]⟧ᵈ μ p) := by
   simp [denotation]
+
+theorem denotation_forall : ⟦∀ₑ φ₁⟧ᵈ μ p = ∀⁎ (fun v => ⟦ₛ[φ₁, 0 ↦ v]⟧ᵈ μ p) := by
+  simp [denotation, Definitions.for_all, Definitions.existence, ← Lemmas.meet_neg]
+  congr 1; ext k; simp
 
 @[simp] theorem valid_T : (p ⊨[μ] Tₑ φ) ↔ ⟦φ⟧ᵈ μ p = .true := by
   simp [denotation, denotation]
@@ -611,6 +624,9 @@ theorem valid_exist : (p ⊨[μ] ∃⁎ₑ φ₁) ↔ (∃ v, p ⊨[μ] ₛ[φ�
 
 theorem valid_forall : (p ⊨[μ] ∀ₑ φ₁) ↔ (∀ v, p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
   simp [denotation]
+
+theorem valid_forall_specialize (v : V) : (p ⊨[μ] ∀ₑ φ₁) → (p ⊨[μ] ₛ[φ₁, 0 ↦ v]) := by
+  intro h; rw [valid_forall] at h; simpa using h v
 
 theorem valid_quorum : (p ⊨[μ] ⊡ₑ φ) ↔ ⊨ (⊡(μ.S) (⟦φ⟧ᵈ μ)) := by
   simp [denotation]

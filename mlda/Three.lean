@@ -193,6 +193,8 @@ end Atom
 
 namespace Function
 
+open scoped Three.Atom
+
 variable {X : Type}
 
 abbrev bigAnd (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold min true f
@@ -204,10 +206,10 @@ scoped notation "⋁" => bigOr
 @[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
-def neg (f : X → 𝟯) : X → 𝟯 := lift1 Atom.neg f
+abbrev neg (f : X → 𝟯) : X → 𝟯 := Atom.neg ∘ f
 scoped prefix:75 "¬ᶠ" => neg
 
-theorem neg_fold {f : X → 𝟯} : (fun x => Atom.neg (f x)) = (¬ᶠ f) := by rfl
+theorem neg_fold {f : X → 𝟯} : (fun x => ¬ (f x)) = (¬ᶠ f) := by rfl
 
 def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
 scoped infixl:35 " ∧ " => and
@@ -267,7 +269,7 @@ theorem Function.neg_and : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
   cases a <;> rfl
 
 @[simp] theorem Function.neg_neg : (¬ᶠ (¬ᶠ f)) = f := by
-  unfold Three.Function.neg; simp; funext a; rw [Function.comp, Function.comp]
+  unfold Three.Function.neg; funext a; rw [Function.comp, Function.comp]
   cases h : f a <;> rfl
 
 @[simp] theorem byzantine_le_neg : byzantine ≤ ¬ a ↔ a ≤ byzantine := by
@@ -416,7 +418,7 @@ theorem join_byzantine : P.fold max false f = byzantine ↔ (∀ x ∈ P, f x �
     Finset.le_fold_max true
   simpa using h
 
-theorem meet_neg : ⋀ P (¬ᶠ f) = ¬ ⋁ P f := by
+theorem meet_neg : ⋀ P (Atom.neg ∘ f) = ¬ ⋁ P f := by
   have := Finset.fold_hom (op := Atom.or) (op' := Atom.and) (b := false) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_or
 

@@ -118,6 +118,17 @@ variable
   {p : P}
   {v v' : Val}
 
+theorem CaEcho1!_simp_echo : (⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) → ⊨[μ] [echo₁, v]ₑ := by
+  intro h p; have b := ca.CaEcho1! p
+  apply Lemmas.valid_forall_specialize v at b
+  simp only [substSimp, Lemmas.valid_impl, Lemmas.denotation_or] at b
+  apply b; rw [Lemmas.or_true]; right; simpa using h p
+
+theorem CaCorrect_simp (s : Sig) : ⊨ (⊡(μ.S) (fun p => TF (μ.ς s p v))) := by
+  have b := ca.CaCorrect s default
+  simp [denotation] at b
+  simp; grind only
+
 theorem CaOutput?_simp [n : ≠½ v] : μ.ς output p v = .true → ⊨[μ] ⊡ₑ [echo₂, v]ₑ := by
   cases n
   · intro h;
@@ -332,11 +343,27 @@ variable
   {v v' : Val}
   {p : P}
 
-theorem t1 (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := sorry
+theorem t1 (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := by
+  intro p; have c := ca.CaCorrect_simp (v := v) echo₁
+  specialize h p; rw [Lemmas.valid_quorum] at h
+  have q := Theorem_2_4_4.t2 (Lemmas.le_and.mpr ⟨c, h⟩)
+  simp [denotation] at q ⊢
+  intro x xm; specialize q x xm; obtain ⟨q1, q2, q3⟩ := q
+  refine ⟨_, q2, ?_⟩; rw [Lemmas.le_and] at q3
+  exact Lemmas.valid_and_TF q3.2 q3.1
 
-theorem t2 (h : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) : ⊨[μ] □ₑ [echo₁, v]ₑ := sorry
+omit twined in
+theorem t2 (h : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) : ⊨[μ] □ₑ [echo₁, v]ₑ := by
+  intro _; simp [denotation]; intro p
+  simpa [denotation] using ca.CaEcho1!_simp_echo h p
 
-theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := sorry
+omit twined in
+theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := by
+  have b := ca.CaCorrect echo₁ default; simp [denotation] at b;
+  intro _; simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_quorum]
+  apply Lemma_2_3_6.t3; simp only [Lemmas.le_and]; constructor
+  simp; intro p; specialize h default; simp [denotation] at h; simpa [denotation] using h p
+  simp [denotation]; grind
 
 theorem t (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := (t3 ∘ t2 ∘ t1) h
 
