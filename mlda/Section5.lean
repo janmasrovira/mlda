@@ -369,4 +369,22 @@ theorem t (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, 
 
 end Lemma_5_3_8
 
+namespace Corollary_5_3_9
+
+variable
+  {μ : Model Sig P Val}
+  [ca : Thy μ]
+  [twined : Twined3 μ.S]
+  {v : Val}
+
+theorem t : ⊨[μ] [echo₂, v]ₑ ⇀ₑ ⊡ₑ [echo₁, v]ₑ := by
+  intro p; simp only [Lemmas.valid_impl]; intro h
+  apply Lemma_5_3_8.t; intro p';
+  apply ca.CaEcho2?_simp (by simpa [denotation] using h)
+
+end Corollary_5_3_9
+
+namespace Corollary_5_3_10
+end Corollary_5_3_10
+
 end CA
