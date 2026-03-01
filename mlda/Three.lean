@@ -67,13 +67,6 @@ scoped infixl:30 " ⊕ " => xor
 @[simp] abbrev impl (a b : 𝟯) : 𝟯 := (¬ a) ∨ b
 scoped infixl:25 " → " => impl
 
-def eq : 𝟯 → 𝟯 → 𝟯
-  | true, true => true
-  | false, false => true
-  | byzantine, byzantine => true
-  | _, _ => false
-scoped infix:5 " ≡ " => eq
-
 def isTrue : 𝟯 → 𝟯
  | true => true
  | _ => false
@@ -240,8 +233,6 @@ theorem false_or_byzantine_le : (a = Three.false) ∨ .byzantine ≤ a := by cas
 
 theorem true_or_le_byzantine : (a = Three.true) ∨ a ≤ .byzantine := by cases a <;> decide
 
-@[simp] theorem eq_true : ((a ≡ b) = true) ↔ a = b := by cases a <;> cases b <;> decide
-
 @[simp] theorem and_idempotent : (a ∧ a) = a := by cases a <;> simp!
 
 @[simp] theorem or_idempotent : (a ∨ a) = a := by cases a <;> simp!
@@ -276,6 +267,9 @@ theorem Function.neg_and : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
   cases a <;> decide
 
 theorem le_or : c ≤ (a ∨ b) ↔ (c ≤ a ∨ c ≤ b) := by
+  cases a <;> cases b <;> cases c <;> decide
+
+theorem or_le : (a ∨ b) ≤ c ↔ (a ≤ c ∧ b ≤ c) := by
   cases a <;> cases b <;> cases c <;> decide
 
 theorem le_and : c ≤ (a ∧ b) ↔ (c ≤ a ∧ c ≤ b) := by
