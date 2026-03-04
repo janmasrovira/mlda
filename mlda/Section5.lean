@@ -520,7 +520,28 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
       · simp; intro v; rw [← Lemmas.valid_TF_iff_TF_true]; exact h32 v
   exact s5
 
-theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁, v1]ₑ) := sorry
+theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁, v1]ₑ) := by
+  intro p
+  have s1 := t1 (μ := μ) default
+  simp only [Lemmas.valid_or]
+  cases Lemmas.valid_or.mp s1
+  · next h =>
+      left; clear s1; simp [denotation] at h ⊢
+      intro y1 y2; specialize h y1 y2; obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.and_true] at h3
+      have b := ca.CaEcho1! h1; simp only [Lemmas.valid_forall, substSimp, Lemmas.valid_impl] at b
+      have b' := b v0 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
+      refine ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 v0))⟩
+      · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
+        left; exact h3.1
+
+  · next h =>
+      right; clear s1; simp [denotation] at h ⊢
+      intro y1 y2; specialize h y1 y2; obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.and_true] at h3
+      have b := ca.CaEcho1! h1; simp only [Lemmas.valid_forall, substSimp, Lemmas.valid_impl] at b
+      have b' := b v1 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
+      exact ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 v1))⟩
+      · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
+        left; exact h3.1
 
 theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, v1]ₑ) := sorry
 
