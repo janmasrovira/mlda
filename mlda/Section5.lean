@@ -500,11 +500,36 @@ variable
   [twined : Twined3 μ.S]
   {v : Val}
 
-theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := sorry
+omit twined in
+theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+  intro p; simp only [Lemmas.valid_impl]; intro h
+  simp [denotation] at h ⊢
+  cases v
+  · simp
+  · exfalso; have := ca.CaInput_half (p := p); rw [h] at this; contradiction
+  · simp
 
-theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := sorry
+omit twined in
+theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+  intro p; simp only [Lemmas.valid_impl]; intro h
+  simp [denotation] at h
+  have ⟨p', hp'⟩ := ca.CaEcho1?_simp h
+  have b := t1 (μ := μ) (v := v) p'; simp only [Lemmas.valid_impl] at b
+  specialize b (by simpa [denotation] using hp')
+  simp [valid_pred, denotation] at b ⊢; exact b
 
-theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := sorry
+theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+  intro p; simp only [Lemmas.valid_impl]; intro h
+  simp [denotation] at h
+  have q1 := ca.CaEcho2?_simp h default
+  simp only [Lemmas.valid_quorum] at q1
+  have q2 := ca.CaCorrect_simp (v := v) echo₁
+  have q1' := Theorem_2_4_4.t'' q1
+  have t := Lemma_2_3_7.c3 q2 (by simpa [denotation] using q1')
+  simp at t; obtain ⟨x1, x2⟩ := t
+  have p2 := Lemmas.valid_impl.mp (t2 (μ := μ) (v := v) x1)
+  simp [denotation] at p2 ⊢
+  apply p2 x2
 
 end Lemma_5_4_2
 
