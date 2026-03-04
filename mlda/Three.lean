@@ -478,6 +478,8 @@ theorem byzantine_le_cases : byzantine ≤ a ↔ a = byzantine ∨ a = true := b
 
 theorem valid_and_TF : ⊨ a → ⊨ (TF a) → a = true := by cases a <;> simp
 
+theorem valid_TF_iff_TF_true : ⊨ (TF a) ↔ TF a = true := by cases a <;> simp
+
 theorem valid_TF : ⊨ (TF a) ↔ a = true ∨ a = false := by
   constructor <;> intro h <;> cases a <;> cases h <;> first | contradiction | simp
 

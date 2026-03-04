@@ -236,10 +236,9 @@ variable
   [ca : Thy μ]
   [twined : Twined3 μ.S]
   {v v' : Val}
-  [≠½ v] [≠½ v']
 
--- TODO adapt to new statement
-theorem t : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
+
+theorem t' [≠½ v] [≠½ v'] : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h; obtain ⟨⟨h1, h2⟩, ⟨g1, g2⟩⟩ := h
   have q1 : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := by apply ca.CaOutput?_simp; assumption
@@ -266,6 +265,18 @@ theorem t : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀�
   specialize h3 default; simp [denotation] at h3; obtain ⟨p1, p2⟩ := h3; rw [Lemmas.and_true] at p2
   have u := ca.CaEcho2Affine p1; simp [denotation] at u; specialize u v v'
   simp [Lemmas.neg_and, Lemmas.le_or_implies] at u; apply u p2.1 p2.2
+
+theorem t : ⊨[μ] (◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀ₑ
+  ((.val v =ₑ .val v') ∨ₑ (.val v =ₑ .val ½) ∨ₑ (.val v' =ₑ .val ½)):= by
+  intro p; simp only [Lemmas.valid_impl]; intro h; simp [denotation, Lemmas.or_true]
+  by_cases v = ½
+  · grind
+  · by_cases v' = ½
+    · grind
+    · next h1 h2 =>
+      have := NotHalf_iff_neq.mpr h1; have := NotHalf_iff_neq.mpr h2
+      have b := Lemmas.valid_impl.mp (t' (μ := μ) (v := v) (v' := v') p) h
+      simp [denotation] at b; grind
 
 end Proposition_5_3_3
 
@@ -470,13 +481,52 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
       intro x xm; simp [Lemmas.or_le]; constructor
       · intro v; apply x3; grind only [Finset.mem_inter]
       · intro v; apply y3; grind only [Finset.mem_inter]
-  have s2 : ⊨[μ] ⊡ₑ ([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ) := sorry
-  have s3 : ⊨[μ] ⊡ₑ ([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := sorry
-  have s4 : ⊨[μ] ⟐ₑ ([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ⟐ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)):= sorry
-  have s5 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, v1]ₑ ∧ₑ TF[echo₁]ₑ)):= sorry
+  have s2 : ⊨[μ] ⊡ₑ (([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
+    intro _
+    simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_and]
+    have h := s1 default
+    simp only [valid_pred, Lemmas.denotation_and, Lemmas.denotation_everywhere,
+        Lemmas.denotation_quorum] at h
+    exact Lemma_2_3_6.t2 _ _ h
+  have s3 : ⊨[μ] ⊡ₑ (([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ))) := by
+    intro p; have h := s2 p
+    simp only [valid_pred, Lemmas.denotation_quorum] at h ⊢
+    convert h using 2; ext q; simp [denotation]
+    exact (inf_sup_right (α := 𝟯) _ _ _).symm
+  have s4 : ⊨[μ] ⟐ₑ ([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ⟐ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
+    intro p; have h := s3 default
+    simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_or,
+        Lemmas.denotation_contraquorum] at h ⊢
+    exact Corollary_2_4_5.t2 h
+  have s5 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, v1]ₑ ∧ₑ TF[echo₁]ₑ)) := by
+    intro p; have h3 := s4 default
+    simp only [valid_pred, Lemmas.denotation_or] at h3
+    simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_or]
+    simp [denotation, Lemmas.le_or] at h3 ⊢
+    cases h3
+    · next h =>
+      left; intro y1 y2; specialize h y1 y2
+      obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.le_and] at h3
+      obtain ⟨h31, h32⟩ := h3; simp [Lemmas.or_le] at h32; obtain ⟨h32, h33⟩ := h32
+      refine ⟨h1, h2, ?_⟩; simp only [Lemmas.and_true]; constructor
+      · apply Lemmas.valid_and_TF h31 (h33 v0)
+      · simp; intro v; rw [← Lemmas.valid_TF_iff_TF_true]; exact h32 v
+    · next h =>
+      right; intro y1 y2; specialize h y1 y2
+      obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.le_and] at h3
+      obtain ⟨h31, h32⟩ := h3; simp [Lemmas.or_le] at h32; obtain ⟨h32, h33⟩ := h32
+      refine ⟨h1, h2, ?_⟩; simp only [Lemmas.and_true]; constructor
+      · apply Lemmas.valid_and_TF h31 (h33 v1)
+      · simp; intro v; rw [← Lemmas.valid_TF_iff_TF_true]; exact h32 v
   exact s5
 
 theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁, v1]ₑ) := sorry
+
+theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, v1]ₑ) := sorry
+
+theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := sorry
+
+theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := sorry
 
 end Corollary_5_3_10
 
