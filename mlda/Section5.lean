@@ -628,7 +628,45 @@ variable
   [twined : Twined3 μ.S]
   {v : Val}
 
-theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := sorry
+theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
+  have s1 := Corollary_5_3_10.t5 (μ := μ) default
+  simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_quorum, Lemmas.denotation_or, Lemmas.byzantine_le_T] at s1; simp [denotation] at s1
+  obtain ⟨o1, o2, o3⟩ := s1
+  have aff := ca.CaEcho2Affine
+  have case1 : ∀ v, (∀ x ∈ o1, μ.ς echo₂ x v = Three.true) →
+      ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
+    intro v hv p; rw [← valid_iff_everywhere]; intro p'
+    rw [Lemmas.valid_exist]; exists v; simp only [substSimp]
+    have b := Lemmas.valid_forall.mp (ca.CaOutput! p') v
+    simp only [substSimp] at b
+    apply Lemmas.valid_impl.mp b
+    simp [denotation]; exact ⟨o1, o2, hv⟩
+  have case2 : (∃ x ∈ o1, μ.ς echo₂ x v0 = Three.true) →
+      (∃ y ∈ o1, μ.ς echo₂ y v1 = Three.true) →
+      ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
+    intro ⟨x, _, hx⟩ ⟨y, _, hy⟩
+    have q0 := ca.CaEcho2?_simp hx
+    have q1 := ca.CaEcho2?_simp hy
+    intro p; rw [← valid_iff_everywhere]; intro p'
+    rw [Lemmas.valid_exist]; exists ½; simp only [substSimp]
+    have b := ca.CaOutput'! p'
+    apply Lemmas.valid_impl.mp b
+    have q0' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v0)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q0 p')
+    have q1' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v1)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q1 p')
+    have h0 := Remark_2_4_6.valid_quorum_implies_true (ca.CaCorrect_simp (v := v0) echo₁) q0'
+    have h1 := Remark_2_4_6.valid_quorum_implies_true (ca.CaCorrect_simp (v := v1) echo₁) q1'
+    simp [denotation, h0, h1]
+  by_cases h : ∀ x ∈ o1, μ.ς echo₂ x v0 = Three.true
+  · exact case1 v0 h
+  · push_neg at h; obtain ⟨x, xm, hx⟩ := h
+    have hx1 : μ.ς echo₂ x v1 = Three.true := by
+      have := Lemmas.or_true.mp (o3 x xm); tauto
+    by_cases h' : ∀ y ∈ o1, μ.ς echo₂ y v1 = Three.true
+    · exact case1 v1 h'
+    · push_neg at h'; obtain ⟨y, ym, hy⟩ := h'
+      have hy0 : μ.ς echo₂ y v0 = Three.true := by
+        have := Lemmas.or_true.mp (o3 y ym); tauto
+      exact case2 ⟨y, ym, hy0⟩ ⟨x, xm, hx1⟩
 
 end Proposition_5_3_11
 
