@@ -533,7 +533,6 @@ theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁
       refine ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 v0))⟩
       · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
         left; exact h3.1
-
   · next h =>
       right; clear s1; simp [denotation] at h ⊢
       intro y1 y2; specialize h y1 y2; obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.and_true] at h3
@@ -543,7 +542,13 @@ theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁
       · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
         left; exact h3.1
 
-theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, v1]ₑ) := sorry
+theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, v1]ₑ) := by
+  have c := t2 (μ := μ) default; simp only [Lemmas.valid_or] at c
+  have b := Lemma_5_3_8.t (μ := μ) (v := v1); intro _
+  simp only [Lemmas.valid_or]
+  cases c
+  · next h => left; sorry
+  · next h => right; sorry
 
 theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := sorry
 
