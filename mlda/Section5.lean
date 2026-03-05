@@ -607,7 +607,16 @@ theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
                   have w := ca.CaInput_half (p := p1)
                   rw [p2] at w; contradiction
 
-theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := sorry
+theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := by
+  intro _
+  have t := t4 (μ := μ) default
+  have b := ca.CaCorrect echo₂ default
+  simp [denotation] at t b ⊢
+  obtain ⟨b1, b2, b3⟩ := b; refine ⟨_, b2, ?_⟩
+  intro x1 x2; simp [Lemmas.or_true]; specialize t x1; simp [Lemmas.le_or] at t
+  cases t
+  · next h => left; exact Lemmas.valid_and_TF h (by grind)
+  · next h => right; exact Lemmas.valid_and_TF h (by grind)
 
 end Corollary_5_3_10
 
