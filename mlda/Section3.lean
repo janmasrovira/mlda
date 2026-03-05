@@ -495,9 +495,21 @@ theorem quorum_global' : (p ⊨[μ] (⊡ₑ φ)) ↔ ⊨[μ] (⊡ₑ φ) := by
   constructor <;> intro h
   intro p'; apply quorum_global h
   exact h p
+theorem quorum_commut_T' : (p ⊨[μ] Tₑ (⊡ₑ φ)) → (p' ⊨[μ] ⊡ₑ (Tₑ φ)) := by
+  simp [denotation]
+theorem quorum_commut_T : (⊨[μ] Tₑ (⊡ₑ φ)) ↔ (⊨[μ] ⊡ₑ (Tₑ φ)) := by
+  constructor <;> (intro h _; simpa [denotation] using h default)
 
 theorem den_contraquorum_global (p p' : P) : ⟦⟐ₑ φ⟧ᵈ μ p = ⟦⟐ₑ φ⟧ᵈ μ p' := by simp [denotation]
 theorem contraquorum_global : (p ⊨[μ] (⟐ₑ φ)) → p' ⊨[μ] (⟐ₑ φ) := by simp [den_contraquorum_global p p']
+theorem contraquorum_global' : (p ⊨[μ] (⟐ₑ φ)) ↔ ⊨[μ] (⟐ₑ φ) := by
+  constructor <;> intro h
+  intro p'; apply contraquorum_global h
+  exact h p
+theorem contraquorum_commut_T' : (p ⊨[μ] Tₑ (⟐ₑ φ)) → (p' ⊨[μ] ⟐ₑ (Tₑ φ)) := by
+  simp [denotation]
+theorem contraquorum_commut_T : (⊨[μ] Tₑ (⟐ₑ φ)) ↔ (⊨[μ] ⟐ₑ (Tₑ φ)) := by
+  constructor <;> (intro h _; simpa [denotation] using h default)
 
 end Notation_3_2_4
 

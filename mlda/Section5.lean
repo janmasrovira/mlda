@@ -137,6 +137,11 @@ theorem CaEcho1!_simp_echo : (⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) → ⊨[μ]
   simp only [substSimp, Lemmas.valid_impl, Lemmas.denotation_or] at b
   apply b; rw [Lemmas.or_true]; right; simpa using h p
 
+theorem CaEcho2!_simp (h : ⊨ (⊡(μ.S) (fun p => T (μ.ς echo₁ p v)))) : ∀p', ∃ v', ⊨ (μ.ς echo₂ p' v') := by
+  intro p'; have b := ca.CaEcho2! p';
+  simp only [Lemmas.valid_impl] at b; simp [denotation] at b h
+  obtain ⟨h1, h2, h3⟩ := h; specialize b v; apply b h1 h2 h3
+
 theorem CaCorrect_simp (s : Sig) : ⊨ (⊡(μ.S) (fun p => TF (μ.ς s p v))) := by
   have b := ca.CaCorrect s default
   simp [denotation] at b
@@ -547,10 +552,60 @@ theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁
   have b := Lemma_5_3_8.t (μ := μ) (v := v1); intro _
   simp only [Lemmas.valid_or]
   cases c
-  · next h => left; sorry
-  · next h => right; sorry
+  · next h =>
+      left; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) :=
+        contraquorum_commut_T.mpr (contraquorum_global'.mp (contraquorum_commut_T' (p' := default) h))
+      exact Lemma_5_3_8.t3 (Lemma_5_3_8.t2 h') _
+  · next h =>
+      right; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, v1]ₑ) :=
+        contraquorum_commut_T.mpr (contraquorum_global'.mp (contraquorum_commut_T' (p' := default) h))
+      exact Lemma_5_3_8.t3 (Lemma_5_3_8.t2 h') _
 
-theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := sorry
+theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
+  have c := t3 (μ := μ) default; simp only [Lemmas.valid_or] at c
+  cases c
+  · next h1 =>
+    intro _; simp [denotation] at h1 ⊢; intro p
+    have b := ca.CaEcho2!_simp (v := v0) (by simpa) p
+    obtain ⟨b1, b2⟩ := b; simp [Lemmas.le_or]
+    cases b1
+    case v0 => grind
+    case v1 => grind
+    case half =>
+      cases Lemmas.byzantine_le_cases.mp b2
+      · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
+      · next h => exfalso
+                  have q := Theorem_2_4_4.t'' (by simpa [denotation] using ca.CaEcho2?_simp h default)
+                  simp at q
+                  have ⟨h1,h2,h3⟩ := h1
+                  specialize q _ h2; obtain ⟨q1, q2, q3⟩ := q
+                  specialize h3 q1 q2
+                  have t := ca.CaCorrect'_true (s := echo₁) (v := v0) (p := q1) (v' := ½) (by grind)
+                  replace q3 := t q3
+                  have ⟨p1, p2⟩ := ca.CaEcho1?_simp q3
+                  have w := ca.CaInput_half (p := p1)
+                  rw [p2] at w; contradiction
+  · next h1 =>
+    intro _; simp [denotation] at h1 ⊢; intro p
+    have b := ca.CaEcho2!_simp (v := v1) (by simpa) p
+    obtain ⟨b1, b2⟩ := b; simp [Lemmas.le_or]
+    cases b1
+    case v0 => grind
+    case v1 => grind
+    case half =>
+      cases Lemmas.byzantine_le_cases.mp b2
+      · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
+      · next h => exfalso
+                  have q := Theorem_2_4_4.t'' (by simpa [denotation] using ca.CaEcho2?_simp h default)
+                  simp at q
+                  have ⟨h1,h2,h3⟩ := h1
+                  specialize q _ h2; obtain ⟨q1, q2, q3⟩ := q
+                  specialize h3 q1 q2
+                  have t := ca.CaCorrect'_true (s := echo₁) (v := v1) (p := q1) (v' := ½) (by grind)
+                  replace q3 := t q3
+                  have ⟨p1, p2⟩ := ca.CaEcho1?_simp q3
+                  have w := ca.CaInput_half (p := p1)
+                  rw [p2] at w; contradiction
 
 theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := sorry
 
