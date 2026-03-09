@@ -1,8 +1,8 @@
 -- NOTE the name of this file is temporary. Eventually code in this file will be reorganized
 
 import mlda.Base
-import mlda.Three
-import mlda.FinSemitopology
+import mlda.Section1
+import mlda.Section2
 import Mathlib.Tactic.Attr.Register
 
 open Three

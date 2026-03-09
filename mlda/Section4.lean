@@ -1,6 +1,6 @@
 import mlda.Base
-import mlda.Three
-import mlda.FinSemitopology
+import mlda.Section1
+import mlda.Section2
 import Mathlib.Tactic.Attr.Register
 import mlda.Section3
 

@@ -1,5 +1,5 @@
 import mlda.Base
-import mlda.Three
+import mlda.Section1
 
 structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
