@@ -329,6 +329,20 @@ theorem t4 (h1 : p ⊨[μ] □ₑ [input, v]ₑ) (h2 : p ⊨[μ] Tₑ (◇ₑ [i
   · simp [denotation]; exact t
   · simp [denotation]; exact h2
 
+theorem t5 [Twined3 μ.S] : p ⊨[μ] ¬ₑ [echo₂, ½]ₑ := by
+  simp [denotation]
+  rcases Lemmas.true_or_le_byzantine (a := μ.ς echo₂ p ½) with h | h
+  · exfalso
+    have q1 : ⊨[μ] ⊡ₑ [echo₁, ½]ₑ := ca.CaEcho2?_simp h
+    have q1' : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₁ p ½) :=
+      Theorem_2_4_4.t'' (by simpa [denotation] using q1 p)
+    have tf := ca.CaCorrect_simp (v := ½) echo₁
+    have q2 := Lemma_2_3_7.c3 tf q1'
+    simp at q2; obtain ⟨_, q2'⟩ := q2
+    have ⟨p', hp'⟩ := ca.CaEcho1?_simp q2'
+    have w := ca.CaInput_half (p := p'); rw [hp'] at w; contradiction
+  · exact h
+
 end Lemma_5_3_5
 
 namespace Proposition_5_3_6
@@ -574,17 +588,8 @@ theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
     case half =>
       cases Lemmas.byzantine_le_cases.mp b2
       · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
-      · next h => exfalso
-                  have q := Theorem_2_4_4.t'' (by simpa [denotation] using ca.CaEcho2?_simp h default)
-                  simp at q
-                  have ⟨h1,h2,h3⟩ := h1
-                  specialize q _ h2; obtain ⟨q1, q2, q3⟩ := q
-                  specialize h3 q1 q2
-                  have t := ca.CaCorrect'_true (s := echo₁) (v := v0) (p := q1) (v' := ½) (by grind)
-                  replace q3 := t q3
-                  have ⟨p1, p2⟩ := ca.CaEcho1?_simp q3
-                  have w := ca.CaInput_half (p := p1)
-                  rw [p2] at w; contradiction
+      · next h => have q := Lemma_5_3_5.t5 (μ := μ) (p := p)
+                  simp [denotation] at q; rw [h] at q; contradiction
   · next h1 =>
     intro _; simp [denotation] at h1 ⊢; intro p
     have b := ca.CaEcho2!_simp (v := v1) (by simpa) p
@@ -595,17 +600,8 @@ theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
     case half =>
       cases Lemmas.byzantine_le_cases.mp b2
       · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
-      · next h => exfalso
-                  have q := Theorem_2_4_4.t'' (by simpa [denotation] using ca.CaEcho2?_simp h default)
-                  simp at q
-                  have ⟨h1,h2,h3⟩ := h1
-                  specialize q _ h2; obtain ⟨q1, q2, q3⟩ := q
-                  specialize h3 q1 q2
-                  have t := ca.CaCorrect'_true (s := echo₁) (v := v1) (p := q1) (v' := ½) (by grind)
-                  replace q3 := t q3
-                  have ⟨p1, p2⟩ := ca.CaEcho1?_simp q3
-                  have w := ca.CaInput_half (p := p1)
-                  rw [p2] at w; contradiction
+      · next h => have q := Lemma_5_3_5.t5 (μ := μ) (p := p)
+                  simp [denotation] at q; rw [h] at q; contradiction
 
 theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := by
   intro _
