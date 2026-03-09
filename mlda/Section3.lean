@@ -369,7 +369,17 @@ scoped notation "[" s ", " t "]ₑ" => Expr.atom s (Term.val t)
 scoped notation "[" s "]ₑ" => Expr.atom s (Term.bound 0)
 
 abbrev TF_all {n : Nat} (s : S) : Expr S P V n := ∀ₑ (TFₑ [s]ₑ)
-scoped notation "TF[" s "]ₑ" => TF_all s
+
+def TF_conj {n : Nat} (s : S) : List S → Expr S P V (n + 1)
+  | [] => TFₑ [s]ₑ
+  | t :: ts => TFₑ [s]ₑ ∧ₑ TF_conj t ts
+
+abbrev TF_all_many {n : Nat} (s : S) (ss : List S) : Expr S P V n := ∀ₑ (TF_conj s ss)
+
+scoped syntax "TF[" term,+ "]ₑ" : term
+scoped macro_rules
+  | `(TF[$s]ₑ) => `(TF_all $s)
+  | `(TF[$s, $ss,*]ₑ) => `(TF_all_many $s [$ss,*])
 
 abbrev B_all {n : Nat} (s : S) : Expr S P V n := ∀ₑ (Bₑ [s]ₑ)
 scoped notation "B[" s "]ₑ" => B_all s

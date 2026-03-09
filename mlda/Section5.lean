@@ -107,7 +107,7 @@ class Thy (μ : Model Sig P Val) where
   CaOutput? : ⊨[μ] ([output, v0]ₑ →ₑ ⊡ₑ [echo₂, v0]ₑ) ∧ₑ
                      ([output, v1]ₑ →ₑ ⊡ₑ [echo₂, v1]ₑ)
   CaOutput'? : ⊨[μ] [output, ½]ₑ →ₑ (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ)
-  CaCorrect (s : Sig) : ⊨[μ] ⊡ₑ TF[s]ₑ
+  CaCorrect : ⊨[μ] ⊡ₑ TF[input, echo₁, echo₂, output]ₑ
   CaCorrect' (s : Sig) : ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
   CaInput : ⊨[μ] ([input, v0]ₑ ⊕ₑ [input, v1]ₑ) ∧ₑ (¬ₑ [input, ½]ₑ)
   CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ
@@ -123,6 +123,14 @@ variable
   [ca : Thy μ]
   {p : P}
   {v v' : Val}
+
+theorem CaCorrect1 (s : Sig) : ⊨[μ] ⊡ₑ TF[s]ₑ := by
+  have c := ca.CaCorrect default
+  intro _
+  simp [TF_all_many, TF_conj, denotation] at c ⊢
+  obtain ⟨c1, c2, c3⟩ := c; refine ⟨_, c2, ?_⟩
+  intro x1 x2 v; specialize c3 x1 x2 v
+  cases s <;> grind [Lemmas.le_and]
 
 theorem CaOutput'?_simp : (μ.ς output p ½ = .true)
   → ((⊨[μ] ⊡ₑ [echo₁, v0]ₑ) ∧ ⊨[μ] ⊡ₑ [echo₁, v1]ₑ) := by
@@ -143,7 +151,7 @@ theorem CaEcho2!_simp (h : ⊨ (⊡(μ.S) (fun p => T (μ.ς echo₁ p v)))) : �
   obtain ⟨h1, h2, h3⟩ := h; specialize b v; apply b h1 h2 h3
 
 theorem CaCorrect_simp (s : Sig) : ⊨ (⊡(μ.S) (fun p => TF (μ.ς s p v))) := by
-  have b := ca.CaCorrect s default
+  have b := ca.CaCorrect1 s default
   simp [denotation] at b
   simp; grind only
 
@@ -253,7 +261,7 @@ theorem t' [≠½ v] [≠½ v'] : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ 
     apply Theorem_2_4_4.t2'; rw [Lemmas.le_and]; constructor
     · simpa [denotation] using q1 p
     · simpa [denotation] using q2 p
-  have c2 : ⊨[μ] (⊡ₑ TF[echo₂]ₑ) := ca.CaCorrect echo₂
+  have c2 : ⊨[μ] (⊡ₑ TF[echo₂]ₑ) := ca.CaCorrect1 echo₂
   have h3 : ⊨[μ] (Tₑ (◇ₑ ([echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ))):= by
     intro _; simp [denotation];
     have l : ⊨ (T (◇ (⟦[echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ⟧ᵈ μ))) := by
@@ -371,7 +379,7 @@ theorem t1' [≠½ v] : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ◇ₑ [input, v]�
   have q1 : ⊨ (T (◇ (fun p => μ.ς echo₂ p v))) := by
     have b : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := ca.CaOutput?_simp h
     have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₂ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using b p)
-    apply Lemma_2_3_7.c3; have b := ca.CaCorrect echo₂ p
+    apply Lemma_2_3_7.c3; have b := ca.CaCorrect1 echo₂ p
     simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
     simp; refine ⟨_, b2, ?_⟩; intro x; specialize b x; intro a; apply b3
     exact a; exact q
@@ -381,7 +389,7 @@ theorem t1' [≠½ v] : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ◇ₑ [input, v]�
     have qe : ⊨[μ] ⊡ₑ [echo₁, v]ₑ := ca.CaEcho2?_simp q1'
     have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₁ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using qe p)
     apply Lemma_2_3_7.c3
-    have b := ca.CaCorrect echo₁ p
+    have b := ca.CaCorrect1 echo₁ p
     simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
     simp; refine ⟨_, b2, ?_⟩; intro x; specialize b x; intro a; apply b3
     exact a; exact q
@@ -400,7 +408,7 @@ theorem t2 : ⊨[μ] ◇ₑ [output, ½]ₑ ⇀ₑ (◇ₑ [input, v0]ₑ ∧ₑ
   intro p; simp only [Lemmas.valid_impl]; intro h; simp [denotation] at h; obtain ⟨h1, h2⟩ := h
   simp only [Lemmas.valid_T, Lemmas.denotation_and, Lemmas.and_true]
   have e1 := ca.CaOutput'?_simp h2
-  have e2 := ca.CaCorrect echo₁
+  have e2 := ca.CaCorrect1 echo₁
   have x1 := quorum_and_TF' e1.1 e2 default;
   have x2 := quorum_and_TF' e1.2 e2 default
   simp [denotation] at x1 x2 ⊢
@@ -454,7 +462,7 @@ theorem t2 (h : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) : ⊨[μ] □ₑ [echo₁
 
 omit twined in
 theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := by
-  have b := ca.CaCorrect echo₁ default; simp [denotation] at b;
+  have b := ca.CaCorrect1 echo₁ default; simp [denotation] at b;
   intro _; simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_quorum]
   apply Lemma_2_3_6.t3; simp only [Lemmas.le_and]; constructor
   simp; intro p; specialize h default; simp [denotation] at h; simpa [denotation] using h p
@@ -491,8 +499,8 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
   have s1 : ⊨[μ] □ₑ ([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ ⊡ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ) := by
     intro _; simp only [Lemmas.valid_and]; constructor
     · simp [denotation, Lemmas.le_or]; intro p; grind [ca.CaInput_0_1 (p := p)]
-    · have b1 := ca.CaCorrect echo₁ default
-      have b2 := ca.CaCorrect input default
+    · have b1 := ca.CaCorrect1 echo₁ default
+      have b2 := ca.CaCorrect1 input default
       simp [denotation] at b1 b2 ⊢
       obtain ⟨x1, x2, x3⟩ := b1
       obtain ⟨y1, y2, y3⟩ := b2
@@ -606,7 +614,7 @@ theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
 theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := by
   intro _
   have t := t4 (μ := μ) default
-  have b := ca.CaCorrect echo₂ default
+  have b := ca.CaCorrect1 echo₂ default
   simp [denotation] at t b ⊢
   obtain ⟨b1, b2, b3⟩ := b; refine ⟨_, b2, ?_⟩
   intro x1 x2; simp [Lemmas.or_true]; specialize t x1; simp [Lemmas.le_or] at t
