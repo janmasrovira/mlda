@@ -1,10 +1,65 @@
-* Readme
-Modal logic for declarative distributed algorithms.
+* Modal Logic for Declarative Distributed Algorithms in Lean 4
+A full Lean 4 formalization of the paper "Declarative distributed broadcast
+using three-valued modal logic and semitopologies" by Murdoch J. Gabbay.
 
-This repository contains a Lean4 formalisation (work in progress) of the results
-presented in
-#+begin_quote
-Declarative distributed broadcast using three-valued modal logic and
-semitopologies, by Murdoch J. Gabbay
-#+end_quote
-The [[file:ref/gabbay-2025.pdf][pdf can be found here]].
+** Overview
+This formalization includes:
+
+- *Section 1: Three-valued logic*: A three-valued logic with logical connectives
+  and predicates
+- *Section 2: Semitopologies and modal operators*: Finite
+  semitopologies with modal operators ~□~ (everywhere), ~◇~ (somewhere), ~⊡~
+  (quorum), ~⟐~ (contraquorum).
+- *Section 3: Logical expressions and models*: Term and expression syntax,
+  semantic models, and three-valued denotation
+- *Section 4: Broadcast algorithm*: Bracha Broadcast specification and
+  correctness proofs
+- *Section 5: Consensus algorithm*: Crusader Agreement specification and
+  correctness proofs
+
+*** Repository structure
+#+begin_example
+mlda/
+├── Base.lean          # (Utility) Foundation
+├── Base/
+│   └── FinEnum.lean   # (Utility) FinEnum derivation macro
+├── Section1.lean      # Three-valued logic: 𝟯 type, connectives, fold operations
+├── Section2.lean      # Finite semitopologies, modal operators, quorum properties
+├── Section3.lean      # Term/expression syntax, models, denotation semantics
+├── Section4.lean      # Broadcast algorithm specification and proofs
+└── Section5.lean      # Consensus agreement specification and proofs
+#+end_example
+
+** Verifying the proofs on your computer
+First, you need to install Lean. You should follow the instructions at
+https://lean-lang.org/install/manual/
+
+*** 1. Clone this repository
+#+begin_src bash
+git clone https://github.com/janmasrovira/mlda
+cd mlda
+#+end_src
+
+*** 2. Build and verify the proofs
+#+begin_src bash
+lake build
+#+end_src
+
+The command above will:
+1. Automatically install the correct Lean version
+2. Download and build Mathlib4 (the standard mathematical library)
+3. Build and verify all formalized proofs
+
+Note that when compiling for the first time, the whole process can take up to 30
+minutes
+
+*If the build completes without errors, all proofs are mechanically verified correct.*
+
+** How to explore the formalization
+The structure of this repository mirrors the paper. Each section corresponds to
+a ~SectionN.lean~ file containing the relevant definitions and theorems. Every
+lemma, theorem, and corollary has its own namespace - for example, Theorem 2.4.4
+is formalized in ~mlda/Section2.lean~ under the namespace Theorem_2_4_4.
+
+** License
+This work is licensed under [[file:LICENSE][CC-BY 4.0]].
