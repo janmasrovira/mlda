@@ -132,6 +132,15 @@ theorem CaCorrect1 (s : Sig) : ⊨[μ] ⊡ₑ TF[s]ₑ := by
   intro x1 x2 v; specialize c3 x1 x2 v
   cases s <;> grind [Lemmas.le_and]
 
+theorem CaCorrect2 (s1 s2 : Sig) : ⊨[μ] ⊡ₑ (TF[s1]ₑ ∧ₑ TF[s2]ₑ) := by
+  have c := ca.CaCorrect default
+  intro _
+  simp [TF_all_many, TF_conj, denotation] at c ⊢
+  obtain ⟨c1, c2, c3⟩ := c; refine ⟨_, c2, ?_⟩
+  intro x1 x2; specialize c3 x1 x2
+  simp [Lemmas.or_le];
+  constructor <;> intro v <;> specialize c3 v <;> cases s1 <;> cases s2 <;> grind [Lemmas.le_and]
+
 theorem CaOutput'?_simp : (μ.ς output p ½ = .true)
   → ((⊨[μ] ⊡ₑ [echo₁, v0]ₑ) ∧ ⊨[μ] ⊡ₑ [echo₁, v1]ₑ) := by
   intro h; have b := CaOutput'? (μ := μ) p
@@ -499,15 +508,7 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
   have s1 : ⊨[μ] □ₑ ([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ ⊡ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ) := by
     intro _; simp only [Lemmas.valid_and]; constructor
     · simp [denotation, Lemmas.le_or]; intro p; grind [ca.CaInput_0_1 (p := p)]
-    · have b1 := ca.CaCorrect1 echo₁ default
-      have b2 := ca.CaCorrect1 input default
-      simp [denotation] at b1 b2 ⊢
-      obtain ⟨x1, x2, x3⟩ := b1
-      obtain ⟨y1, y2, y3⟩ := b2
-      have k := twined.twined x2 y2 y2; simp at k; refine ⟨_, k, ?_⟩
-      intro x xm; simp [Lemmas.or_le]; constructor
-      · intro v; apply x3; grind only [Finset.mem_inter]
-      · intro v; apply y3; grind only [Finset.mem_inter]
+    · exact ca.CaCorrect2 echo₁ input _
   have s2 : ⊨[μ] ⊡ₑ (([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
     intro _
     simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_and]
