@@ -415,7 +415,6 @@ theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
   cases valid_TF.mp (p _ ym); assumption
   next h => rw [h] at yp; contradiction
 
--- TODO I've adapted the statement
 theorem t4 : ⊨ ((⊡(S) f) ∧ ⟐(S) (T ∘ f')) → ⊨ (T (◇ f')) := by
   intro h
   have y := Lemma_2_3_7.c1 (S := S) (f := f) h
@@ -448,8 +447,29 @@ end Remark_2_4_6
 
 namespace Remark_2_4_7
 
--- TODO
--- theorem t' : (∀ f f',(⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')) → Twined3 S := by
+open Three.Lemmas
+
+variable
+  {P : Type}
+  [Nonempty P]
+  [Fintype P]
+  [DecidableEq P]
+  {S : FinSemitopology P}
+
+theorem t (h : ∀ (f f' : P → 𝟯), (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f'))
+    {a b c : Finset P} (ha : a ∈ S.Open1) (hb : b ∈ S.Open1) (hc : c ∈ S.Open1)
+    : (a ∩ b ∩ c).Nonempty := by
+  specialize h (fun p => if p ∈ a then .true else .byzantine)
+               (fun p => if p ∈ b then .true else .byzantine)
+  have hqa : ⊡(S) (fun p => if p ∈ a then .true else .byzantine) = .true :=
+    quorum_true.mpr ⟨a, ha, fun x hx => by simp [hx]⟩
+  have hqb : ⊡(S) (fun p => if p ∈ b then .true else .byzantine) = .true :=
+    quorum_true.mpr ⟨b, hb, fun x hx => by simp [hx]⟩
+  rw [hqa, hqb] at h; simp at h
+  obtain ⟨x, hxc, hx⟩ := h c hc
+  have hxa : x ∈ a := by by_contra hna; simp [hna] at hx
+  have hxb : x ∈ b := by by_contra hnb; simp [hnb] at hx
+  exact ⟨x, Finset.mem_inter.mpr ⟨Finset.mem_inter.mpr ⟨hxa, hxb⟩, hxc⟩⟩
 
 end Remark_2_4_7
 
@@ -535,7 +555,7 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
   have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = .true := by
     have x := i.twined3 vote (¬ᶠ vote); simpa [q] using x
   rw [contraquorum, meet_true] at v
-  have k : ⊨ (⟐(S) (B ∘ vote)) := by -- TODO simplify?
+  have k : ⊨ (⟐(S) (B ∘ vote)) := by
     simp [contraquorum, le_meet]; intro s sm
     have ⟨y, ym, yp⟩ := join_true.mp (v _ sm)
     refine ⟨_, ym, ?_⟩
