@@ -598,7 +598,6 @@ variable
   (a b : 𝟯)
 
 abbrev ℙ : Finset P := Finset.univ
--- TODO try to fix S
 
 def Open1 : Finset (Finset P) := S.Open.filter (·.Nonempty)
 
@@ -611,13 +610,16 @@ scoped notation "□" => everywhere
 abbrev somewhere := ⋁ ℙ f
 scoped notation "◇" => somewhere
 
-abbrev quorum := ⋁ S.Open1 (fun o => ⋀ o f)
+-- S needs to be an explicit parameter of quorum/contraquorum: it affects the value (via S.Open1)
+-- but not the type (P → 𝟯 → 𝟯), so Lean's unification cannot infer it.
+-- The ⊡(S) and ⟐(S) notation is therefore necessary.
+abbrev quorum (S : FinSemitopology P) (f : P → 𝟯) := ⋁ S.Open1 (fun o => ⋀ o f)
 scoped notation "⊡" => quorum
-scoped notation "⊡" "(" A ")" => quorum (S := A)
+scoped notation "⊡" "(" S ")" => quorum S
 
-abbrev contraquorum := ⋀ S.Open1 (fun o => ⋁ o f)
+abbrev contraquorum (S : FinSemitopology P) (f : P → 𝟯) := ⋀ S.Open1 (fun o => ⋁ o f)
 scoped notation "⟐" => contraquorum
-scoped notation "⟐" "(" A ")" => contraquorum (S := A)
+scoped notation "⟐" "(" S ")" => contraquorum S
 
 end
 
