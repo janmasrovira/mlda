@@ -23,21 +23,21 @@ def allValues : Finset Value := Finset.univ
 omit [DecidableEq Value] in
 @[simp] theorem in_allValues : v ∈ allValues := Finset.mem_univ v
 
-abbrev veq : 𝟯 := if v = v' then true else false
+abbrev veq : 𝟯 := if v = v' then 𝐭 else 𝐟
 scoped infix:4 " ≡ " => veq
 
 @[simp] def and_implies_eq : 𝟯 := (f v ∧ f v') → (v ≡ v')
 
 @[simp] def and_implies_eq_all : 𝟯 :=
-  allValues |>.fold min true fun v' => and_implies_eq f v v'
+  allValues |>.fold min 𝐭 fun v' => and_implies_eq f v v'
 
-abbrev for_all : 𝟯 := allValues |>.fold min true f
+abbrev for_all : 𝟯 := allValues |>.fold min 𝐭 f
 scoped notation " ∀⁎ " => for_all
 
-abbrev existence : 𝟯 := allValues |>.fold max false f
+abbrev existence : 𝟯 := allValues |>.fold max 𝐟 f
 scoped notation " ∃⁎ " => existence
 
-abbrev existence_affine : 𝟯 := allValues |>.fold min true (and_implies_eq_all f)
+abbrev existence_affine : 𝟯 := allValues |>.fold min 𝐭 (and_implies_eq_all f)
 scoped notation " ∃₀₁ " => existence_affine
 
 abbrev existence_unique : 𝟯 := existence f ∧ existence_affine f
@@ -55,38 +55,38 @@ variable
   {a : 𝟯}
 
 omit [Fintype Value] in
-@[simp] theorem veq_true : (v ≡ v') = .true ↔ v = v' := by simp
+@[simp] theorem veq_true : (v ≡ v') = 𝐭 ↔ v = v' := by simp
 
 omit [Fintype Value] in
-@[simp] theorem veq_false : (v ≡ v') = .false ↔ v ≠ v' := by simp
+@[simp] theorem veq_false : (v ≡ v') =𝐟 ↔ v ≠ v' := by simp
 
 omit [Fintype Value] in
-@[simp] theorem veq_refl : (v ≡ v) = .true := by simp
+@[simp] theorem veq_refl : (v ≡ v) = 𝐭 := by simp
 
 omit [Fintype Value] in
-@[simp] theorem veq_byzantine_le: .byzantine ≤ (v ≡ v') ↔ (v ≡ v') = .true := by
+@[simp] theorem veq_byzantine_le: 𝐛 ≤ (v ≡ v') ↔ (v ≡ v') = 𝐭 := by
   if h : v = v'
   then simp [h]
   else simp [veq_false.mpr h]
 
 omit [Fintype Value] in
-@[simp] theorem veq_le_byzantine : (v ≡ v') ≤ .byzantine ↔ (v ≡ v') = .false := by
+@[simp] theorem veq_le_byzantine : (v ≡ v') ≤ 𝐛 ↔ (v ≡ v') =𝐟 := by
   if h : v = v'
   then simp [h]
   else simp [veq_false.mpr h]
 
 omit [Fintype Value] in
-@[simp] theorem veq_ne_byzantine : (v ≡ v') ≠ .byzantine := by
+@[simp] theorem veq_ne_byzantine : (v ≡ v') ≠ 𝐛 := by
   if h : v = v'
   then simp [h]
   else simp [veq_false.mpr h]
 
-theorem byzantine_le_affine_implies_eq : .byzantine ≤ ∃₀₁ f ↔ (∀ {v} {v'}, f v = .true → f v' = .true → v = v') := by
+theorem byzantine_le_affine_implies_eq : 𝐛 ≤ ∃₀₁ f ↔ (∀ {v} {v'}, f v = 𝐭 → f v' = 𝐭 → v = v') := by
   constructor; intro h v v' vt vt'; simp [existence_affine] at h;
   have p := h v v'; simpa [vt, vt'] using p
   intro h; simp; intro v v'; simp [Lemmas.le_or_implies, Lemmas.and_true]; apply h
 
-theorem affine_implies_eq : ∃₀₁ f = .true → .byzantine ≤ f v → .byzantine ≤ f v' → v = v' := by
+theorem affine_implies_eq : ∃₀₁ f = 𝐭 → 𝐛 ≤ f v → 𝐛 ≤ f v' → v = v' := by
    intro h vt vt'; simp [existence_affine] at h
    simpa using Lemmas.mp_weak (h v v') (Lemmas.le_and.mpr ⟨vt, vt'⟩)
 
@@ -110,14 +110,14 @@ variable
   {f : Value → 𝟯}
   {v v' : Value}
 
-theorem t1 : f v = .true → f v' = .true → v ≠ v'
-  → ∃₀₁ f = .false := by
+theorem t1 : f v = 𝐭 → f v' = 𝐭 → v ≠ v'
+  → ∃₀₁ f =𝐟 := by
   intro v1 v2 n
   simp [existence_affine]
   exists v;
   exists v'; simpa [v1, v2]
 
-theorem t2 : (∃! v, f v = .true) → (∀ v', f v' ≠ .byzantine) → ∃₁ f = .true := by
+theorem t2 : (∃! v, f v = 𝐭) → (∀ v', f v' ≠ 𝐛) → ∃₁ f = 𝐭 := by
   rintro ⟨t, ft, h1⟩ h2
   simp [existence_unique, Lemmas.and_true]; constructor
   exists t; intro x y
@@ -126,10 +126,10 @@ theorem t2 : (∃! v, f v = .true) → (∀ v', f v' ≠ .byzantine) → ∃₁ 
   cases fy : f y <;> first | contradiction | simp
   simp [h1 x fx, h1 y fy]
 
-theorem t3 : (∃! v, f v = .true) → f v' = .byzantine
-  → ∃₁ f = .byzantine ∧ ∃₀₁ f = .byzantine := by
+theorem t3 : (∃! v, f v = 𝐭) → f v' = 𝐛
+  → ∃₁ f = 𝐛 ∧ ∃₀₁ f = 𝐛 := by
   rintro ⟨v, vt, hv⟩ h2
-  have affine : ∃₀₁ f = .byzantine := by
+  have affine : ∃₀₁ f = 𝐛 := by
     simp [existence_affine]
     constructor
     intro x; intro y
@@ -141,7 +141,7 @@ theorem t3 : (∃! v, f v = .true) → f v' = .byzantine
   constructor; simp [existence_unique, affine, existence, Lemmas.le_join]
   exists v'; simp [h2]; exact affine
 
-theorem t4 : (∀ v, f v ≤ .byzantine) → (∃! v', f v' = .byzantine) → ∃₁ f = .byzantine ∧ ∃₀₁ f = .true := by
+theorem t4 : (∀ v, f v ≤ 𝐛) → (∃! v', f v' = 𝐛) → ∃₁ f = 𝐛 ∧ ∃₀₁ f = 𝐭 := by
   intro h1 h2; obtain ⟨x1, x2, x3⟩ := h2; constructor
   · rw [existence_unique, and_byzantine, or_iff_not_imp_left]; intro h; simp at h
     constructor
@@ -158,9 +158,9 @@ theorem t4 : (∀ v, f v ≤ .byzantine) → (∃! v', f v' = .byzantine) → �
       simp [Lemmas.and_byzantine] at h'; cases h' <;> grind
     · next h' => rw [Lemmas.and_true] at h'; specialize h1 x; rw [h'.1] at h1; contradiction
 
-theorem t5 : (∀ v, f v ≤ .byzantine) → v ≠ v' → f v = .byzantine → f v' = .byzantine → ∃₁ f = .byzantine := by
+theorem t5 : (∀ v, f v ≤ 𝐛) → v ≠ v' → f v = 𝐛 → f v' = 𝐛 → ∃₁ f = 𝐛 := by
   rintro p ne fv fv'
-  have affine : ∃₀₁ f = .byzantine := by
+  have affine : ∃₀₁ f = 𝐛 := by
     simp [existence_affine]
     constructor
     · intro x y
@@ -171,11 +171,11 @@ theorem t5 : (∀ v, f v ≤ .byzantine) → v ≠ v' → f v = .byzantine → f
   simp [existence_unique, affine, existence, Lemmas.le_join]
   exists v; simp [fv]
 
-theorem t6 : (∀ v, f v = .false) → ∃₁ f = .false ∧ ∃₀₁ f = .true := by
+theorem t6 : (∀ v, f v =𝐟) → ∃₁ f =𝐟 ∧ ∃₀₁ f = 𝐭 := by
   intro h
-  have affine : ∃₀₁ f = .true := by simp [existence_affine]; intro x y; simp [h x, h y]
-  have ex : ∃⁎ f = .false := by simpa [existence]
-  have unique : ∃₁ f = .false := by simp [existence_unique, ex]
+  have affine : ∃₀₁ f = 𝐭 := by simp [existence_affine]; intro x y; simp [h x, h y]
+  have ex : ∃⁎ f =𝐟 := by simpa [existence]
+  have unique : ∃₁ f =𝐟 := by simp [existence_unique, ex]
   exact ⟨unique, affine⟩
 
 end Remark_3_1_2
@@ -191,10 +191,10 @@ variable
 namespace Part_1
 
 abbrev p_A := ⊨ (∃₀₁ f)
-abbrev p_B := .byzantine ≤ ∃₀₁ f
+abbrev p_B := 𝐛 ≤ ∃₀₁ f
 abbrev p_C := ∃? v, ⊨ (T (f v))
-abbrev p_D := ∃? v, f v = .true
-abbrev p_E := ∀ v v', f v = .true → f v' = .true → v = v'
+abbrev p_D := ∃? v, f v = 𝐭
+abbrev p_E := ∀ v v', f v = 𝐭 → f v' = 𝐭 → v = v'
 
 theorem A_B : p_A f → p_B f := by simp
 
@@ -240,7 +240,7 @@ end Part_2
 namespace Part_3
 
 abbrev P_A := ⊨ (T (∃₀₁ f))
-abbrev P_B := (∃? v, .byzantine ≤ f v)
+abbrev P_B := (∃? v, 𝐛 ≤ f v)
 
 theorem A_B : P_A f ↔ P_B f := by
   simp [P_B]; constructor
@@ -256,7 +256,7 @@ end Part_3
 namespace Part_4
 
 abbrev P_A := ⊨ (T (∃₁ f))
-abbrev P_B := (∃! v, f v = .true) ∧ (∀ v, f v ≠ .byzantine)
+abbrev P_B := (∃! v, f v = 𝐭) ∧ (∀ v, f v ≠ 𝐛)
 
 theorem A_B : P_A f ↔ P_B f := by
   simp [P_B]; constructor
@@ -462,10 +462,10 @@ def denotation (φ : Expr S P V 0) (p : P) : 𝟯 :=
     | .val v => v
   let denTerm (s : S) (p' : P) (t : Term V 0) : 𝟯 := μ.ς s p' (termVal t)
   match φ, h : Expr.size φ with
-  | .bot, _ => .false
+  | .bot, _ =>𝐟
   | .and l r, _ => denotation l p ∧ denotation r p
   | .tf e, _ => TF (denotation e p)
-  | .eq t1 t2, _ => if termVal t1 = termVal t2 then .true else .false
+  | .eq t1 t2, _ => if termVal t1 = termVal t2 then 𝐭 else 𝐟
   | .t e, _ => T (denotation e p)
   | .neg e, _ => ¬ (denotation e p)
   | .quorum e, _ => ⊡(μ.S) (fun p => denotation e p)
@@ -479,7 +479,7 @@ def denotation (φ : Expr S P V 0) (p : P) : 𝟯 :=
 scoped notation "ₛ[" φ ", " ix "↦" v "]" => substAt ix v φ
 scoped notation "⟦" φ' "⟧ᵈ" => denotation (φ := φ')
 
-abbrev valid_pred (p : P) (φ : Expr S P V 0) : Prop := .byzantine ≤ ⟦ φ ⟧ᵈ μ p
+abbrev valid_pred (p : P) (φ : Expr S P V 0) : Prop := 𝐛 ≤ ⟦ φ ⟧ᵈ μ p
 abbrev valid (φ : Expr S P V 0) := ∀ p, valid_pred μ p φ
 
 scoped notation p " ⊨[" μ "] " φ => valid_pred μ p φ
@@ -638,7 +638,7 @@ theorem denotation_forall : ⟦∀ₑ φ₁⟧ᵈ μ p = ∀⁎ (fun v => ⟦ₛ
   simp [denotation, Definitions.for_all, Definitions.existence, ← Lemmas.meet_neg]
   congr 1; ext k; simp
 
-@[simp] theorem valid_T : (p ⊨[μ] Tₑ φ) ↔ ⟦φ⟧ᵈ μ p = .true := by
+@[simp] theorem valid_T : (p ⊨[μ] Tₑ φ) ↔ ⟦φ⟧ᵈ μ p = 𝐭 := by
   simp [denotation, denotation]
 
 theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ := by
@@ -647,7 +647,7 @@ theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ 
 theorem valid_and : (p ⊨[μ] φ ∧ₑ ψ) ↔ (p ⊨[μ] φ) ∧ p ⊨[μ] ψ := by
   simp [Lemmas.le_and]
 
-theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = Three.true) → p ⊨[μ] ψ) := by
+theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = 𝐭) → p ⊨[μ] ψ) := by
   simp [Lemmas.and_le]
   constructor
   · rintro (h | h)

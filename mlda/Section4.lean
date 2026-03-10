@@ -54,14 +54,14 @@ namespace ThyBB
   {μ : Model BBSig P V}
   [bb : ThyBB μ]
 
-theorem BrDeliver!' {p} {v} : (⊨[μ] Tₑ (⊡ₑ [ready, v]ₑ)) → .byzantine ≤ μ.ς deliver p v := by
+theorem BrDeliver!' {p} {v} : (⊨[μ] Tₑ (⊡ₑ [ready, v]ₑ)) → 𝐛 ≤ μ.ς deliver p v := by
   intro h; have b := bb.BrDeliver!
   specialize b p; rw [Lemmas.valid_forall] at b; specialize b v
   simp only [substSimp, Lemmas.valid_impl] at b
   conv at b => rhs; simp [denotation]
   apply b; specialize h p; rw [Lemmas.valid_T] at h; exact h
 
-theorem BrDeliver?' {p} {v} : μ.ς deliver p v = .true → ⊨[μ] (⊡ₑ [ready, v]ₑ) := by
+theorem BrDeliver?' {p} {v} : μ.ς deliver p v = 𝐭 → ⊨[μ] (⊡ₑ [ready, v]ₑ) := by
   have b := bb.BrDeliver? p; simp only [Lemmas.valid_forall, substSimp] at b; specialize b v
   rw [Lemmas.substAt_bound, Lemmas.valid_impl] at b
   intro h; exact quorum_global'.mp (b (by simpa [denotation] using h))
@@ -126,7 +126,7 @@ theorem t : P1 μ ∨ P2 μ := by
                 simp [denotation, existence, Lemmas.le_and] at b
                 have ⟨⟨v, p, b1⟩, b2⟩ := b; clear b
                 exists v; simp [denotation] at h ⊢;
-                have : Model.ς μ broadcast p v = .true := by
+                have : Model.ς μ broadcast p v = 𝐭 := by
                   specialize h p; simp [Lemmas.byzantine_le_TF] at h
                   cases Lemmas.byzantine_le.mp b1;
                   · next g => specialize h v; contradiction
@@ -156,28 +156,28 @@ variable
   {v v' : V}
 
 -- This lemma is similar to Lemma 4.2.6 in the pdf
-theorem when_broadcast : μ.ς broadcast p v = .true →
+theorem when_broadcast : μ.ς broadcast p v = 𝐭 →
   Lemma_4_2_4.P1 μ ∧
-  ∀ {v' : V} {p' : P}, μ.ς broadcast p' v' = .true → v' = v := by
+  ∀ {v' : V} {p' : P}, μ.ς broadcast p' v' = 𝐭 → v' = v := by
   intro h; cases Lemma_4_2_4.t μ
   next k => constructor
             · assumption
             · intro v' p' b; obtain ⟨k1, k2, k3, k4⟩ := k
-              have f {vy} {py} (hy : μ.ς broadcast py vy = Three.true) : vy = k2 := by
+              have f {vy} {py} (hy : μ.ς broadcast py vy = 𝐭) : vy = k2 := by
                 apply k4; intro ignore; simp [denotation]; exists py
               have := f h; have := f b; subst_vars; rfl
   next k => simp [Lemma_4_2_4.P2, denotation] at k; specialize k v p; rw [h] at k; contradiction
 
-theorem broadcast_true : μ.ς broadcast p v = .true
-        → byzantine ≤ μ.ς broadcast p' v'
-        → μ.ς broadcast p' v' = .true := by
+theorem broadcast_true : μ.ς broadcast p v = 𝐭
+        → 𝐛 ≤ μ.ς broadcast p' v'
+        → μ.ς broadcast p' v' = 𝐭 := by
         intro h1 h2
         have l := bb.BrCorrectBroadcast default; rw [valid_or] at l; simp [denotation] at l
         cases l
         · next h => exact Lemmas.valid_and_TF h2 (h _ _ )
         · next h => rw [h p v] at h1; contradiction
 
-theorem echo_byzantine : μ.ς echo p v = .byzantine → μ.ς echo p v' = .byzantine := by
+theorem echo_byzantine : μ.ς echo p v = 𝐛 → μ.ς echo p v' = 𝐛 := by
         intro h1
         have l := bb.BrCorrectEcho p; rw [valid_forall] at l
         specialize l v'; simp only [substSimp, valid_or] at l
@@ -207,7 +207,7 @@ theorem t2 : ⊨[μ] (◇ₑ [broadcast, v]ₑ →ₑ □ₑ [echo, v]ₑ) := by
   simp [Lemmas.le_or] at i'; apply Decidable.or_iff_not_imp_left.mp at i'; simp at i'
   specialize i' p h; obtain ⟨v', e⟩ := i'
   rw [Lemmas.byzantine_le_cases] at e; cases e
-  · next g => have e : Model.ς μ echo p' v = .byzantine:= Lemmas.echo_byzantine g; rw [e]
+  · next g => have e : Model.ς μ echo p' v = 𝐛:= Lemmas.echo_byzantine g; rw [e]
   · next g =>
       have ⟨⟨_, unV, unVp, _⟩, i⟩ := Lemmas.when_broadcast h
       simp [denotation] at unVp; obtain ⟨x1, x2⟩ := unVp
@@ -288,12 +288,12 @@ variable
 
 theorem t : ⊨[μ] (◇ₑ [broadcast, v]ₑ →ₑ □ₑ [deliver, v]ₑ) := by
   intro p; rw [Lemmas.valid_impl]; intro h
-  have h1 : ∀ p', ⟦◇ₑ [broadcast, v]ₑ⟧ᵈ μ p' = .true := by
+  have h1 : ∀ p', ⟦◇ₑ [broadcast, v]ₑ⟧ᵈ μ p' = 𝐭 := by
     intro p'; rw [den_somewhere_global p p'] at h; rw [h]
   have h2 : ⊨[μ] □ₑ [echo, v]ₑ := by
     intro p'; apply Lemmas.valid_impl.mp (Lemma_4_2_7.t2 p') (h1 p')
   have h3 : ⊨[μ] Tₑ (⊡ₑ [echo, v]ₑ) := Lemma_4_2_9.t1 h2
-  have h3' : ∀ p, ⟦⊡ₑ [echo, v]ₑ⟧ᵈ μ p = .true := by
+  have h3' : ∀ p, ⟦⊡ₑ [echo, v]ₑ⟧ᵈ μ p = 𝐭 := by
     intro p; simpa using h3 p
   have h4 : ⊨[μ] □ₑ [ready, v]ₑ := by
     intro p'; exact Lemmas.valid_impl.mp (Lemma_4_2_7.t3 p') (h3' p')
@@ -394,7 +394,7 @@ theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
   simp only [valid_pred, Lemmas.denotation_exists_affine, substSimp, Lemmas.byzantine_le_affine_implies_eq]
   intro v1 v2 h1 h2; simp [denotation] at h1 h2; obtain ⟨u1, u2⟩ := h1; obtain ⟨w1, w2⟩ := h2
   have d1 := bb.BrDeliver?' u2; have d2 := bb.BrDeliver?' w2
-  have mke {p'} {v} (x : Model.ς μ ready p' v = .true) : ⊨[μ] (⊡ₑ [echo, v]ₑ) := by
+  have mke {p'} {v} (x : Model.ς μ ready p' v = 𝐭) : ⊨[μ] (⊡ₑ [echo, v]ₑ) := by
     intro p2;
     have h := Lemmas.valid_forall.mp (bb.BrReady? p') v
     simp only [substSimp] at h; simp only [Lemmas.valid_impl] at h
@@ -404,7 +404,7 @@ theorem t : ⊨[μ] ∃₀₁ₑ (◇ₑ [deliver]ₑ) := by
     apply Lemma_4_2_11.t3; intro p
     apply Lemmas.valid_and.mpr
     exact ⟨d1 p, d2 p⟩
-  have exvready : ∃ p', (Model.ς μ ready p' v1 = Three.true) ∧ Model.ς μ ready p' v2 = Three.true := by
+  have exvready : ∃ p', (Model.ς μ ready p' v1 = 𝐭) ∧ Model.ς μ ready p' v2 = 𝐭 := by
     specialize hr default
     simpa [denotation, Lemmas.and_true] using hr
   obtain ⟨r, r1, r2⟩ := exvready
