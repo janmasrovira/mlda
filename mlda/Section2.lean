@@ -1,11 +1,11 @@
 import mlda.Base
 import mlda.Section1
 
+-- TODO document Fintype P
 structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
   empty_open : ∅ ∈ Open
   univ_open : Fintype.elems ∈ Open
-  subset_P : Open ⊆ Fintype.elems.powerset
   isOpen_sUnion : ∀ s : Finset (Finset P), (∀ t ∈ s, t ∈ Open) → s.biUnion id ∈ Open
 
 namespace FinSemitopology
@@ -26,6 +26,7 @@ variable
   (a b : 𝟯)
 
 abbrev ℙ : Finset P := Finset.univ
+-- TODO try to fix S
 
 def Open1 : Finset (Finset P) := S.Open.filter (·.Nonempty)
 
@@ -279,7 +280,7 @@ class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P
 export Twined3 (twined)
 
 namespace Example_2_4_3
--- TODO
+-- Not formalised
 end Example_2_4_3
 
 namespace Theorem_2_4_4
@@ -548,7 +549,6 @@ theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
   simp [Remark_2_3_5.map_somewhere] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
   have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
-
   have votep' := mp_weak (i.observeN? p') (by simp [px'])
   have q : (⊡(S) vote ∧ ⊡(S) (¬ᶠ vote)) = .true :=
     Three.Lemmas.and_true.mpr ⟨votep, votep'⟩

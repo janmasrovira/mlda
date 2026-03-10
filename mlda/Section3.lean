@@ -296,13 +296,15 @@ end Part_5
 
 end Proposition_3_1_3
 
-section Types
+section Types -- TODO Rename section to mirror the paper
 
 inductive Term (V : Type) (scope : Nat) where
   | bound : Fin scope → Term V scope
   | val : V → Term V scope
 
--- The type Expr defined here corresponds to the sum of Terms and Predicates defined in the paper
+-- The type Expr defined here corresponds to the sum of Terms and Predicates defined in the paper (Figure 7)
+--
+-- TODO Explain well-scoped Expr
 inductive Expr (S P V : Type) : Nat → Type where
   | atom {n} : S → Term V n → Expr S P V n
   | bot {n} : Expr S P V n
@@ -338,6 +340,7 @@ variable
   [Inhabited P]
   {n : Nat}
 
+-- TODO change e to superscript
 scoped notation "¬ₑ " => Expr.neg
 scoped notation "⊥ₑ" => Expr.bot
 scoped infixl:35 " ∧ₑ " => Expr.and

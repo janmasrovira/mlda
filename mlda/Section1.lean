@@ -140,6 +140,7 @@ scoped notation "⊨" => Valid
 abbrev NotValid (p : 𝟯) : Prop := p = .false
 scoped notation "⊭" => NotValid
 
+-- TODO make sure all numbers align with the pdf
 namespace Proposition_2_2_2
 
 variable {a b : 𝟯}
@@ -200,7 +201,7 @@ scoped notation "⋁" => bigOr
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
 abbrev neg (f : X → 𝟯) : X → 𝟯 := Atom.neg ∘ f
-scoped prefix:75 "¬ᶠ" => neg
+scoped prefix:75 "¬ᶠ" => neg -- TODO add supescript l to all lifted operators
 
 theorem neg_fold {f : X → 𝟯} : (fun x => ¬ (f x)) = (¬ᶠ f) := by rfl
 
@@ -284,16 +285,20 @@ theorem and_true : (a ∧ b) = Three.true ↔ (a = true ∧ b = true) := by
 theorem and_byzantine : (a ∧ b) = Three.byzantine ↔ (a = byzantine ∧ byzantine ≤ b) ∨ (b = byzantine ∧ byzantine ≤ a) := by
   cases a <;> cases b <;> decide
 
-theorem byzantine_le_and : Three.byzantine ≤ (a ∧ b) ↔ (byzantine ≤ a ∧ byzantine ≤ b) := by
+theorem byzantine_le_and : .byzantine ≤ (a ∧ b) ↔ (byzantine ≤ a ∧ byzantine ≤ b) := by
   cases a <;> cases b <;> decide
 
-theorem and_false : (a ∧ b) = Three.false ↔ (a = false ∨ b = false) := by
+theorem and_false : (a ∧ b) = .false ↔ (a = false ∨ b = false) := by
   cases a <;> cases b <;> decide
 
-theorem or_true : (a ∨ b) = Three.true ↔ (a = true ∨ b = true) := by
+theorem or_true : (a ∨ b) = .true ↔ (a = true ∨ b = true) := by
   cases a <;> cases b <;> decide
 
-theorem impl_true : (a → b) = Three.true ↔ (byzantine ≤ a → b = true) := by
+theorem impl_true : (a → b) = .true ↔ (byzantine ≤ a → b = true) := by
+  cases a <;> cases b <;> decide
+
+theorem impl_byzantine : (a → b) = .byzantine ↔
+    (a ≤ byzantine ∨ b ≠ byzantine) → (a = byzantine ∧ b ≤ byzantine) := by
   cases a <;> cases b <;> decide
 
 @[simp] theorem bot_le : false ≤ a ↔ True := by
@@ -509,6 +514,9 @@ theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
   cases a <;> simp
 
 @[simp] theorem byzantine_lt : byzantine < a ↔ a = true := by
+  cases a <;> simp
+
+@[simp] theorem lt_byzantine : a < byzantine ↔ a = false := by
   cases a <;> simp
 
 theorem le_or_implies : byzantine ≤ (a ∨ b) ↔ (a = false → byzantine ≤ b) := by
