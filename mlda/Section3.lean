@@ -303,7 +303,11 @@ inductive Term (V : Type) (scope : Nat) where
 
 -- The type Expr defined here corresponds to the sum of Terms and Predicates defined in the paper (Figure 7)
 --
--- TODO Explain well-scoped Expr
+-- We use a well-scoped encoding: the Nat index tracks the number of bound variables in scope.
+-- Bound variables are represented as `Fin scope`, so ill-scoped references (e.g. a dangling
+-- de Bruijn index) are unrepresentable by construction. Each quantifier (e.g. `exist`)
+-- increments the scope by one in its body, and closed expressions have scope 0. This way the
+-- type checker enforces scoping invariants.
 inductive Expr (S P V : Type) : Nat → Type where
   | atom {n} : S → Term V n → Expr S P V n
   | bot {n} : Expr S P V n
