@@ -200,13 +200,12 @@ scoped notation "⋀" => bigAnd
 abbrev bigOr (P : Finset X) (f : X → 𝟯) : 𝟯 := P.fold max 𝐟 f
 scoped notation "⋁" => bigOr
 
-@[simp] def lift1 (op : 𝟯 → 𝟯) (f : X → 𝟯) : X → 𝟯 := op ∘ f
 @[simp] def lift2 (op : 𝟯 → 𝟯 → 𝟯) (f f' : X → 𝟯) : X → 𝟯 := fun x => op (f x) (f' x)
 
 abbrev neg (f : X → 𝟯) : X → 𝟯 := Atom.neg ∘ f
-scoped prefix:75 "¬ᶠ" => neg -- TODO add supescript l to all lifted operators
+scoped prefix:75 "¬" => neg
 
-theorem neg_fold {f : X → 𝟯} : (fun x => ¬ (f x)) = (¬ᶠ f) := by rfl
+theorem neg_fold {f : X → 𝟯} : (fun x => ¬ (f x)) = (¬ f) := by rfl
 
 def and (f f' : X → 𝟯) : X → 𝟯 := lift2 Atom.and f f'
 scoped infixl:35 " ∧ " => and
@@ -254,16 +253,16 @@ theorem neg_and : (¬ (a ∧ b)) = (¬ a ∨ ¬ b) := by
 @[simp] theorem Function.and_applied {x} : (f ∧ f') x = (f x ∧ f' x) := by
   simp [Function.and]
 
-@[simp] theorem Function.neg_applied {x} : (¬ᶠ f) x = ¬ (f x) := by simp [Function.neg]
+@[simp] theorem Function.neg_applied {x} : (¬ f) x = ¬ (f x) := by simp [Function.neg]
 
-theorem Function.neg_and : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
+theorem Function.neg_and : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
   rw [Three.Function.and, Three.Function.or, Three.Function.neg]
   funext; apply Lemmas.neg_and
 
 @[simp] theorem neg_neg : (¬ ¬ a) = a := by
   cases a <;> rfl
 
-@[simp] theorem Function.neg_neg : (¬ᶠ (¬ᶠ f)) = f := by
+@[simp] theorem Function.neg_neg : (¬ (¬ f)) = f := by
   unfold Three.Function.neg; funext a; rw [Function.comp, Function.comp]
   cases h : f a <;> rfl
 
@@ -424,7 +423,7 @@ theorem meet_neg : ⋀ P (Atom.neg ∘ f) = ¬ ⋁ P f := by
   have := Finset.fold_hom (op := Atom.or) (op' := Atom.and) (b := 𝐟) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_or
 
-theorem join_neg : ⋁ P (¬ᶠ f) = ¬ ⋀ P f := by
+theorem join_neg : ⋁ P (¬ f) = ¬ ⋀ P f := by
   have := Finset.fold_hom (op := Atom.and) (op' := Atom.or) (b := 𝐭) (f := f) (m := Atom.neg) (s := P) ?_
   simp at this; exact this; apply neg_and
 
@@ -497,14 +496,14 @@ theorem valid_TF : ⊨ (TF a) ↔ a = 𝐭 ∨ a = 𝐟 := by
 theorem T_neg : T (¬ a) = F a := by
   cases a <;> simp [Atom.isFalse]
 
-theorem Function.T_neg : T ∘ (¬ᶠ f) = F ∘ f := by
+theorem Function.T_neg : T ∘ (¬ f) = F ∘ f := by
   funext a; simp [Lemmas.T_neg, Function.neg]
 
 @[simp] theorem neg_eq_true : (¬ a) = 𝐭 ↔ a = 𝐟 := by cases a <;> simp
 @[simp] theorem neg_eq_false : (¬ a) = 𝐟 ↔ a = 𝐭 := by cases a <;> simp
 @[simp] theorem neg_eq_byzantine : (¬ a) = 𝐛 ↔ a = 𝐛 := by cases a <;> simp
 
-@[simp] theorem Function.neg_eq_true {x} : (¬ᶠ f) x = 𝐭 ↔ f x = 𝐟 := by
+@[simp] theorem Function.neg_eq_true {x} : (¬ f) x = 𝐭 ↔ f x = 𝐟 := by
   simp [Function.neg]
 
 @[simp] theorem byzantine_meet_left_eq_true : (𝐛 ∧ a) = 𝐭 ↔ False := by
@@ -661,24 +660,24 @@ variable
 
 open Three.Lemmas
 
-theorem p1_1 : (¬ᶠ (f ∧ f')) = (¬ᶠ f ∨ ¬ᶠ f') := by
+theorem p1_1 : (¬ (f ∧ f')) = (¬ f ∨ ¬ f') := by
   funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp; cases f x <;> cases f' x <;> simp!
 
-theorem p1_2 : (¬ᶠ (f ∨ f')) = (¬ᶠ f ∧ ¬ᶠ f') := by
+theorem p1_2 : (¬ (f ∨ f')) = (¬ f ∧ ¬ f') := by
   funext x; unfold Three.Function.neg Three.Function.and Three.Function.or; simp
 
-theorem p1_3 [Fintype P] : (¬ (◇ (¬ᶠ f))) = □ f := by
+theorem p1_3 [Fintype P] : (¬ (◇ (¬ f))) = □ f := by
   simp [somewhere, everywhere, join_neg];
 
-theorem p1_4 [Fintype P] : (¬ (□ (¬ᶠ f))) = ◇ f := by
+theorem p1_4 [Fintype P] : (¬ (□ (¬ f))) = ◇ f := by
   simp [somewhere, everywhere, meet_neg];
 
 theorem p1_5 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
-  : (¬ (⟐(S) (¬ᶠ f))) = ⊡(S) f := by
+  : (¬ (⟐(S) (¬ f))) = ⊡(S) f := by
   simp [contraquorum, join_neg, Three.Function.neg_fold, meet_neg]
 
 theorem p1_6 [Nonempty P] [Fintype P] [DecidableEq P] {S : FinSemitopology P}
-  : (¬ (⊡(S) (¬ᶠ f))) = ⟐(S) f := by
+  : (¬ (⊡(S) (¬ f))) = ⟐(S) f := by
   simp [quorum, meet_neg, Three.Function.neg_fold, join_neg]
 
 @[simp] theorem p2_1 : (¬ (T (¬ a))) = TB a := by cases a <;> rfl
@@ -917,7 +916,7 @@ variable
 open Three.Lemmas
 
 theorem t1 : ⊡(S) (f ∨ f') ≤ (⟐(S) f ∨ ⟐(S) f') := by
-  have x := Proposition_2_2_3.p9.mp (Theorem_2_4_4.t (f := ¬ᶠ f) (f' := ¬ᶠ f') (S := S))
+  have x := Proposition_2_2_3.p9.mp (Theorem_2_4_4.t (f := ¬ f) (f' := ¬ f') (S := S))
   simpa [← Lemma_2_3_3.p1_2, Lemma_2_3_3.p1_5, Three.Lemmas.neg_and
         , Lemma_2_3_3.p1_6, Lemma_2_3_3.p1_6] using x
 
@@ -1056,8 +1055,8 @@ class ThyVote (S : FinSemitopology P) (vote observe : P → 𝟯) where
   observe? p : (observe p → ⊡(S) vote) = 𝐭
   observe! p : (⊡(S) vote ⇀ observe p) = 𝐭
   correct : ⊡(S) (TF ∘ vote) = 𝐭
-  observeN? p : (¬ (observe p) → ⊡(S) (¬ᶠ vote)) = 𝐭
-  observeN! p : (⊡(S) (¬ᶠ vote) ⇀ (¬ (observe p))) = 𝐭
+  observeN? p : (¬ (observe p) → ⊡(S) (¬ vote)) = 𝐭
+  observeN! p : (⊡(S) (¬ vote) ⇀ (¬ (observe p))) = 𝐭
   twined3 f f' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')
 
 end
@@ -1085,7 +1084,7 @@ theorem t2 : ⊨ (⊡(S) vote ⇀ □ observe) := by
   rw [Proposition_2_2_3.p5, everywhere]; intro h;
   simp; intro p; exact mp_strong_true (i.observe! p) h
 
-theorem t3 : ⊨ (◇ (¬ᶠ observe) → ⊡(S) (¬ᶠ vote)) := by
+theorem t3 : ⊨ (◇ (¬ observe) → ⊡(S) (¬ vote)) := by
   rw [Proposition_2_2_3.p4]; intro h; obtain ⟨x, t⟩ := somewhere_true.mp h
   simp [quorum, le_join, le_meet]
   obtain ⟨s, xo, sp⟩ := by simpa [quorum] using mp_weak (i.observeN? x) (byzantine_le.mpr (.inr t))
@@ -1111,17 +1110,17 @@ variable
 open Three.Lemmas
 
 include i in
-theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ᶠ observe))) := by
+theorem t : ⊭ (◇ (T ∘ observe) ∧ ◇ (T ∘ (¬ observe))) := by
   apply notValid_by_contra
   intro h; rw [Valid, le_and] at h; have ⟨h1, h2⟩ := h
   simp [Remark_2_3_5.map_somewhere] at h1 h2
   have ⟨p, px⟩ := h1; have ⟨p', px'⟩ := h2
   have votep := mp_weak (i.observe? p) (byzantine_le.mpr (.inr px))
   have votep' := mp_weak (i.observeN? p') (by simp [px'])
-  have q : (⊡(S) vote ∧ ⊡(S) (¬ᶠ vote)) = 𝐭 :=
+  have q : (⊡(S) vote ∧ ⊡(S) (¬ vote)) = 𝐭 :=
     Three.Lemmas.and_true.mpr ⟨votep, votep'⟩
-  have v : (⟐(S) (vote ∧ (¬ᶠ vote))) = 𝐭 := by
-    have x := i.twined3 vote (¬ᶠ vote); simpa [q] using x
+  have v : (⟐(S) (vote ∧ (¬ vote))) = 𝐭 := by
+    have x := i.twined3 vote (¬ vote); simpa [q] using x
   rw [contraquorum, meet_true] at v
   have k : ⊨ (⟐(S) (B ∘ vote)) := by
     simp [contraquorum, le_meet]; intro s sm
