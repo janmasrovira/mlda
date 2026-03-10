@@ -343,7 +343,6 @@ variable
   [Inhabited P]
   {n : Nat}
 
--- TODO change e to superscript
 scoped notation "¬ₑ " => Expr.neg
 scoped notation "⊥ₑ" => Expr.bot
 scoped infixl:35 " ∧ₑ " => Expr.and
