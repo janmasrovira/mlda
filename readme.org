@@ -30,7 +30,7 @@ mlda/
 ├── Section4.lean      # Broadcast algorithm specification and proofs
 └── Section5.lean      # Consensus agreement specification and proofs
 #+end_example
-Note that in the paper, Section 1 serves as an introduction, so it is not
+In the paper, Section 1 serves as an introduction, so it is not
 included in the Lean formalisation.
 
 ** Verifying the proofs on your computer
