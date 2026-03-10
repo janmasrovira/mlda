@@ -567,7 +567,13 @@ theorem mp_strong : (𝐛 ≤ (a ⇀ b)) → a = 𝐭 → b = 𝐭 := by
 end Lemmas
 
 end Three
--- TODO document Fintype P
+
+/-- A finite semitopology over a type `P` of participants.
+
+The `Fintype P` assumption ensures `P` is finite, which is needed so that folds over the full set
+of participants (e.g. `□` and `◇`) are computable via `Finset.univ`. In practice, `P` represents
+the set of participants in a distributed algorithm, which is always finite. Note that the paper does
+not impose this assumption explicitly — it is an artifact of the formalization. -/
 structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
   empty_open : ∅ ∈ Open
