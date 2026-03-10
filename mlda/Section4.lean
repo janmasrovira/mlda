@@ -1,5 +1,4 @@
 import mlda.Base
-import mlda.Section1
 import mlda.Section2
 import Mathlib.Tactic.Attr.Register
 import mlda.Section3

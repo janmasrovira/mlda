@@ -5,11 +5,12 @@ using three-valued modal logic and semitopologies" by Murdoch J. Gabbay.
 ** Overview
 This formalization includes:
 
-- *Section 1: Three-valued logic*: A three-valued logic with logical connectives
-  and predicates
-- *Section 2: Semitopologies and modal operators*: Finite
-  semitopologies with modal operators ~□~ (everywhere), ~◇~ (somewhere), ~⊡~
-  (quorum), ~⟐~ (contraquorum).
+- *Section 2*:
+  - *Three-valued logic*: A three-valued logic with logical connectives
+    and predicates
+  - *Semitopologies and modal operators*: Finite semitopologies with modal
+    operators ~□~ (everywhere), ~◇~ (somewhere), ~⊡~ (quorum), ~⟐~
+    (contraquorum).
 - *Section 3: Logical expressions and models*: Term and expression syntax,
   semantic models, and three-valued denotation
 - *Section 4: Broadcast algorithm*: Bracha Broadcast specification and
@@ -23,12 +24,14 @@ mlda/
 ├── Base.lean          # (Utility) Foundation
 ├── Base/
 │   └── FinEnum.lean   # (Utility) FinEnum derivation macro
-├── Section1.lean      # Three-valued logic: 𝟯 type, connectives, fold operations
-├── Section2.lean      # Finite semitopologies, modal operators, quorum properties
+├── Section2.lean      # Three-valued logic: 𝟯 type, connectives, fold operations
+                       # Finite semitopologies, modal operators, quorum properties
 ├── Section3.lean      # Term/expression syntax, models, denotation semantics
 ├── Section4.lean      # Broadcast algorithm specification and proofs
 └── Section5.lean      # Consensus agreement specification and proofs
 #+end_example
+Note that in the paper, Section 1 serves as an introduction, so it is not
+included in the Lean formalisation.
 
 ** Verifying the proofs on your computer
 First, you need to install Lean. You should follow the instructions at
