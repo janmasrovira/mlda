@@ -143,7 +143,6 @@ scoped notation "⊨" => Valid
 abbrev NotValid (p : 𝟯) : Prop := p = 𝐟
 scoped notation "⊭" => NotValid
 
--- TODO make sure all numbers abign with the pdf
 namespace Proposition_2_2_3
 
 variable {a b : 𝟯}
