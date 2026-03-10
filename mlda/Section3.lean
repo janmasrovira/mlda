@@ -1,5 +1,3 @@
--- NOTE the name of this file is temporary. Eventually code in this file will be reorganized
-
 import mlda.Base
 import mlda.Section1
 import mlda.Section2
@@ -144,8 +142,22 @@ theorem t3 : (∃! v, f v = .true) → f v' = .byzantine
   constructor; simp [existence_unique, affine, existence, Lemmas.le_join]
   exists v'; simp [h2]; exact affine
 
--- NOTE I think this theorem is not entirely true and not needed (see pdf). I think it should be removed. It is superseded by t5
--- theorem t4 : (∀ v, f v ≤ .byzantine) → (∃! v', f v' = .byzantine) → ∃₁ f = .byzantine ∧ ∃₀₁ f = .byzantine := by
+theorem t4 : (∀ v, f v ≤ .byzantine) → (∃! v', f v' = .byzantine) → ∃₁ f = .byzantine ∧ ∃₀₁ f = .true := by
+  intro h1 h2; obtain ⟨x1, x2, x3⟩ := h2; constructor
+  · rw [existence_unique, and_byzantine, or_iff_not_imp_left]; intro h; simp at h
+    constructor
+    · simp
+      have h' := h ?_; obtain ⟨h'1, h'2, h'3⟩ := h'
+      simp [Lemmas.and_true] at h'3
+      obtain ⟨⟨y1, y2⟩, y3⟩ := h'3
+      have q := h1 h'1; rw [y1] at q; contradiction
+      simp [existence, join_byzantine]; refine ⟨h1, ⟨x1, x2⟩⟩
+    · simp; exists x1; rw [x2]
+  · simp; intro x y
+    simp [impl_true]; intro h; simp [byzantine_le] at h; cases h
+    · next h' =>
+      simp [Lemmas.and_byzantine] at h'; cases h' <;> grind
+    · next h' => rw [Lemmas.and_true] at h'; specialize h1 x; rw [h'.1] at h1; contradiction
 
 theorem t5 : (∀ v, f v ≤ .byzantine) → v ≠ v' → f v = .byzantine → f v' = .byzantine → ∃₁ f = .byzantine := by
   rintro p ne fv fv'
@@ -462,7 +474,7 @@ def denotation (φ : Expr S P V 0) (p : P) : 𝟯 :=
   termination_by Expr.size φ
   decreasing_by all_goals try simp [Expr.size, substAt_size] <;> omega
 
-scoped notation  "ₛ[" φ ", " ix "↦" v "]" => substAt ix v φ
+scoped notation "ₛ[" φ ", " ix "↦" v "]" => substAt ix v φ
 scoped notation "⟦" φ' "⟧ᵈ" => denotation (φ := φ')
 
 abbrev valid_pred (p : P) (φ : Expr S P V 0) : Prop := .byzantine ≤ ⟦ φ ⟧ᵈ μ p
