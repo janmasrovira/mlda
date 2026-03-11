@@ -276,7 +276,7 @@ theorem t' [≠½ v] [≠½ v'] : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ 
   have q2 : ⊨[μ] ⊡ₑ [echo₂, v']ₑ := by apply ca.CaOutput?_simp; assumption
   have q1' : ⊨[μ] ⟐ₑ ([echo₂, v]ₑ ∧ₑ [echo₂, v']ₑ) := by
     intro _; simp only [valid_pred, Lemmas.denotation_contraquorum, denotation]
-    apply Theorem_2_4_4.t2'; rw [Lemmas.le_and]; constructor
+    apply Theorem_2_4_5.t2'; rw [Lemmas.le_and]; constructor
     · simpa [denotation] using q1 p
     · simpa [denotation] using q2 p
   have c2 : ⊨[μ] (⊡ₑ TF[echo₂]ₑ) := ca.CaCorrect1 echo₂
@@ -361,7 +361,7 @@ theorem t5 [Twined3 μ.S] : p ⊨[μ] ¬ₑ [echo₂, ½]ₑ := by
   · exfalso
     have q1 : ⊨[μ] ⊡ₑ [echo₁, ½]ₑ := ca.CaEcho2?_simp h
     have q1' : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₁ p ½) :=
-      Theorem_2_4_4.t'' (by simpa [denotation] using q1 p)
+      Theorem_2_4_5.t'' (by simpa [denotation] using q1 p)
     have tf := ca.CaCorrect_simp (v := ½) echo₁
     have q2 := Lemma_2_3_7.c3 tf q1'
     simp at q2; obtain ⟨_, q2'⟩ := q2
@@ -383,7 +383,7 @@ variable
 omit ca in
 theorem quorum_and_TF {s} (h1 : ⊨[μ] ⊡ₑ [s, v]ₑ) (h2 : ⊨[μ] ⊡ₑ (TFₑ [s, v]ₑ)) : ⊨[μ] Tₑ (◇ₑ [s, v]ₑ) := by
   intro p; simp [denotation]; specialize h2 default
-  have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς s p v) := Theorem_2_4_4.t'' (by simpa [denotation] using h1 p)
+  have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς s p v) := Theorem_2_4_5.t'' (by simpa [denotation] using h1 p)
   have b := Lemma_2_3_7.c3 ?_ q; simpa using b
   simpa [denotation] using h2
 
@@ -396,7 +396,7 @@ theorem t1' [≠½ v] : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ◇ₑ [input, v]�
   intro _; simp only [Lemmas.valid_impl]; simp [denotation]; intro p h
   have q1 : ⊨ (T (◇ (fun p => μ.ς echo₂ p v))) := by
     have b : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := ca.CaOutput?_simp h
-    have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₂ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using b p)
+    have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₂ p v) := Theorem_2_4_5.t'' (by simpa [denotation] using b p)
     apply Lemma_2_3_7.c3; have b := ca.CaCorrect1 echo₂ p
     simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
     simp; refine ⟨_, b2, ?_⟩; intro x; specialize b x; intro a; apply b3
@@ -405,7 +405,7 @@ theorem t1' [≠½ v] : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ◇ₑ [input, v]�
   have q2 : ⊨ (T (◇ (fun p => μ.ς echo₁ p v))) := by
     have b : ⊨[μ] ⊡ₑ [echo₂, v]ₑ := ca.CaOutput?_simp h
     have qe : ⊨[μ] ⊡ₑ [echo₁, v]ₑ := ca.CaEcho2?_simp q1'
-    have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₁ p v) := Theorem_2_4_4.t'' (by simpa [denotation] using qe p)
+    have q : ⊨ (⟐(μ.S) fun p ↦ μ.ς echo₁ p v) := Theorem_2_4_5.t'' (by simpa [denotation] using qe p)
     apply Lemma_2_3_7.c3
     have b := ca.CaCorrect1 echo₁ p
     simp [denotation] at b; obtain ⟨b1, b2, b3⟩ := b
@@ -466,7 +466,7 @@ variable
 theorem t1 [twined : Twined3 μ.S] (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := by
   intro p; have c := ca.CaCorrect_simp (v := v) echo₁
   specialize h p; rw [Lemmas.valid_quorum] at h
-  have q := Theorem_2_4_4.t2 (Lemmas.le_and.mpr ⟨c, h⟩)
+  have q := Theorem_2_4_5.t2 (Lemmas.le_and.mpr ⟨c, h⟩)
   simp [denotation] at q ⊢
   intro x xm; specialize q x xm; obtain ⟨q1, q2, q3⟩ := q
   refine ⟨_, q2, ?_⟩; rw [Lemmas.le_and] at q3
@@ -530,7 +530,7 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
     intro p; have h := s3 default
     simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_or,
         Lemmas.denotation_contraquorum] at h ⊢
-    exact Corollary_2_4_5.t2 h
+    exact Corollary_2_4_6.t2 h
   have s5 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, v1]ₑ ∧ₑ TF[echo₁]ₑ)) := by
     intro p; have h3 := s4 default
     simp only [valid_pred, Lemmas.denotation_or] at h3
@@ -663,8 +663,8 @@ theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     apply Lemmas.valid_impl.mp b
     have q0' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v0)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q0 p')
     have q1' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v1)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q1 p')
-    have h0 := Remark_2_4_6.valid_quorum_implies_true (ca.CaCorrect_simp (v := v0) echo₁) q0'
-    have h1 := Remark_2_4_6.valid_quorum_implies_true (ca.CaCorrect_simp (v := v1) echo₁) q1'
+    have h0 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := v0) echo₁) q0'
+    have h1 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := v1) echo₁) q1'
     simp [denotation, h0, h1]
   by_cases h : ∀ x ∈ o1, μ.ς echo₂ x v0 = 𝐭
   · exact case1 v0 h
@@ -712,7 +712,7 @@ theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v
   have q1 := ca.CaEcho2?_simp h default
   simp only [Lemmas.valid_quorum] at q1
   have q2 := ca.CaCorrect_simp (v := v) echo₁
-  have q1' := Theorem_2_4_4.t'' q1
+  have q1' := Theorem_2_4_5.t'' q1
   have t := Lemma_2_3_7.c3 q2 (by simpa [denotation] using q1')
   simp at t; obtain ⟨x1, x2⟩ := t
   have p2 := Lemmas.valid_impl.mp (t2 (μ := μ) (v := v) x1)

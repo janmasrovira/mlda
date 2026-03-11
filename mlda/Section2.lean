@@ -14,6 +14,8 @@ This file defines:
   guaranteeing that any three non-empty open sets share a common element.
 -/
 
+section Defeinition_2_2_1
+
 inductive Three : Type where
   | Three_f
   | Three_b
@@ -23,6 +25,8 @@ notation "𝟯" => Three
 notation "𝐟" => Three.Three_f
 notation "𝐛" => Three.Three_b
 notation "𝐭" => Three.Three_t
+
+end Defeinition_2_2_1
 
 namespace Three
 
@@ -1064,7 +1068,7 @@ theorem t (h : ∀ (f f' : P → 𝟯), (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f �
 
 end Remark_2_4_8
 
-section
+section Definition_2_5_1
 
 variable
   {P : Type}
@@ -1082,7 +1086,7 @@ class ThyVote (S : FinSemitopology P) (vote observe : P → 𝟯) where
   observeN! p : (⊡(S) (¬ vote) ⇀ (¬ (observe p))) = 𝐭
   twined3 f f' : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f')
 
-end
+end Definition_2_5_1
 
 namespace Lemma_2_5_6
 

@@ -339,7 +339,7 @@ theorem t1_aux {p} {s : BBSig}
   (h2 : p ⊨[μ] ⊡ₑ TF[s]ₑ)
   : p ⊨[μ] Tₑ (⟐ₑ [s, v]ₑ) := by
   rw [valid_pred] at h1 h2; simp only [Lemmas.denotation_quorum] at h1 h2
-  have r := Theorem_2_4_4.t2' (Lemmas.le_and.mpr ⟨h1,h2⟩)
+  have r := Theorem_2_4_5.t2' (Lemmas.le_and.mpr ⟨h1,h2⟩)
   simp at r; simp [denotation]; intro x xm
   have ⟨_, y2, y3⟩ := r _ xm; simp [denotation, Lemmas.le_and] at y3; obtain ⟨y3, y3'⟩ := y3
   refine ⟨_, y2, ?_⟩; refine Lemmas.valid_and_TF y3 (y3' v)
