@@ -11,7 +11,7 @@ import mlda.Base.FinEnum
 /-!
 # Base utilities
 
-General-purpose typeclasses and notation used throughout the formalization:
+General-purpose typeclasses and notation used throughout the formalisation:
 -/
 
 register_simp_attr substSimp

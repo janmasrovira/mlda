@@ -1,9 +1,9 @@
 * Modal Logic for Declarative Distributed Algorithms in Lean 4
-A full Lean 4 formalization of the paper "Declarative distributed broadcast
+A full Lean 4 formalisation of the paper "Declarative distributed broadcast
 using three-valued modal logic and semitopologies" by Murdoch J. Gabbay.
 
 ** Overview
-This formalization includes:
+This formalisation includes:
 
 - *Section 2*:
   - *Three-valued logic*: A three-valued logic with logical connectives

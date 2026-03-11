@@ -7,7 +7,7 @@ import mlda.Section5
 /-!
 # Modal Logic for Declarative Distributed Algorithms
 
-A full Lean 4 formalization of the paper *"Declarative distributed broadcast
+A full Lean 4 formalisation of the paper *"Declarative distributed broadcast
 using three-valued modal logic and semitopologies"* by Murdoch J. Gabbay.
 
 ## Overview

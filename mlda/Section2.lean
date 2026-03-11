@@ -587,7 +587,7 @@ end Three
 The `Fintype P` assumption ensures `P` is finite, which is needed so that folds over the full set
 of participants (e.g. `□` and `◇`) are computable via `Finset.univ`. In practice, `P` represents
 the set of participants in a distributed algorithm, which is always finite. Note that the paper does
-not impose this assumption explicitly — it is an artifact of the formalization. -/
+not impose this assumption - it is an artifact of constructivity of the Lean formalisation. -/
 structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] where
   Open : Finset (Finset P)
   empty_open : ∅ ∈ Open
@@ -624,9 +624,11 @@ scoped notation "□" => everywhere
 abbrev somewhere := ⋁ ℙ f
 scoped notation "◇" => somewhere
 
--- S needs to be an explicit parameter of quorum/contraquorum: it affects the value (via S.Open1)
--- but not the type (P → 𝟯 → 𝟯), so Lean's unification cannot infer it.
--- The ⊡(S) and ⟐(S) notation is therefore necessary.
+-- You will see ⊡(S) (see `quorum` below) and ⟐(S)
+-- (see `contraquorum`) below. The S needs to be an explicit argument
+-- of quorum/contraquorum because S is mentioned in the definition of ⊡ and ⟐
+-- (via S.Open1), but S is not mentioned in the type (P → 𝟯 → 𝟯), so Lean's
+-- unification cannot infer it.
 abbrev quorum (S : FinSemitopology P) (f : P → 𝟯) := ⋁ S.Open1 (fun o => ⋀ o f)
 scoped notation "⊡" => quorum
 scoped notation "⊡" "(" S ")" => quorum S

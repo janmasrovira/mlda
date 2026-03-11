@@ -6,7 +6,7 @@ import mlda.Section3
 /-!
 # Section 4: Bracha Broadcast
 
-This file formalizes the Bracha Broadcast algorithm:
+This file formalises the Bracha Broadcast algorithm:
 
 - **Signature** (`BBSig`): four signals - broadcast, echo, ready, deliver.
 - **Axioms** (`ThyBB`): axioms for Bracha Broadcast
@@ -149,9 +149,13 @@ theorem t : P1 μ ∨ P2 μ := by
               simp [denotation, FinSemitopology.everywhere, existence] at h
               exact h p v
 
+-- TODO prove that *exactly* one holds
+
 end Lemma_4_2_4
 
 namespace Lemmas
+
+-- TODO
 
 variable
   {V P : Type}
@@ -359,6 +363,7 @@ theorem t2 (h1 : ⊨[μ] (⊡ₑ [echo, v]ₑ ∧ₑ ⊡ₑ [echo, v']ₑ))
   apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
   apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
 
+-- special case of t2 when v = v'
 theorem t2' (h1 : ⊨[μ] (⊡ₑ [echo, v]ₑ)) : ⊨[μ] (Tₑ (◇ₑ [echo, v]ₑ)) := by
   intro p; specialize h1 p
   have h2 := Lemmas.valid_forall.mp (bb.BrCorrect p) v; simp only [substSimp, Lemmas.valid_and] at h2

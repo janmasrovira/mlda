@@ -6,7 +6,7 @@ import Mathlib.Tactic.Attr.Register
 /-!
 # Section 5: Crusader Agreement
 
-This file formalizes the Crusader Agreement consensus protocol:
+This file formalises the Crusader Agreement consensus protocol:
 
 - **Value domain** (`Val`): three values `v0`, `v1`, `½` (in the paper denoted as 0, 1, 0.5 respectively)
 - **Signature** (`Sig`): input, echo₁, echo₂, and output signals.
@@ -38,7 +38,7 @@ variable
 
 inductive Val where
   | v0
-  | half
+  | half -- TODO vhalf
   | v1
   deriving DecidableEq, FinEnum, Ord
 
@@ -120,7 +120,7 @@ class Thy (μ : Model Sig P Val) where
   CaCorrect : ⊨[μ] ⊡ₑ TF[input, echo₁, echo₂, output]ₑ
   CaCorrect' (s : Sig) : ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
   CaInput : ⊨[μ] ([input, v0]ₑ ⊕ₑ [input, v1]ₑ) ∧ₑ (¬ₑ [input, ½]ₑ)
-  CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ
+  CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ -- axiom called CaEcho2_01 in the paper
   CaEcho1! : ⊨[μ] ∀ₑ (([input]ₑ ∨ₑ ⟐ₑ [echo₁]ₑ) →ₑ [echo₁]ₑ)
   CaEcho2! : ⊨[μ] (∃⁎ₑ (⊡ₑ [echo₁]ₑ)) →ₑ ∃⁎ₑ [echo₂]ₑ
   CaOutput! : ⊨[μ] ∀ₑ (⊡ₑ [echo₂]ₑ →ₑ [output]ₑ)
@@ -268,7 +268,6 @@ variable
   [ca : Thy μ]
   [twined : Twined3 μ.S]
   {v v' : Val}
-
 
 theorem t' [≠½ v] [≠½ v'] : ⊨[μ] ((◇ₑ [output, v]ₑ ∧ₑ ◇ₑ [output, v']ₑ) ⇀ₑ (.val v =ₑ .val v')) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
@@ -461,11 +460,10 @@ namespace Lemma_5_3_8
 variable
   {μ : Model Sig P Val}
   [ca : Thy μ]
-  [twined : Twined3 μ.S]
   {v v' : Val}
   {p : P}
 
-theorem t1 (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := by
+theorem t1 [twined : Twined3 μ.S] (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ) := by
   intro p; have c := ca.CaCorrect_simp (v := v) echo₁
   specialize h p; rw [Lemmas.valid_quorum] at h
   have q := Theorem_2_4_4.t2 (Lemmas.le_and.mpr ⟨c, h⟩)
@@ -474,12 +472,10 @@ theorem t1 (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⟐ₑ [echo₁,
   refine ⟨_, q2, ?_⟩; rw [Lemmas.le_and] at q3
   exact Lemmas.valid_and_TF q3.2 q3.1
 
-omit twined in
 theorem t2 (h : ⊨[μ] Tₑ (⟐ₑ [echo₁, v]ₑ)) : ⊨[μ] □ₑ [echo₁, v]ₑ := by
   intro _; simp [denotation]; intro p
   simpa [denotation] using ca.CaEcho1!_simp_echo h p
 
-omit twined in
 theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := by
   have b := ca.CaCorrect1 echo₁ default; simp [denotation] at b;
   intro _; simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_quorum]
@@ -487,7 +483,7 @@ theorem t3 (h : ⊨[μ] □ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁,
   simp; intro p; specialize h default; simp [denotation] at h; simpa [denotation] using h p
   simp [denotation]; grind
 
-theorem t (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := (t3 ∘ t2 ∘ t1) h
+theorem t [twined : Twined3 μ.S] (h : ⊨[μ] ⊡ₑ [echo₁, v]ₑ) : ⊨[μ] Tₑ (⊡ₑ [echo₁, v]ₑ) := (t3 ∘ t2 ∘ t1) h
 
 end Lemma_5_3_8
 
@@ -496,10 +492,9 @@ namespace Corollary_5_3_9
 variable
   {μ : Model Sig P Val}
   [ca : Thy μ]
-  [twined : Twined3 μ.S]
   {v : Val}
 
-theorem t : ⊨[μ] [echo₂, v]ₑ ⇀ₑ ⊡ₑ [echo₁, v]ₑ := by
+theorem t [twined : Twined3 μ.S] : ⊨[μ] [echo₂, v]ₑ ⇀ₑ ⊡ₑ [echo₁, v]ₑ := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   apply Lemma_5_3_8.t; intro p';
   apply ca.CaEcho2?_simp (by simpa [denotation] using h)
@@ -694,7 +689,7 @@ variable
   {v : Val}
 
 omit twined in
-theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h ⊢
   cases v
@@ -703,7 +698,7 @@ theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term
   · simp
 
 omit twined in
-theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h
   have ⟨p', hp'⟩ := ca.CaEcho1?_simp h
@@ -711,7 +706,7 @@ theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Te
   specialize b (by simpa [denotation] using hp')
   simp [valid_pred, denotation] at b ⊢; exact b
 
-theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ Term.val v0) ∨ₑ (Term.val v =ₑ .val v1) := by
+theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h
   have q1 := ca.CaEcho2?_simp h default

@@ -394,7 +394,7 @@ scoped notation "Bₑ " => is_byzantine
 
 scoped notation "[" s "; " t "]ₑ" => Expr.atom s t
 scoped notation "[" s ", " t "]ₑ" => Expr.atom s (Term.val t)
-scoped notation "[" s "]ₑ" => Expr.atom s (Term.bound 0)
+scoped notation "[" s "]ₑ" => Expr.atom s (Term.bound 0) -- defined in Notation 3.2.2 (2)
 
 abbrev TF_all {n : Nat} (s : S) : Expr S P V n := ∀ₑ (TFₑ [s]ₑ)
 
@@ -661,6 +661,11 @@ theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ 
 theorem valid_and : (p ⊨[μ] φ ∧ₑ ψ) ↔ (p ⊨[μ] φ) ∧ p ⊨[μ] ψ := by
   simp [Lemmas.le_and]
 
+-- TODO use unicode
+-- The paper has "weak implication" -> and "strong implication" -^. In the Lean
+-- formalisation we arrange the mathematics equivalently but slightly
+-- differently. We use only -> (treating P -^ Q as a macro for P -> TQ) and
+-- therefore we use only one modus ponens principle, as follows:
 theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = 𝐭) → p ⊨[μ] ψ) := by
   simp [Lemmas.and_le]
   constructor
