@@ -81,7 +81,18 @@ is formalised in ~mlda/Section2.lean~ under the namespace Theorem_2_4_5.
 Generic auxiliary lemmas that are used in the formalisation but do not appear in the
 paper are placed under the ~Lemmas~ namespace within each file.
 
-The generated documentation for this formalisation can be browsed at [[https://janmasrovira.github.io/mlda/mlda.html][janmasrovira.github.io/mlda]]
+The generated documentation for this formalization can be browsed at
+[[https://janmasrovira.github.io/mlda/mlda.html][janmasrovira.github.io/mlda]]. In the HTML documentation, theorem statements are
+presented without notation (a limitation of the existing tooling). It is
+recommended to follow the /Source/ link to see them presented with proper notation.
+
+** Building the documentation locally
+To build the documentation run:
+#+begin_src bash
+lake -d docbuild build mlda:docs
+#+end_src
+When the above command finishes, the documentation will be available at
+~docbuild/.lake/build/doc/mlda.html~.
 
 ** License
 This work is licensed under [[file:LICENSE][CC-BY 4.0]].
