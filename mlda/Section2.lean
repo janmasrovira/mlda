@@ -1,5 +1,19 @@
 import mlda.Base
 
+/-!
+# Section 2: Three-valued logic and semitopologies
+
+This file defines:
+
+- **Three-valued logic** (`Three`, denoted as `𝟯`) and its operations
+- **Fold operations**: `⋀` and `⋁` for big conjunction / disjunction over finsets.
+- **Finite semitopologies** (`FinSemitopology`): a topology on a finite set of
+  participants, equipped with modal operators `□` (everywhere), `◇` (somewhere),
+  `⊡` (quorum), and `⟐` (contraquorum).
+- **Twined semitopologies** (`Twined3`): the three-way intersection property
+  guaranteeing that any three non-empty open sets share a common element.
+-/
+
 inductive Three : Type where
   | Three_f
   | Three_b

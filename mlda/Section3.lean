@@ -2,6 +2,17 @@ import mlda.Base
 import mlda.Section2
 import Mathlib.Tactic.Attr.Register
 
+/-!
+# Section 3: Logical expressions and models
+
+This file defines:
+
+- **Terms and expressions** (`Expr`): The syntax for the expressions in the logic described in Figure 7
+- **Models** (`Model`): semantic structures.
+- **Denotation** (`denotation`): a recursive function evaluating expressions to three-valued truth
+  in a given model.
+-/
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function

@@ -8,6 +8,12 @@ import Mathlib.Order.Basic
 import Mathlib.Topology.Basic
 import mlda.Base.FinEnum
 
+/-!
+# Base utilities
+
+General-purpose typeclasses and notation used throughout the formalization:
+-/
+
 register_simp_attr substSimp
 
 class MapMin {A : Type} [Min A] (op : A → A) where

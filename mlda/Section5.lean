@@ -3,6 +3,17 @@ import mlda.Section2
 import mlda.Section3
 import Mathlib.Tactic.Attr.Register
 
+/-!
+# Section 5: Crusader Agreement
+
+This file formalizes the Crusader Agreement consensus protocol:
+
+- **Value domain** (`Val`): three values `v0`, `v1`, `½` (in the paper denoted as 0, 1, 0.5 respectively)
+- **Signature** (`Sig`): input, echo₁, echo₂, and output signals.
+- **Axioms** (`Thy`): axioms for Crusader Agreement
+- **Correctness proofs**: weak agreement (`Proposition_5_3_3.t`), validity (`Proposition_5_3_6.t1`, `Proposition_5_3_6.t3`), liveness (`Proposition_5_3_11.t`)
+-/
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function

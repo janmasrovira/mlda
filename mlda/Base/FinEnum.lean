@@ -1,5 +1,13 @@
 import Mathlib.Data.FinEnum
 import Lean
+
+/-!
+# FinEnum derivation macro
+
+Provides a `FinEnum` deriving handler that automatically synthesizes `FinEnum`
+instances for inductive types whose constructors are all nullary.
+-/
+
 open Lean Elab Term Command
 open Lean.Parser.Term
 

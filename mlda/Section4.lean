@@ -3,6 +3,16 @@ import mlda.Section2
 import Mathlib.Tactic.Attr.Register
 import mlda.Section3
 
+/-!
+# Section 4: Bracha Broadcast
+
+This file formalizes the Bracha Broadcast algorithm:
+
+- **Signature** (`BBSig`): four signals - broadcast, echo, ready, deliver.
+- **Axioms** (`ThyBB`): axioms for Bracha Broadcast
+- **Correctness proofs**: Validity (`Proposition_4_2_10.t`), consistency (`Proposition_4_2_12.t`), integrity (`Proposition_4_2_13.t`), totality (`Proposition_4_2_14.t`).
+-/
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function
