@@ -8,7 +8,7 @@ import Mathlib.Tactic.Attr.Register
 This file defines:
 
 - **Terms and expressions** (`Expr`): The syntax for the expressions in the logic described in Figure 7
-- **Models** (`Model`): semantic structures.
+- **Models** (`Model`): semantic structure.
 - **Denotation** (`denotation`): a recursive function evaluating expressions to three-valued truth
   in a given model.
 -/

@@ -8,7 +8,7 @@ import mlda.Section3
 
 This file formalises the Bracha Broadcast algorithm:
 
-- **Signature** (`BBSig`): four signals - broadcast, echo, ready, deliver.
+- **Signature** (`BBSig`): broadcast, echo, ready, deliver.
 - **Axioms** (`ThyBB`): axioms for Bracha Broadcast
 - **Correctness proofs**: Validity (`Proposition_4_2_10.t`), consistency (`Proposition_4_2_12.t`), integrity (`Proposition_4_2_13.t`), totality (`Proposition_4_2_14.t`).
 -/

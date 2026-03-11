@@ -8,8 +8,8 @@ import Mathlib.Tactic.Attr.Register
 
 This file formalises the Crusader Agreement consensus protocol:
 
-- **Value domain** (`Val`): three values `v0`, `v1`, `½` (in the paper denoted as 0, 1, 0.5 respectively)
-- **Signature** (`Sig`): input, echo₁, echo₂, and output signals.
+- **Value domain** (`Val`): three values `0`, `1`, `½`.
+- **Signature** (`Sig`): input, echo₁, echo₂, output.
 - **Axioms** (`Thy`): axioms for Crusader Agreement
 - **Correctness proofs**: weak agreement (`Proposition_5_3_3.t`), validity (`Proposition_5_3_6.t1`, `Proposition_5_3_6.t3`), liveness (`Proposition_5_3_11.t`)
 -/
