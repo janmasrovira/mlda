@@ -38,47 +38,49 @@ variable
 
 inductive Val where
   | v0
-  | half -- TODO vhalf
+  | vhalf
   | v1
   deriving DecidableEq, FinEnum, Ord
 
+namespace Val
+
+scoped notation " 𝟢 " => Val.v0
+scoped notation " ½ " => Val.vhalf
+scoped notation " 𝟣 " => Val.v1
+
 instance : Max Val where
   max a b := match a, b with
-   | .v1, _  => .v1
-   | _, .v1  => .v1
-   | .half, _  => .half
-   | _, .half  => .half
-   | _, _ => .v0
+   | 𝟣, _  => 𝟣
+   | _, 𝟣  => 𝟣
+   | ½, _  => ½
+   | _, ½  => ½
+   | _, _ => 𝟢
 
 instance : Min Val where
   min a b := match a, b with
-   | .v0, _  => .v0
-   | _, .v0  => .v0
-   | .half, _  => .half
-   | _, .half  => .half
-   | _, _ => .v1
+   | 𝟢, _  => 𝟢
+   | _, 𝟢  => 𝟢
+   | ½, _  => ½
+   | _, ½  => ½
+   | _, _ => 𝟣
 
 instance : LinearOrder Val := by
   let toFin : Val → Fin 3
-    | .v0 => 0
-    | .half => 1
-    | .v1 => 2
+    | 𝟢 => 0
+    | ½ => 1
+    | 𝟣 => 2
   apply LinearOrder.liftWithOrd toFin
   intro x y p; cases x <;> cases y <;> cases p <;> rfl
   repeat (intro x y; cases x <;> cases y <;> rfl)
 
-namespace Val
-
-scoped notation " ½ " => Val.half
-
 class inductive NotHalf : Val → Prop
-  | v0 : NotHalf v0
-  | v1 : NotHalf v1
+  | v0 : NotHalf 𝟢
+  | v1 : NotHalf 𝟣
 
 scoped notation "≠½ " => NotHalf
 
-instance : ≠½ v0 := .v0
-instance : ≠½ v1 := .v1
+instance : ≠½ 𝟢 := .v0
+instance : ≠½ 𝟣 := .v1
 
 theorem NotHalf_iff_neq {v} : NotHalf v ↔ v ≠ ½ := by
   cases v <;> simp
@@ -87,14 +89,14 @@ theorem NotHalf_iff_neq {v} : NotHalf v ↔ v ≠ ½ := by
   · exact .v1
 
 abbrev complement : Val → Val
-  | .v0 => v1
-  | .v1 => v0
-  | .half => ½
+  | 𝟢 => 𝟣
+  | 𝟣 => 𝟢
+  | ½ => ½
 
 scoped notation "~" => complement
 
-@[simp] theorem complement_v0 : ~ v0 = v1 := rfl
-@[simp] theorem complement_v1 : ~ v1 = v0 := rfl
+@[simp] theorem complement_v0 : ~ 𝟢 = 𝟣 := rfl
+@[simp] theorem complement_v1 : ~ 𝟣 = 𝟢 := rfl
 @[simp] theorem complement_half : ~ ½ = ½ := rfl
 @[simp] theorem complement_complement {v : Val} : ~ (~ v) = v := by cases v <;> rfl
 
@@ -114,17 +116,17 @@ export Sig (input echo₁ echo₂ output)
 class Thy (μ : Model Sig P Val) where
   CaEcho1? : ⊨[μ] ∀ₑ ([echo₁]ₑ ⇀ₑ ◇ₑ [input]ₑ)
   CaEcho2? : ⊨[μ] ∀ₑ ([echo₂]ₑ →ₑ ⊡ₑ [echo₁]ₑ)
-  CaOutput? : ⊨[μ] ([output, v0]ₑ →ₑ ⊡ₑ [echo₂, v0]ₑ) ∧ₑ
-                     ([output, v1]ₑ →ₑ ⊡ₑ [echo₂, v1]ₑ)
-  CaOutput'? : ⊨[μ] [output, ½]ₑ →ₑ (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ)
+  CaOutput? : ⊨[μ] ([output, 𝟢]ₑ →ₑ ⊡ₑ [echo₂, 𝟢]ₑ) ∧ₑ
+                     ([output, 𝟣]ₑ →ₑ ⊡ₑ [echo₂, 𝟣]ₑ)
+  CaOutput'? : ⊨[μ] [output, ½]ₑ →ₑ (⊡ₑ [echo₁, 𝟢]ₑ ∧ₑ ⊡ₑ [echo₁, 𝟣]ₑ)
   CaCorrect : ⊨[μ] ⊡ₑ TF[input, echo₁, echo₂, output]ₑ
   CaCorrect' (s : Sig) : ⊨[μ] TF[s]ₑ ∨ₑ B[s]ₑ
-  CaInput : ⊨[μ] ([input, v0]ₑ ⊕ₑ [input, v1]ₑ) ∧ₑ (¬ₑ [input, ½]ₑ)
+  CaInput : ⊨[μ] ([input, 𝟢]ₑ ⊕ₑ [input, 𝟣]ₑ) ∧ₑ (¬ₑ [input, ½]ₑ)
   CaEcho2Affine : ⊨[μ] ∃₀₁ₑ [echo₂]ₑ -- axiom called CaEcho2_01 in the paper
   CaEcho1! : ⊨[μ] ∀ₑ (([input]ₑ ∨ₑ ⟐ₑ [echo₁]ₑ) →ₑ [echo₁]ₑ)
   CaEcho2! : ⊨[μ] (∃⁎ₑ (⊡ₑ [echo₁]ₑ)) →ₑ ∃⁎ₑ [echo₂]ₑ
   CaOutput! : ⊨[μ] ∀ₑ (⊡ₑ [echo₂]ₑ →ₑ [output]ₑ)
-  CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, v0]ₑ ∧ₑ ⊡ₑ [echo₁, v1]ₑ) →ₑ [output, ½]ₑ
+  CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, 𝟢]ₑ ∧ₑ ⊡ₑ [echo₁, 𝟣]ₑ) →ₑ [output, ½]ₑ
 
 namespace Thy
 
@@ -152,7 +154,7 @@ theorem CaCorrect2 (s1 s2 : Sig) : ⊨[μ] ⊡ₑ (TF[s1]ₑ ∧ₑ TF[s2]ₑ) :
   constructor <;> intro v <;> specialize c3 v <;> cases s1 <;> cases s2 <;> grind [Lemmas.le_and]
 
 theorem CaOutput'?_simp : (μ.ς output p ½ = 𝐭)
-  → ((⊨[μ] ⊡ₑ [echo₁, v0]ₑ) ∧ ⊨[μ] ⊡ₑ [echo₁, v1]ₑ) := by
+  → ((⊨[μ] ⊡ₑ [echo₁, 𝟢]ₑ) ∧ ⊨[μ] ⊡ₑ [echo₁, 𝟣]ₑ) := by
   intro h; have b := CaOutput'? (μ := μ) p
   simp only [Lemmas.valid_impl] at b; specialize b (by simpa [denotation] using h)
   have t := Lemmas.valid_and.mp b
@@ -214,38 +216,38 @@ theorem CaCorrect'_false {s : Sig} (h : μ.ς s p v ≠ 𝐛) : ∀ {v'}, μ.ς 
 theorem CaInput_half : μ.ς input p ½ ≤ 𝐛 := by
   have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; exact b.2
 
-theorem CaInput_1_le (h1 : 𝐛 ≤ μ.ς input p v0) : μ.ς input p v1 ≤ 𝐛 := by
+theorem CaInput_1_le (h1 : 𝐛 ≤ μ.ς input p 𝟢) : μ.ς input p 𝟣 ≤ 𝐛 := by
   have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
   simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
   · next h => exact h.2
-  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v0 = 𝐛 := by grind
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p 𝟢 = 𝐛 := by grind
               rw [ca.CaCorrect'_byzantine b]
 
 theorem CaInput_0_1 :
-    𝐛 ≤ μ.ς input p v0 ∧ μ.ς input p v1 ≤ 𝐛 ∨
-    μ.ς input p v0 ≤ 𝐛 ∧ 𝐛 ≤ μ.ς input p v1 := by
+    𝐛 ≤ μ.ς input p 𝟢 ∧ μ.ς input p 𝟣 ≤ 𝐛 ∨
+    μ.ς input p 𝟢 ≤ 𝐛 ∧ 𝐛 ≤ μ.ς input p 𝟣 := by
   have b := ca.CaInput p; simp only [Lemmas.valid_and] at b; obtain b := b.1
   simp [denotation, Lemmas.le_or, Lemmas.le_and] at b
   exact b
 
-theorem CaInput_0_le (h1 : 𝐛 ≤ μ.ς input p v1) : μ.ς input p v0 ≤ 𝐛 := by
+theorem CaInput_0_le (h1 : 𝐛 ≤ μ.ς input p 𝟣) : μ.ς input p 𝟢 ≤ 𝐛 := by
   have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
   simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
-  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v1 = 𝐛 := by grind
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p 𝟣 = 𝐛 := by grind
               rw [ca.CaCorrect'_byzantine b]
   · next h => exact h.1
 
-theorem CaInput_le_0 (h1 : μ.ς input p v1 ≤ 𝐛) : 𝐛 ≤ μ.ς input p v0 := by
+theorem CaInput_le_0 (h1 : μ.ς input p 𝟣 ≤ 𝐛) : 𝐛 ≤ μ.ς input p 𝟢 := by
   have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
   simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
   · next h => exact h.1
-  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v1 = 𝐛 := by grind
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p 𝟣 = 𝐛 := by grind
               rw [ca.CaCorrect'_byzantine b]
 
-theorem CaInput_le_1 (h1 : μ.ς input p v0 ≤ 𝐛) : 𝐛 ≤ μ.ς input p v1 := by
+theorem CaInput_le_1 (h1 : μ.ς input p 𝟢 ≤ 𝐛) : 𝐛 ≤ μ.ς input p 𝟣 := by
   have b := ca.CaInput p; simp [denotation, Lemmas.le_and] at b; replace b := b.1
   simp [Lemmas.le_or, Lemmas.le_and] at b; cases b
-  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p v0 = 𝐛 := by grind
+  · next h => obtain ⟨h1, h2⟩ := h; have b : μ.ς input p 𝟢 = 𝐛 := by grind
               rw [ca.CaCorrect'_byzantine b]
   · next h => exact h.2
 
@@ -338,7 +340,7 @@ theorem t3_aux (o : v ≤ v') (h1 : p ⊨[μ] Tₑ [input, v]ₑ) (h2 : p ⊨[μ
   rcases lt_trichotomy v v' with h | h | h
   · exfalso; clear o; cases v <;> cases v' <;> try contradiction
     · have b := t1 (p := p) (μ := μ); simp [denotation, h2] at b
-    · have b := t2 (p := p) (μ := μ) (v := v1).mp; simp! [denotation, h1, h2] at b
+    · have b := t2 (p := p) (μ := μ) (v := 𝟣).mp; simp! [denotation, h1, h2] at b
     · have b := t1 (p := p) (μ := μ); simp [denotation, h1] at b
   · assumption
   · exact absurd h (not_lt.mpr o)
@@ -422,7 +424,7 @@ theorem t1 : ⊨[μ] ◇ₑ [output, v]ₑ ⇀ₑ ((◇ₑ [input, v]ₑ) ∨ₑ
               have b := t1' (v := v) (μ := μ) p
               rw [Lemmas.valid_impl] at b; simpa using b h
 
-theorem t2 : ⊨[μ] ◇ₑ [output, ½]ₑ ⇀ₑ (◇ₑ [input, v0]ₑ ∧ₑ ◇ₑ [input, v1]ₑ) := by
+theorem t2 : ⊨[μ] ◇ₑ [output, ½]ₑ ⇀ₑ (◇ₑ [input, 𝟢]ₑ ∧ₑ ◇ₑ [input, 𝟣]ₑ) := by
   intro p; simp only [Lemmas.valid_impl]; intro h; simp [denotation] at h; obtain ⟨h1, h2⟩ := h
   simp only [Lemmas.valid_T, Lemmas.denotation_and, Lemmas.and_true]
   have e1 := ca.CaOutput'?_simp h2
@@ -509,29 +511,29 @@ variable
   [twined : Twined3 μ.S]
   {v : Val}
 
-theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, v1]ₑ ∧ₑ TF[echo₁]ₑ)) := by
-  have s1 : ⊨[μ] □ₑ ([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ ⊡ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ) := by
+theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, 𝟢]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, 𝟣]ₑ ∧ₑ TF[echo₁]ₑ)) := by
+  have s1 : ⊨[μ] □ₑ ([input, 𝟢]ₑ ∨ₑ [input, 𝟣]ₑ) ∧ₑ ⊡ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ) := by
     intro _; simp only [Lemmas.valid_and]; constructor
     · simp [denotation, Lemmas.le_or]; intro p; grind [ca.CaInput_0_1 (p := p)]
     · exact ca.CaCorrect2 echo₁ input _
-  have s2 : ⊨[μ] ⊡ₑ (([input, v0]ₑ ∨ₑ [input, v1]ₑ) ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
+  have s2 : ⊨[μ] ⊡ₑ (([input, 𝟢]ₑ ∨ₑ [input, 𝟣]ₑ) ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
     intro _
     simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_and]
     have h := s1 default
     simp only [valid_pred, Lemmas.denotation_and, Lemmas.denotation_everywhere,
         Lemmas.denotation_quorum] at h
     exact Lemma_2_3_6.t2 _ _ h
-  have s3 : ⊨[μ] ⊡ₑ (([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ))) := by
+  have s3 : ⊨[μ] ⊡ₑ (([input, 𝟢]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ([input, 𝟣]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ))) := by
     intro p; have h := s2 p
     simp only [valid_pred, Lemmas.denotation_quorum] at h ⊢
     convert h using 2; ext q; simp [denotation]
     exact (inf_sup_right (α := 𝟯) _ _ _).symm
-  have s4 : ⊨[μ] ⟐ₑ ([input, v0]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ⟐ₑ ([input, v1]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
+  have s4 : ⊨[μ] ⟐ₑ ([input, 𝟢]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) ∨ₑ ⟐ₑ ([input, 𝟣]ₑ ∧ₑ (TF[echo₁]ₑ ∧ₑ TF[input]ₑ)) := by
     intro p; have h := s3 default
     simp only [valid_pred, Lemmas.denotation_quorum, Lemmas.denotation_or,
         Lemmas.denotation_contraquorum] at h ⊢
     exact Corollary_2_4_6.t2 h
-  have s5 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, v1]ₑ ∧ₑ TF[echo₁]ₑ)) := by
+  have s5 : ⊨[μ] Tₑ (⟐ₑ ([input, 𝟢]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ Tₑ (⟐ₑ ([input, 𝟣]ₑ ∧ₑ TF[echo₁]ₑ)) := by
     intro p; have h3 := s4 default
     simp only [valid_pred, Lemmas.denotation_or] at h3
     simp only [valid_pred, Lemmas.denotation_T, Lemmas.denotation_or]
@@ -542,18 +544,18 @@ theorem t1 : ⊨[μ] Tₑ (⟐ₑ ([input, v0]ₑ ∧ₑ TF[echo₁]ₑ)) ∨ₑ
       obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.le_and] at h3
       obtain ⟨h31, h32⟩ := h3; simp [Lemmas.or_le] at h32; obtain ⟨h32, h33⟩ := h32
       refine ⟨h1, h2, ?_⟩; simp only [Lemmas.and_true]; constructor
-      · apply Lemmas.valid_and_TF h31 (h33 v0)
+      · apply Lemmas.valid_and_TF h31 (h33 𝟢)
       · simp; intro v; rw [← Lemmas.valid_TF_iff_TF_true]; exact h32 v
     · next h =>
       right; intro y1 y2; specialize h y1 y2
       obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.le_and] at h3
       obtain ⟨h31, h32⟩ := h3; simp [Lemmas.or_le] at h32; obtain ⟨h32, h33⟩ := h32
       refine ⟨h1, h2, ?_⟩; simp only [Lemmas.and_true]; constructor
-      · apply Lemmas.valid_and_TF h31 (h33 v1)
+      · apply Lemmas.valid_and_TF h31 (h33 𝟣)
       · simp; intro v; rw [← Lemmas.valid_TF_iff_TF_true]; exact h32 v
   exact s5
 
-theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁, v1]ₑ) := by
+theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, 𝟢]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁, 𝟣]ₑ) := by
   intro p
   have s1 := t1 (μ := μ) default
   simp only [Lemmas.valid_or]
@@ -562,62 +564,62 @@ theorem t2 : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⟐ₑ [echo₁
       left; clear s1; simp [denotation] at h ⊢
       intro y1 y2; specialize h y1 y2; obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.and_true] at h3
       have b := ca.CaEcho1! h1; simp only [Lemmas.valid_forall, substSimp, Lemmas.valid_impl] at b
-      have b' := b v0 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
-      refine ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 v0))⟩
+      have b' := b 𝟢 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
+      refine ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 𝟢))⟩
       · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
         left; exact h3.1
   · next h =>
       right; clear s1; simp [denotation] at h ⊢
       intro y1 y2; specialize h y1 y2; obtain ⟨h1, h2, h3⟩ := h; simp [Lemmas.and_true] at h3
       have b := ca.CaEcho1! h1; simp only [Lemmas.valid_forall, substSimp, Lemmas.valid_impl] at b
-      have b' := b v1 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
-      exact ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 v1))⟩
+      have b' := b 𝟣 ?_; simp [denotation] at b'; obtain ⟨h3, h4⟩ := h3
+      exact ⟨_, h2, Lemmas.valid_and_TF b' (Lemmas.valid_TF_iff_TF_true.mpr (h4 𝟣))⟩
       · simp only [Lemmas.denotation_or, Lemmas.or_true]; simp [denotation]
         left; exact h3.1
 
-theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, v0]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, v1]ₑ) := by
+theorem t3 : ⊨[μ] Tₑ (⊡ₑ [echo₁, 𝟢]ₑ) ∨ₑ Tₑ (⊡ₑ [echo₁, 𝟣]ₑ) := by
   have c := t2 (μ := μ) default; simp only [Lemmas.valid_or] at c
-  have b := Lemma_5_3_8.t (μ := μ) (v := v1); intro _
+  have b := Lemma_5_3_8.t (μ := μ) (v := 𝟣); intro _
   simp only [Lemmas.valid_or]
   cases c
   · next h =>
-      left; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, v0]ₑ) :=
+      left; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, 𝟢]ₑ) :=
         contraquorum_commut_T.mpr (contraquorum_global'.mp (contraquorum_commut_T' (p' := default) h))
       exact Lemma_5_3_8.t3 (Lemma_5_3_8.t2 h') _
   · next h =>
-      right; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, v1]ₑ) :=
+      right; have h' : ⊨[μ] Tₑ (⟐ₑ [echo₁, 𝟣]ₑ) :=
         contraquorum_commut_T.mpr (contraquorum_global'.mp (contraquorum_commut_T' (p' := default) h))
       exact Lemma_5_3_8.t3 (Lemma_5_3_8.t2 h') _
 
-theorem t4 : ⊨[μ] □ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ) := by
+theorem t4 : ⊨[μ] □ₑ ([echo₂, 𝟢]ₑ ∨ₑ [echo₂, 𝟣]ₑ) := by
   have c := t3 (μ := μ) default; simp only [Lemmas.valid_or] at c
   cases c
   · next h1 =>
     intro _; simp [denotation] at h1 ⊢; intro p
-    have b := ca.CaEcho2!_simp (v := v0) (by simpa) p
+    have b := ca.CaEcho2!_simp (v := 𝟢) (by simpa) p
     obtain ⟨b1, b2⟩ := b; simp [Lemmas.le_or]
     cases b1
     case v0 => grind
     case v1 => grind
-    case half =>
+    case vhalf =>
       cases Lemmas.byzantine_le_cases.mp b2
-      · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
+      · next h => grind [ca.CaCorrect'_byzantine (v' := 𝟢) h]
       · next h => have q := Lemma_5_3_5.t5 (μ := μ) (p := p)
                   simp [denotation] at q; rw [h] at q; contradiction
   · next h1 =>
     intro _; simp [denotation] at h1 ⊢; intro p
-    have b := ca.CaEcho2!_simp (v := v1) (by simpa) p
+    have b := ca.CaEcho2!_simp (v := 𝟣) (by simpa) p
     obtain ⟨b1, b2⟩ := b; simp [Lemmas.le_or]
     cases b1
     case v0 => grind
     case v1 => grind
-    case half =>
+    case vhalf =>
       cases Lemmas.byzantine_le_cases.mp b2
-      · next h => grind [ca.CaCorrect'_byzantine (v' := v0) h]
+      · next h => grind [ca.CaCorrect'_byzantine (v' := 𝟢) h]
       · next h => have q := Lemma_5_3_5.t5 (μ := μ) (p := p)
                   simp [denotation] at q; rw [h] at q; contradiction
 
-theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, v0]ₑ ∨ₑ [echo₂, v1]ₑ)) := by
+theorem t5 : ⊨[μ] Tₑ (⊡ₑ ([echo₂, 𝟢]ₑ ∨ₑ [echo₂, 𝟣]ₑ)) := by
   intro _
   have t := t4 (μ := μ) default
   have b := ca.CaCorrect1 echo₂ default
@@ -651,8 +653,8 @@ theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     simp only [substSimp] at b
     apply Lemmas.valid_impl.mp b
     simp [denotation]; exact ⟨o1, o2, hv⟩
-  have case2 : (∃ x ∈ o1, μ.ς echo₂ x v0 = 𝐭) →
-      (∃ y ∈ o1, μ.ς echo₂ y v1 = 𝐭) →
+  have case2 : (∃ x ∈ o1, μ.ς echo₂ x 𝟢 = 𝐭) →
+      (∃ y ∈ o1, μ.ς echo₂ y 𝟣 = 𝐭) →
       ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     intro ⟨x, _, hx⟩ ⟨y, _, hy⟩
     have q0 := ca.CaEcho2?_simp hx
@@ -661,20 +663,20 @@ theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     rw [Lemmas.valid_exist]; exists ½; simp only [substSimp]
     have b := ca.CaOutput'! p'
     apply Lemmas.valid_impl.mp b
-    have q0' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v0)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q0 p')
-    have q1' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v1)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q1 p')
-    have h0 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := v0) echo₁) q0'
-    have h1 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := v1) echo₁) q1'
+    have q0' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p 𝟢)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q0 p')
+    have q1' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p 𝟣)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q1 p')
+    have h0 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := 𝟢) echo₁) q0'
+    have h1 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := 𝟣) echo₁) q1'
     simp [denotation, h0, h1]
-  by_cases h : ∀ x ∈ o1, μ.ς echo₂ x v0 = 𝐭
-  · exact case1 v0 h
+  by_cases h : ∀ x ∈ o1, μ.ς echo₂ x 𝟢 = 𝐭
+  · exact case1 𝟢 h
   · push_neg at h; obtain ⟨x, xm, hx⟩ := h
-    have hx1 : μ.ς echo₂ x v1 = 𝐭 := by
+    have hx1 : μ.ς echo₂ x 𝟣 = 𝐭 := by
       have := Lemmas.or_true.mp (o3 x xm); tauto
-    by_cases h' : ∀ y ∈ o1, μ.ς echo₂ y v1 = 𝐭
-    · exact case1 v1 h'
+    by_cases h' : ∀ y ∈ o1, μ.ς echo₂ y 𝟣 = 𝐭
+    · exact case1 𝟣 h'
     · push_neg at h'; obtain ⟨y, ym, hy⟩ := h'
-      have hy0 : μ.ς echo₂ y v0 = 𝐭 := by
+      have hy0 : μ.ς echo₂ y 𝟢 = 𝐭 := by
         have := Lemmas.or_true.mp (o3 y ym); tauto
       exact case2 ⟨y, ym, hy0⟩ ⟨x, xm, hx1⟩
 
@@ -689,7 +691,7 @@ variable
   {v : Val}
 
 omit twined in
-theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
+theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ .val 𝟢) ∨ₑ (.val v =ₑ .val 𝟣) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h ⊢
   cases v
@@ -698,7 +700,7 @@ theorem t1 : ⊨[μ] [input, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =
   · simp
 
 omit twined in
-theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
+theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ .val 𝟢) ∨ₑ (.val v =ₑ .val 𝟣) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h
   have ⟨p', hp'⟩ := ca.CaEcho1?_simp h
@@ -706,7 +708,7 @@ theorem t2 : ⊨[μ] [echo₁, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v
   specialize b (by simpa [denotation] using hp')
   simp [valid_pred, denotation] at b ⊢; exact b
 
-theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ .val v0) ∨ₑ (.val v =ₑ .val v1) := by
+theorem t3 : ⊨[μ] [echo₂, v]ₑ ⇀ₑ (.val v =ₑ .val 𝟢) ∨ₑ (.val v =ₑ .val 𝟣) := by
   intro p; simp only [Lemmas.valid_impl]; intro h
   simp [denotation] at h
   have q1 := ca.CaEcho2?_simp h default
