@@ -78,6 +78,9 @@ a ~SectionN.lean~ file containing the relevant definitions and theorems. Every
 lemma, theorem, and corollary has its own namespace - for example, Theorem 2.4.5
 is formalised in ~mlda/Section2.lean~ under the namespace Theorem_2_4_5.
 
+Generic auxiliary lemmas that are used in the formalisation but do not appear in the
+paper are placed under the ~Lemmas~ namespace within each file.
+
 The generated documentation for this formalisation can be browsed at [[https://janmasrovira.github.io/mlda/mlda.html][janmasrovira.github.io/mlda]]
 
 ** License
