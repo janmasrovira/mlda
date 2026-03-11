@@ -873,7 +873,7 @@ namespace Example_2_4_3
 -- Not formalised
 end Example_2_4_3
 
-namespace Theorem_2_4_4
+namespace Theorem_2_4_5
 
 open Three.Lemmas
 
@@ -923,9 +923,9 @@ theorem t2 : ⊨ (⊡(S) f ∧ ⊡(S) f') → (⊨ (⟐(S) (f ∧ f'))) := by
 theorem t2' : 𝐛 ≤ (⊡(S) f ∧ ⊡(S) f') → (⊨ (⟐(S) (f ∧ f'))) := by
   apply le_implies_valid t
 
-end Theorem_2_4_4
+end Theorem_2_4_5
 
-namespace Corollary_2_4_5
+namespace Corollary_2_4_6
 
 variable
   {P : Type}
@@ -939,15 +939,15 @@ variable
 open Three.Lemmas
 
 theorem t1 : ⊡(S) (f ∨ f') ≤ (⟐(S) f ∨ ⟐(S) f') := by
-  have x := Proposition_2_2_3.p9.mp (Theorem_2_4_4.t (f := ¬ f) (f' := ¬ f') (S := S))
+  have x := Proposition_2_2_3.p9.mp (Theorem_2_4_5.t (f := ¬ f) (f' := ¬ f') (S := S))
   simpa [← Lemma_2_3_3.p1_2, Lemma_2_3_3.p1_5, Three.Lemmas.neg_and
         , Lemma_2_3_3.p1_6, Lemma_2_3_3.p1_6] using x
 
 theorem t2 : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f ∨ ⟐(S) f') := Three.Lemmas.le_implies_valid t1
 
-end Corollary_2_4_5
+end Corollary_2_4_6
 
-namespace Remark_2_4_6
+namespace Remark_2_4_7
 
 open Three.Lemmas
 
@@ -992,7 +992,7 @@ theorem valid_quorum_implies_true [twined : Twined3 S]
 
 include q in
 theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
-  have h := Theorem_2_4_4.t (f := T ∘ f) (f' := T ∘ f) (S := S)
+  have h := Theorem_2_4_5.t (f := T ∘ f) (f' := T ∘ f) (S := S)
   intro p; replace p := valid_quorum_implies_true q p
   simpa [Remark_2_3_5.map_contraquorum, Remark_2_3_5.map_quorum, p] using h
 
@@ -1028,15 +1028,15 @@ theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S)
 
 omit q in
 theorem t5_11 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S) (f ∧ f')) :=
-  le_implies_valid Theorem_2_4_4.t
+  le_implies_valid Theorem_2_4_5.t
 
 omit q in
 theorem t5_2 [twined : Twined3 S] : ⊨ (⊡(S) (f ∨ f')) → ⊨ (⟐(S) f ∨ ⟐(S) f') := by
-  intro p; exact Corollary_2_4_5.t2 p
+  intro p; exact Corollary_2_4_6.t2 p
 
-end Remark_2_4_6
+end Remark_2_4_7
 
-namespace Remark_2_4_7
+namespace Remark_2_4_8
 
 open Three.Lemmas
 
@@ -1062,7 +1062,7 @@ theorem t (h : ∀ (f f' : P → 𝟯), (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f �
   have hxb : x ∈ b := by by_contra hnb; simp [hnb] at hx
   exact ⟨x, Finset.mem_inter.mpr ⟨Finset.mem_inter.mpr ⟨hxa, hxb⟩, hxc⟩⟩
 
-end Remark_2_4_7
+end Remark_2_4_8
 
 section
 
