@@ -51,18 +51,32 @@ lake build
 The command above will:
 1. Automatically install the correct Lean version
 2. Download and build Mathlib4 (the standard mathematical library)
-3. Build and verify all formalized proofs
+3. Build and verify all formalised proofs
 
 Note that when compiling for the first time, the whole process can take up to 30
 minutes
 
 *If the build completes without errors, all proofs are mechanically verified correct.*
 
+To confirm that it completed correctly, check that the last lines of output of
+the ~lake build~ command match the following:
+#+begin_example
+ℹ [730/735] Replayed mlda.Section2
+info: mlda/Section2.lean:17:0: Checking definitions and proofs in Section 2...
+ℹ [731/735] Replayed mlda.Section3
+info: mlda/Section3.lean:16:0: Checking definitions and proofs in Section 3...
+ℹ [732/735] Built mlda.Section4
+info: mlda/Section4.lean:16:0: Checking definitions and proofs in Section 4...
+ℹ [733/735] Built mlda.Section5
+info: mlda/Section5.lean:17:0: Checking definitions and proofs in Section 5...
+Build completed successfully (735 jobs).
+#+end_example
+
 ** How to explore the formalisation
 The structure of this repository mirrors the paper. Each section corresponds to
 a ~SectionN.lean~ file containing the relevant definitions and theorems. Every
 lemma, theorem, and corollary has its own namespace - for example, Theorem 2.4.5
-is formalized in ~mlda/Section2.lean~ under the namespace Theorem_2_4_5.
+is formalised in ~mlda/Section2.lean~ under the namespace Theorem_2_4_5.
 
 The generated documentation for this formalisation can be browsed at [[https://janmasrovira.github.io/mlda/mlda.html][janmasrovira.github.io/mlda]]
 

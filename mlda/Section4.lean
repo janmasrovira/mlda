@@ -13,6 +13,8 @@ This file formalises the Bracha Broadcast algorithm:
 - **Correctness proofs**: Validity (`Proposition_4_2_10.t`), consistency (`Proposition_4_2_12.t`), integrity (`Proposition_4_2_13.t`), totality (`Proposition_4_2_14.t`).
 -/
 
+#eval IO.println "Checking definitions and proofs in Section 4..."
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function

@@ -14,6 +14,8 @@ This file formalises the Crusader Agreement consensus protocol:
 - **Correctness proofs**: weak agreement (`Proposition_5_3_3.t`), validity (`Proposition_5_3_6.t1`, `Proposition_5_3_6.t3`), liveness (`Proposition_5_3_11.t`)
 -/
 
+#eval IO.println "Checking definitions and proofs in Section 5..."
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function

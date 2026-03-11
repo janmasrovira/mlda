@@ -13,6 +13,8 @@ This file defines:
   in a given model.
 -/
 
+#eval IO.println "Checking definitions and proofs in Section 3..."
+
 open Three
 open scoped Three.Atom
 open scoped Three.Function

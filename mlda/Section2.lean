@@ -14,6 +14,8 @@ This file defines:
   guaranteeing that any three non-empty open sets share a common element.
 -/
 
+#eval IO.println "Checking definitions and proofs in Section 2..."
+
 section Defeinition_2_2_1
 
 inductive Three : Type where
