@@ -151,13 +151,16 @@ theorem t : P1 μ ∨ P2 μ := by
               simp [denotation, FinSemitopology.everywhere, existence] at h
               exact h p v
 
--- TODO prove that *exactly* one holds
+omit bb in
+theorem t_not_both : ¬ (P1 μ ∧ P2 μ) := by
+  simp [P1, P2]; intro h1 ⟨x1, x2, x3⟩
+  exists x1; exists default; specialize h1 default
+  simp [denotation] at h1 ⊢
+  specialize h1 x1; simpa [Lemmas.valid_TF_iff_TF_true] using h1
 
 end Lemma_4_2_4
 
 namespace Lemmas
-
--- TODO
 
 variable
   {V P : Type}
