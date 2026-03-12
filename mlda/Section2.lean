@@ -588,6 +588,8 @@ end Lemmas
 
 end Three
 
+section Definition_2_3_1
+
 /-- A finite semitopology over a type `P` of participants.
 
 The `Fintype P` assumption ensures `P` is finite, which is needed so that folds over the full set
@@ -600,12 +602,14 @@ structure FinSemitopology (P : Type) [Nonempty P] [DecidableEq P] [Fintype P] wh
   univ_open : Fintype.elems ∈ Open
   isOpen_sUnion : ∀ s : Finset (Finset P), (∀ t ∈ s, t ∈ Open) → s.biUnion id ∈ Open
 
+end Definition_2_3_1
+
 namespace FinSemitopology
 
 open scoped Three.Function
 open Three.Atom
 
-section
+section Definition_2_3_2
 
 variable
   {P : Type}
@@ -643,7 +647,7 @@ abbrev contraquorum (S : FinSemitopology P) (f : P → 𝟯) := ⋀ S.Open1 (fun
 scoped notation "⟐" => contraquorum
 scoped notation "⟐" "(" S ")" => contraquorum S
 
-end
+end Definition_2_3_2
 
 section
 
@@ -870,10 +874,14 @@ theorem c3 : ⊨ (⊡(S) (TF ∘ f)) → ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := b
 
 end Lemma_2_3_7
 
+section Definition_2_4_1
+
 class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
   twined : ∀ {a b c}, a ∈ S.Open1 → b ∈ S.Open1 → c ∈ S.Open1 → a ∩ b ∩ c ∈ S.Open1
 
 export Twined3 (twined)
+
+end Definition_2_4_1
 
 namespace Example_2_4_3
 -- Not formalised

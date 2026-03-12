@@ -20,14 +20,14 @@ open scoped Three.Atom
 open scoped Three.Function
 open scoped FinSemitopology
 open FinSemitopology
-open scoped Definitions
-open Definitions
+open scoped Definition_3_1_1
+open Definition_3_1_1
 open scoped Notation
 open Notation
 open scoped Denotation
 open Denotation
 
-section
+section Definition_4_1_2
 
 variable
   {P V : Type}
@@ -106,7 +106,7 @@ theorem BrCorrectTFEcho : ∀ p, ∀ v, p ⊨[μ] ⊡ₑ (TFₑ [echo, v]ₑ) :=
 
 end ThyBB
 
-end
+end Definition_4_1_2
 
 namespace Lemma_4_2_4
 

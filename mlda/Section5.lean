@@ -21,8 +21,8 @@ open scoped Three.Atom
 open scoped Three.Function
 open scoped FinSemitopology
 open FinSemitopology
-open scoped Definitions
-open Definitions
+open scoped Definition_3_1_1
+open Definition_3_1_1
 open scoped Notation
 open Notation
 open scoped Denotation
@@ -37,6 +37,8 @@ variable
   [Inhabited P]
   [Fintype V]
   [DecidableEq V]
+
+section Definition_5_1_2
 
 inductive Val where
   | v0
@@ -129,6 +131,11 @@ class Thy (μ : Model Sig P Val) where
   CaEcho2! : ⊨[μ] (∃⁎ₑ (⊡ₑ [echo₁]ₑ)) →ₑ ∃⁎ₑ [echo₂]ₑ
   CaOutput! : ⊨[μ] ∀ₑ (⊡ₑ [echo₂]ₑ →ₑ [output]ₑ)
   CaOutput'! : ⊨[μ] (⊡ₑ [echo₁, 𝟢]ₑ ∧ₑ ⊡ₑ [echo₁, 𝟣]ₑ) →ₑ [output, ½]ₑ
+
+end Definition_5_1_2
+
+open scoped Val
+open Val
 
 namespace Thy
 

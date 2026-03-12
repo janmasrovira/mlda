@@ -25,7 +25,7 @@ variable
   [Fintype Value]
   [DecidableEq Value]
 
-namespace Definitions
+namespace Definition_3_1_1
 
 variable
   (f : Value → 𝟯)
@@ -56,9 +56,9 @@ scoped notation " ∃₀₁ " => existence_affine
 abbrev existence_unique : 𝟯 := existence f ∧ existence_affine f
 scoped notation " ∃₁ " => existence_unique
 
-end Definitions
+end Definition_3_1_1
 
-open Definitions
+open Definition_3_1_1
 
 namespace Lemmas
 
@@ -308,7 +308,7 @@ end Part_5
 
 end Proposition_3_1_3
 
-section Types -- TODO Rename section to mirror the paper
+section Definition_3_2_1
 
 inductive Term (V : Type) (scope : Nat) where
   | bound : Fin scope → Term V scope
@@ -343,7 +343,9 @@ structure Model
   S : FinSemitopology P
   ς : Interpretation Sig P V
 
-end Types
+end Definition_3_2_1
+
+section Notation_3_2_2
 
 namespace Notation
 
@@ -416,7 +418,11 @@ scoped notation "B[" s "]ₑ" => B_all s
 
 end Notation
 
+end Notation_3_2_2
+
 open Notation
+
+section Definition_3_2_3
 
 namespace Denotation
 
@@ -502,6 +508,8 @@ scoped notation p " ⊨[" μ "] " φ => valid_pred μ p φ
 scoped notation "⊨[" μ "] " φ => valid μ φ
 
 end Denotation
+
+end Definition_3_2_3
 
 open Denotation
 
@@ -651,7 +659,7 @@ theorem denotation_exists_affine : ⟦∃₀₁ₑ φ₁⟧ᵈ μ p = ∃₀₁ 
   simp [denotation]
 
 theorem denotation_forall : ⟦∀ₑ φ₁⟧ᵈ μ p = ∀⁎ (fun v => ⟦ₛ[φ₁, 0 ↦ v]⟧ᵈ μ p) := by
-  simp [denotation, Definitions.for_all, Definitions.existence, ← Lemmas.meet_neg]
+  simp [denotation, ← Lemmas.meet_neg]
   congr 1; ext k; simp
 
 @[simp] theorem valid_T : (p ⊨[μ] Tₑ φ) ↔ ⟦φ⟧ᵈ μ p = 𝐭 := by
