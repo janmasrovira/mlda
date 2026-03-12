@@ -671,11 +671,10 @@ theorem valid_or : (p ⊨[μ] φ ∨ₑ ψ) ↔ (p ⊨[μ] φ) ∨ p ⊨[μ] ψ 
 theorem valid_and : (p ⊨[μ] φ ∧ₑ ψ) ↔ (p ⊨[μ] φ) ∧ p ⊨[μ] ψ := by
   simp [Lemmas.le_and]
 
--- TODO use unicode
--- The paper has "weak implication" -> and "strong implication" -^. In the Lean
+-- The paper has "weak implication" → and "strong implication" ⇀. In the Lean
 -- formalisation we arrange the mathematics equivalently but slightly
--- differently. We use only -> (treating P -^ Q as a macro for P -> TQ) and
--- therefore we use only one modus ponens principle, as follows:
+-- differently. Because we treat P ⇀ Q as an abbreviation for P → T Q,
+-- we use only one modus ponens principle, as follows:
 theorem valid_impl : (p ⊨[μ] (φ →ₑ ψ)) ↔ ((⟦φ⟧ᵈ μ p = 𝐭) → p ⊨[μ] ψ) := by
   simp [Lemmas.and_le]
   constructor
