@@ -662,20 +662,26 @@ theorem t : ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     simp only [substSimp] at b
     apply Lemmas.valid_impl.mp b
     simp [denotation]; exact ⟨o1, o2, hv⟩
+  have key : ∀ {v : Val}, (⊨[μ] ⊡ₑ [echo₁, v]ₑ) →
+      ⊡(μ.S) (fun p => μ.ς echo₁ p v) = 𝐭 := by
+    intro v hv
+    have cv := ca.CaCorrect_simp (v := v) echo₁
+    have qv : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p v)) := by
+      simpa [denotation] using Lemmas.valid_quorum.mp (hv default)
+    have ecv : ⊨[μ] [echo₁, v]ₑ := ca.CaEcho1!_simp_echo fun _ => by
+      simpa [denotation] using Remark_2_4_7.t2 cv qv
+    obtain ⟨o, om, op⟩ := quorum_valid.mp cv
+    exact quorum_true.mpr ⟨o, om, fun x xm =>
+      Lemmas.valid_and_TF (by simpa [denotation] using ecv x) (op x xm)⟩
   have case2 : (∃ x ∈ o1, μ.ς echo₂ x 𝟢 = 𝐭) →
       (∃ y ∈ o1, μ.ς echo₂ y 𝟣 = 𝐭) →
       ⊨[μ] □ₑ (∃⁎ₑ [output]ₑ) := by
     intro ⟨x, _, hx⟩ ⟨y, _, hy⟩
-    have q0 := ca.CaEcho2?_simp hx
-    have q1 := ca.CaEcho2?_simp hy
+    have h0 := key (ca.CaEcho2?_simp hx)
+    have h1 := key (ca.CaEcho2?_simp hy)
     intro p; rw [← valid_iff_everywhere]; intro p'
     rw [Lemmas.valid_exist]; exists ½; simp only [substSimp]
-    have b := ca.CaOutput'! p'
-    apply Lemmas.valid_impl.mp b
-    have q0' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p 𝟢)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q0 p')
-    have q1' : ⊨ (⊡(μ.S) (fun p => μ.ς echo₁ p 𝟣)) := by simpa [denotation] using Lemmas.valid_quorum.mp (q1 p')
-    have h0 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := 𝟢) echo₁) q0'
-    have h1 := Remark_2_4_7.valid_quorum_implies_true (ca.CaCorrect_simp (v := 𝟣) echo₁) q1'
+    apply Lemmas.valid_impl.mp (ca.CaOutput'! p')
     simp [denotation, h0, h1]
   by_cases h : ∀ x ∈ o1, μ.ς echo₂ x 𝟢 = 𝐭
   · exact case1 𝟢 h

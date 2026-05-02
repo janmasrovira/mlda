@@ -877,7 +877,7 @@ end Lemma_2_3_7
 section Definition_2_4_1
 
 class Twined3 {P : Type} [Nonempty P] [DecidableEq P] [Fintype P] [DecidableEq P] (S : FinSemitopology P) where
-  twined : ∀ {a b c}, a ∈ S.Open1 → b ∈ S.Open1 → c ∈ S.Open1 → a ∩ b ∩ c ∈ S.Open1
+  twined : ∀ {a b c}, a ∈ S.Open1 → b ∈ S.Open1 → c ∈ S.Open1 → (a ∩ b ∩ c).Nonempty
 
 export Twined3 (twined)
 
@@ -907,7 +907,7 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     have ⟨s1, m1, p1⟩ := join_true.mp h1
     have ⟨s2, m2, p2⟩ := join_true.mp h2
     simp [contraquorum]; intro s3 m3
-    have x := twined m1 m2 m3; simp [Open1] at x; rcases x with ⟨x1, w, w1⟩
+    have ⟨w, w1⟩ := twined m1 m2 m3
     simp [Finset.mem_inter] at w1; rcases w1 with ⟨w1, w2, w3⟩
     exists w; constructor; assumption;
     simp [Three.Lemmas.and_true]
@@ -920,7 +920,7 @@ theorem t : (⊡(S) f ∧ ⊡(S) f') ≤ ⟐(S) (f ∧ f') := by
     have ⟨s2, m2, b2⟩ := byzantine_le_join.mp h2
     intro s3 m3;
     simp [byzantine_le_join, Three.Function.and, byzantine_le_and];
-    obtain x := twined m1 m2 m3; simp [Open1] at x; rcases x with ⟨_, w, w1⟩
+    obtain ⟨w, w1⟩ := twined m1 m2 m3
     simp [Finset.mem_inter] at w1; obtain ⟨w1, w2, w3⟩ := w1
     exists w; constructor; assumption; constructor
     exact byzantine_le_meet.mp b1 w w1; exact byzantine_le_meet.mp b2 w w2
@@ -994,21 +994,15 @@ theorem t1 : ⊨ (□ f) → ⊨ (T (⊡(S) f)) := by
     next k => rw [k] at l; contradiction
 
 include q in
-theorem valid_quorum_implies_true [twined : Twined3 S]
-  : ⊨ (⊡(S) f) -> ⊡(S) f = 𝐭 := by
-  intro h; simp [quorum, le_join] at h; obtain ⟨h1, h2, h3⟩ := h
-  have ⟨qs, qm, p⟩ := q' q; simp
-  refine ⟨qs ∩ h1, ?_, ?_⟩;
-  have t := twined.twined qm qm h2; simpa using t
-  intro x xq; obtain ⟨x1, x2⟩ := by simpa [Finset.mem_inter] using xq
-  cases valid_TF.mp (p x x1); assumption
-  next h => have := h3 _ x2; rw [h] at this; contradiction
-
-include q in
-theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) -> ⊨ (T (⟐(S) f)) := by
-  have h := Theorem_2_4_5.t (f := T ∘ f) (f' := T ∘ f) (S := S)
-  intro p; replace p := valid_quorum_implies_true q p
-  simpa [Remark_2_3_5.map_contraquorum, Remark_2_3_5.map_quorum, p] using h
+theorem t2 [twined : Twined3 S] : ⊨ (⊡(S) f) → ⊨ (T (⟐(S) f)) := by
+  intro p
+  have h := Theorem_2_4_5.t (f := f) (f' := TF ∘ f) (S := S)
+  have v : ⊨ (⊡(S) f ∧ ⊡(S) (TF ∘ f)) := byzantine_le_and.mpr ⟨p, q⟩
+  have hv : ⊨ (⟐(S) (f ∧ TF ∘ f)) := le_implies_valid h v
+  have eq : ((f ∧ TF ∘ f : P → 𝟯)) = T ∘ f := by
+    funext x; simp [Three.Function.and]; cases f x <;> rfl
+  rw [eq, Remark_2_3_5.map_contraquorum (M := T)] at hv
+  exact hv
 
 include q in
 theorem t3 : ⊨ (⟐(S) f) → ⊨ (T (◇ f)) := by
@@ -1035,7 +1029,7 @@ theorem t5_1 [twined : Twined3 S] : ⊨ (⊡(S) f ∧ ⊡(S) f') → ⊨ (⟐(S)
   replace ⟨h1, h1m, h1p⟩ := h1
   replace ⟨h2, h2m, h2p⟩ := h2
   intro w wm
-  obtain ⟨k, ⟨lm, l⟩⟩ := by simpa [Open1] using twined.twined h1m h2m wm
+  obtain ⟨lm, l⟩ := twined.twined h1m h2m wm
   simp [Finset.mem_inter] at l
   refine ⟨lm, l.2.2, ?_⟩; simp [le_and]; constructor
   exact h1p _ l.1; exact h2p _ l.2.1

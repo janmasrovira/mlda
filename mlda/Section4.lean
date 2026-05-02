@@ -361,9 +361,9 @@ theorem t2 (h1 : ⊨[μ] (⊡ₑ [echo, v]ₑ ∧ₑ ⊡ₑ [echo, v']ₑ))
   replace h2 := h2.2; simp [denotation]
   simp [denotation] at h1 h2; simp [Lemmas.le_and] at h1
   obtain ⟨⟨s1, s12, s13⟩, s2, s3, s4⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
-  have t := twined.twined s12 s3 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
+  obtain ⟨t2, t3⟩ := twined.twined s12 s3 r2
   exists t2; simp [Lemmas.and_true]
-  obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3; obtain ⟨m2, m3⟩ := Finset.mem_inter.mp m2;
+  simp at t3; obtain ⟨m1, m2, m3⟩ := t3
   constructor
   apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
   apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
@@ -375,8 +375,8 @@ theorem t2' (h1 : ⊨[μ] (⊡ₑ [echo, v]ₑ)) : ⊨[μ] (Tₑ (◇ₑ [echo, 
   replace h2 := h2.2; simp [denotation]
   simp [denotation] at h1 h2
   obtain ⟨s1, s12, s13⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
-  have t := twined.twined s12 s12 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
-  exists t2; obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3
+  obtain ⟨t2, t3⟩ := twined.twined s12 s12 r2
+  exists t2; simp at t3; obtain ⟨m1, m2⟩ := t3
   apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
 
 theorem t3 (h1 : ⊨[μ] (⊡ₑ [ready, v]ₑ ∧ₑ ⊡ₑ [ready, v']ₑ))
@@ -386,9 +386,9 @@ theorem t3 (h1 : ⊨[μ] (⊡ₑ [ready, v]ₑ ∧ₑ ⊡ₑ [ready, v']ₑ))
   replace h2 := h2.1; simp [denotation]
   simp [denotation] at h1 h2; simp [Lemmas.le_and] at h1
   obtain ⟨⟨s1, s12, s13⟩, s2, s3, s4⟩ := h1; obtain ⟨r1, r2, r3⟩ := h2
-  have t := twined.twined s12 s3 r2; simp [Open1] at t; obtain ⟨t1, ⟨t2, t3⟩⟩ := t
+  obtain ⟨t2, t3⟩ := twined.twined s12 s3 r2
   exists t2; simp [Lemmas.and_true]
-  obtain ⟨m1, m2⟩ := Finset.mem_inter.mp t3; obtain ⟨m2, m3⟩ := Finset.mem_inter.mp m2;
+  simp at t3; obtain ⟨m1, m2, m3⟩ := t3
   constructor
   apply Lemmas.valid_and_TF; apply s13; assumption; apply r3; assumption;
   apply Lemmas.valid_and_TF; apply s4 t2; assumption; apply r3; assumption
